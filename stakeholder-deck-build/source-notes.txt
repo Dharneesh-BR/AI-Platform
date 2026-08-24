@@ -1,0 +1,4 @@
+[Sources]
+- Internal project workspace and implementation state in C:\Users\Admin\CascadeProjects\Agentic AI.
+- Conversation decisions: platform brand changed to Magnafic AI; stakeholder demo scope focuses on frontend flow and architecture readiness.
+- No external web sources were used.

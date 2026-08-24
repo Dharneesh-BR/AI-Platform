@@ -1,0 +1,857 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgcrypto, pgvector(map: "vector")]
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  ADMIN
+  CONSULTANT
+  CLIENT
+  VIEWER
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectLifecycleState {
+  CREATED
+  ONBOARDING
+  DISCOVERY_PENDING
+  DISCOVERY_RUNNING
+  DISCOVERY_COMPLETED
+  KNOWLEDGE_READY
+  AI_READY
+  FAILED
+}
+
+enum ResearchStatus {
+  DRAFT
+  PLANNED
+  RUNNING
+  VALIDATING
+  COMPLETED
+  FAILED
+}
+
+enum DocumentSourceType {
+  PDF
+  WORD
+  POWERPOINT
+  EXCEL
+  IMAGE
+  CSV
+  TEXT
+  WEB
+  MEETING_NOTE
+  MARKET_REPORT
+  CONSULTING_FRAMEWORK
+}
+
+enum AiExecutionStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum AgentType {
+  TOPIC_SCOUTER
+  RESEARCH
+  COMPETITOR_ANALYSIS
+  FINANCIAL_ANALYSIS
+  MARKETING_STRATEGY
+  BUSINESS_STRATEGY
+  WRITING
+  COMPLIANCE
+  PRESENTATION
+  CODING
+  VALIDATION
+  ORCHESTRATOR
+  SUPERVISOR
+}
+
+enum PromptStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+enum ReportStatus {
+  DRAFT
+  GENERATING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  READ
+  FAILED
+}
+
+enum DiscoveryStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum DiscoveryStepStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum ResearchSourceType {
+  PROJECT_PROFILE
+  COMPANY_PROFILE
+  WEBSITE_DATA
+  UPLOADED_DOCUMENT
+  FUTURE_INTEGRATION
+}
+
+model User {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firebaseUid String   @unique
+  email       String   @unique
+  displayName String?
+  avatarUrl   String?
+  role        PlatformRole @default(VIEWER)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?  @db.Uuid
+  updatedBy   String?  @db.Uuid
+
+  memberships OrganizationMembership[]
+  messages    ConversationMessage[]
+
+  @@index([deletedAt])
+}
+
+model Organization {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  slug        String    @unique
+  description String?
+  settings    Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?   @db.Uuid
+  updatedBy   String?   @db.Uuid
+
+  memberships OrganizationMembership[]
+  projects    Project[]
+  documents   KnowledgeDocument[]
+  reports     Report[]
+  billing     BillingAccount?
+  projectProfiles ProjectProfile[]
+  discoveryJobs   DiscoveryJob[]
+  companyProfiles CompanyProfile[]
+  researchSources ResearchSource[]
+
+  @@index([deletedAt])
+}
+
+model OrganizationMembership {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String           @db.Uuid
+  userId         String           @db.Uuid
+  role           PlatformRole
+  status         MembershipStatus @default(INVITED)
+  invitedAt      DateTime?
+  joinedAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?          @db.Uuid
+  updatedBy      String?          @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role])
+  @@index([deletedAt])
+}
+
+model Project {
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String        @db.Uuid
+  name           String
+  slug           String
+  description    String?
+  status         ProjectStatus @default(DRAFT)
+  lifecycleState ProjectLifecycleState @default(AI_READY)
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?       @db.Uuid
+  updatedBy      String?       @db.Uuid
+
+  organization  Organization          @relation(fields: [organizationId], references: [id])
+  researchPlans ResearchPlan[]
+  conversations Conversation[]
+  documents     KnowledgeDocument[]
+  reports       Report[]
+  agentRuns     AgentRun[]
+  projectProfile ProjectProfile?
+  discoveryJobs  DiscoveryJob[]
+  companyProfiles CompanyProfile[]
+  companyTechnologies CompanyTechnology[]
+  companyCompetitors  CompanyCompetitor[]
+  companyGoals        CompanyGoal[]
+  researchSources     ResearchSource[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, status])
+  @@index([organizationId, lifecycleState])
+  @@index([deletedAt])
+}
+
+model ProjectProfile {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @db.Uuid
+  organizationId String    @db.Uuid
+  projectId      String    @unique @db.Uuid
+  companyName    String
+  websiteUrl     String?
+  industry       String?
+  companySize    String?
+  businessModel  String?
+  targetMarket   String?
+  businessGoals  Json      @default("[]")
+  primaryChallenges Json   @default("[]")
+  competitors    Json      @default("[]")
+  documents      Json      @default("[]")
+  brandGuidelines Json     @default("[]")
+  strategyDocuments Json   @default("[]")
+  onboardingStep String?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?   @db.Uuid
+  updatedBy      String?   @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+
+  @@index([tenantId])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model DiscoveryJob {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String          @db.Uuid
+  organizationId String          @db.Uuid
+  projectId      String          @db.Uuid
+  status         DiscoveryStatus @default(PENDING)
+  idempotencyKey String?
+  progress       Int             @default(0)
+  currentStep    String?
+  steps          Json            @default("[]")
+  errorMessage   String?
+  attempts       Int             @default(0)
+  maxAttempts    Int             @default(3)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?         @db.Uuid
+  updatedBy      String?         @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+
+  @@unique([projectId, idempotencyKey])
+  @@index([tenantId])
+  @@index([organizationId, status])
+  @@index([projectId, status])
+  @@index([deletedAt])
+}
+
+model CompanyProfile {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String    @db.Uuid
+  organizationId String    @db.Uuid
+  projectId      String    @db.Uuid
+  version        Int
+  isApproved     Boolean   @default(false)
+  approvedAt     DateTime?
+  mission        String?
+  vision         String?
+  industry       String?
+  targetCustomers Json     @default("[]")
+  products       Json      @default("[]")
+  services       Json      @default("[]")
+  painPoints     Json      @default("[]")
+  uniqueSellingProposition String?
+  summaries      Json      @default("{}")
+  sourceMetadata Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?   @db.Uuid
+  updatedBy      String?   @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+  technologies CompanyTechnology[]
+  competitors  CompanyCompetitor[]
+  goals        CompanyGoal[]
+
+  @@unique([projectId, version])
+  @@index([tenantId])
+  @@index([organizationId, isApproved])
+  @@index([projectId, isApproved])
+  @@index([deletedAt])
+}
+
+model CompanyTechnology {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String    @db.Uuid
+  organizationId   String    @db.Uuid
+  projectId        String    @db.Uuid
+  companyProfileId String?   @db.Uuid
+  name             String
+  category         String?
+  confidence       Decimal?  @db.Decimal(5, 4)
+  evidence         Json      @default("[]")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?   @db.Uuid
+  updatedBy        String?   @db.Uuid
+
+  project        Project         @relation(fields: [projectId], references: [id])
+  companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
+
+  @@index([tenantId])
+  @@index([organizationId])
+  @@index([projectId, category])
+  @@index([deletedAt])
+}
+
+model CompanyCompetitor {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String    @db.Uuid
+  organizationId   String    @db.Uuid
+  projectId        String    @db.Uuid
+  companyProfileId String?   @db.Uuid
+  name             String
+  websiteUrl       String?
+  positioning      String?
+  strengths        Json      @default("[]")
+  weaknesses       Json      @default("[]")
+  confidence       Decimal?  @db.Decimal(5, 4)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?   @db.Uuid
+  updatedBy        String?   @db.Uuid
+
+  project        Project         @relation(fields: [projectId], references: [id])
+  companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
+
+  @@index([tenantId])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model CompanyGoal {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String    @db.Uuid
+  organizationId   String    @db.Uuid
+  projectId        String    @db.Uuid
+  companyProfileId String?   @db.Uuid
+  title            String
+  description      String?
+  priority         Int       @default(100)
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?   @db.Uuid
+  updatedBy        String?   @db.Uuid
+
+  project        Project         @relation(fields: [projectId], references: [id])
+  companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
+
+  @@index([tenantId])
+  @@index([organizationId])
+  @@index([projectId, priority])
+  @@index([deletedAt])
+}
+
+model ResearchSource {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String             @db.Uuid
+  organizationId String             @db.Uuid
+  projectId      String             @db.Uuid
+  type           ResearchSourceType
+  sourceId       String?
+  title          String
+  content        Json
+  metadata       Json               @default("{}")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?            @db.Uuid
+  updatedBy      String?            @db.Uuid
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+
+  @@index([tenantId])
+  @@index([organizationId, type])
+  @@index([projectId, type])
+  @@index([deletedAt])
+}
+
+model ResearchPlan {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String         @db.Uuid
+  title       String
+  question    String
+  objectives  Json           @default("[]")
+  status      ResearchStatus @default(DRAFT)
+  plan        Json           @default("{}")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?        @db.Uuid
+  updatedBy   String?        @db.Uuid
+
+  project     Project             @relation(fields: [projectId], references: [id])
+  findings    ResearchFinding[]
+  citations   Citation[]
+  validations ValidationResult[]
+
+  @@index([projectId, status])
+  @@index([deletedAt])
+}
+
+model ResearchFinding {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchPlanId String   @db.Uuid
+  title          String
+  summary        String
+  evidence       Json     @default("[]")
+  confidence     Decimal? @db.Decimal(5, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?  @db.Uuid
+  updatedBy      String?  @db.Uuid
+
+  researchPlan ResearchPlan @relation(fields: [researchPlanId], references: [id])
+
+  @@index([researchPlanId])
+  @@index([deletedAt])
+}
+
+model Citation {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchPlanId String   @db.Uuid
+  title          String?
+  url            String?
+  source         String
+  excerpt        String?
+  retrievedAt    DateTime?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?  @db.Uuid
+  updatedBy      String?  @db.Uuid
+
+  researchPlan ResearchPlan @relation(fields: [researchPlanId], references: [id])
+
+  @@index([researchPlanId])
+  @@index([deletedAt])
+}
+
+model ValidationResult {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  researchPlanId String   @db.Uuid
+  passed         Boolean
+  score          Decimal? @db.Decimal(5, 4)
+  issues         Json     @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?  @db.Uuid
+  updatedBy      String?  @db.Uuid
+
+  researchPlan ResearchPlan @relation(fields: [researchPlanId], references: [id])
+
+  @@index([researchPlanId, passed])
+  @@index([deletedAt])
+}
+
+model Conversation {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId String    @db.Uuid
+  title     String?
+  metadata  Json      @default("{}")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?   @db.Uuid
+  updatedBy String?   @db.Uuid
+
+  project  Project               @relation(fields: [projectId], references: [id])
+  messages ConversationMessage[]
+
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model ConversationMessage {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @db.Uuid
+  authorUserId   String?  @db.Uuid
+  role           String
+  content        String
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?  @db.Uuid
+  updatedBy      String?  @db.Uuid
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  author       User?        @relation(fields: [authorUserId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@index([deletedAt])
+}
+
+model KnowledgeDocument {
+  id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String             @db.Uuid
+  projectId      String?            @db.Uuid
+  sourceType     DocumentSourceType
+  title          String
+  uri            String?
+  checksum       String?
+  mimeType       String?
+  metadata       Json               @default("{}")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?            @db.Uuid
+  updatedBy      String?            @db.Uuid
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  project      Project?        @relation(fields: [projectId], references: [id])
+  chunks       DocumentChunk[]
+
+  @@index([organizationId, sourceType])
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model DocumentChunk {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId String                  @db.Uuid
+  ordinal    Int
+  content    String
+  tokenCount Int?
+  embedding  Unsupported("vector(1536)")?
+  metadata   Json                    @default("{}")
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  deletedAt  DateTime?
+  createdBy  String?                 @db.Uuid
+  updatedBy  String?                 @db.Uuid
+
+  document KnowledgeDocument @relation(fields: [documentId], references: [id])
+
+  @@unique([documentId, ordinal])
+  @@index([documentId])
+  @@index([deletedAt])
+}
+
+model ModelProvider {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String    @unique
+  baseUrl   String?
+  enabled   Boolean   @default(true)
+  metadata  Json      @default("{}")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?   @db.Uuid
+  updatedBy String?   @db.Uuid
+
+  models ModelConfiguration[]
+
+  @@index([enabled])
+  @@index([deletedAt])
+}
+
+model ModelConfiguration {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  providerId      String    @db.Uuid
+  modelKey        String
+  displayName     String
+  capabilities    Json      @default("{}")
+  routingPriority Int       @default(100)
+  enabled         Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?   @db.Uuid
+  updatedBy       String?   @db.Uuid
+
+  provider   ModelProvider @relation(fields: [providerId], references: [id])
+  executions AiExecution[]
+
+  @@unique([providerId, modelKey])
+  @@index([enabled, routingPriority])
+  @@index([deletedAt])
+}
+
+model AiExecution {
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  modelConfigId  String?           @db.Uuid
+  status         AiExecutionStatus @default(QUEUED)
+  input          Json
+  output         Json?
+  promptTokens   Int               @default(0)
+  completionTokens Int             @default(0)
+  totalCostUsd   Decimal?          @db.Decimal(12, 6)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?           @db.Uuid
+  updatedBy      String?           @db.Uuid
+
+  modelConfig ModelConfiguration? @relation(fields: [modelConfigId], references: [id])
+  agentRuns   AgentRun[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model AgentRun {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId     String?           @db.Uuid
+  aiExecutionId String?           @db.Uuid
+  agentType     AgentType
+  status        AiExecutionStatus @default(QUEUED)
+  state         Json              @default("{}")
+  startedAt     DateTime?
+  completedAt   DateTime?
+  errorMessage  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?           @db.Uuid
+  updatedBy     String?           @db.Uuid
+
+  project     Project?     @relation(fields: [projectId], references: [id])
+  aiExecution AiExecution? @relation(fields: [aiExecutionId], references: [id])
+
+  @@index([projectId, agentType])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model PromptTemplate {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  description String?
+  category    String
+  status      PromptStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?      @db.Uuid
+  updatedBy   String?      @db.Uuid
+
+  versions PromptVersion[]
+
+  @@unique([name, category])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model PromptVersion {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  promptTemplateId String   @db.Uuid
+  version          Int
+  content          String
+  variables        Json     @default("[]")
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?  @db.Uuid
+  updatedBy        String?  @db.Uuid
+
+  promptTemplate PromptTemplate @relation(fields: [promptTemplateId], references: [id])
+
+  @@unique([promptTemplateId, version])
+  @@index([deletedAt])
+}
+
+model Report {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String       @db.Uuid
+  projectId      String       @db.Uuid
+  title          String
+  status         ReportStatus @default(DRAFT)
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?      @db.Uuid
+  updatedBy      String?      @db.Uuid
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  project      Project         @relation(fields: [projectId], references: [id])
+  sections     ReportSection[]
+
+  @@index([organizationId, status])
+  @@index([projectId])
+  @@index([deletedAt])
+}
+
+model ReportSection {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportId  String   @db.Uuid
+  title     String
+  kind      String
+  ordinal   Int
+  content   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?  @db.Uuid
+  updatedBy String?  @db.Uuid
+
+  report Report @relation(fields: [reportId], references: [id])
+
+  @@unique([reportId, ordinal])
+  @@index([reportId, kind])
+  @@index([deletedAt])
+}
+
+model BillingAccount {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @unique @db.Uuid
+  externalId     String?
+  planKey        String
+  status         String
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?   @db.Uuid
+  updatedBy      String?   @db.Uuid
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  usageRecords UsageRecord[]
+
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model UsageRecord {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  billingAccountId String   @db.Uuid
+  metricKey        String
+  quantity         Decimal  @db.Decimal(18, 6)
+  occurredAt       DateTime
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?  @db.Uuid
+  updatedBy        String?  @db.Uuid
+
+  billingAccount BillingAccount @relation(fields: [billingAccountId], references: [id])
+
+  @@index([billingAccountId, metricKey])
+  @@index([occurredAt])
+  @@index([deletedAt])
+}
+
+model Notification {
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String             @db.Uuid
+  title     String
+  body      String
+  status    NotificationStatus @default(PENDING)
+  metadata  Json               @default("{}")
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  deletedAt DateTime?
+  createdBy String?            @db.Uuid
+  updatedBy String?            @db.Uuid
+
+  @@index([userId, status])
+  @@index([deletedAt])
+}
+
+model AuditLog {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String?  @db.Uuid
+  actorUserId    String?  @db.Uuid
+  action         String
+  resourceType   String
+  resourceId     String?
+  ipAddress      String?
+  userAgent      String?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  createdBy      String?  @db.Uuid
+  updatedBy      String?  @db.Uuid
+
+  @@index([organizationId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([resourceType, resourceId])
+  @@index([deletedAt])
+}

@@ -1,0 +1,221 @@
+{"kind":"deck","id":"pr/iisiz0","name":"Deck"}
+{"kind":"layout","layoutId":"fc40ae84-ecc4-4e7b-b6d2-a582c0c6baea","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"0fe946e6-3d9b-49bc-b6c7-89389b2316ba","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/cq596o","slide":1,"title":"Magnafic AI","textShapes":11}
+{"kind":"textbox","id":"sh/xorito7m","slide":1,"text":"Magnafic AI","textPreview":"Magnafic AI","textChars":11,"textLines":1,"bbox":[42,40,420,60]}
+{"kind":"textbox","id":"sh/al0zi9ov","slide":1,"text":"Stakeholder pre-read","textPreview":"Stakeholder pre-read","textChars":20,"textLines":1,"bbox":[42,175,520,64]}
+{"kind":"textbox","id":"sh/bm90repg","slide":1,"text":"Enterprise AI consulting platform","textPreview":"Enterprise AI consulting platform","textChars":33,"textLines":1,"bbox":[42,252,560,54]}
+{"kind":"textbox","id":"sh/ojihgj6p","slide":1,"text":"What is built, what remains, and how the demo will flow","textPreview":"What is built, what remains, and how the demo will flow","textChars":55,"textLines":1,"bbox":[42,535,620,72]}
+{"kind":"shape","id":"sh/pkripo7a","slide":1,"bbox":[658,42,582,588]}
+{"kind":"textbox","id":"sh/2xgze9oz","slide":1,"text":"AI-ready consulting workflow","textPreview":"AI-ready consulting workflow","textChars":28,"textLines":1,"bbox":[710,135,420,58]}
+{"kind":"shape","id":"sh/ni90nep4","slide":1,"bbox":[710,230,32,32]}
+{"kind":"textbox","id":"sh/0vyhcz6t","slide":1,"text":"Client workspace","textPreview":"Client workspace","textChars":16,"textLines":1,"bbox":[762,226,350,40]}
+{"kind":"shape","id":"sh/1w7il47e","slide":1,"bbox":[710,294,32,32]}
+{"kind":"textbox","id":"sh/50365g3m","slide":1,"text":"Project onboarding","textPreview":"Project onboarding","textChars":18,"textLines":1,"bbox":[762,290,350,40]}
+{"kind":"shape","id":"sh/4zupcb21","slide":1,"bbox":[710,358,32,32]}
+{"kind":"textbox","id":"sh/3ylo36lg","slide":1,"text":"Company discovery","textPreview":"Company discovery","textChars":17,"textLines":1,"bbox":[762,354,350,40]}
+{"kind":"shape","id":"sh/ixc7a1kv","slide":1,"bbox":[710,422,32,32]}
+{"kind":"textbox","id":"sh/hw361g3a","slide":1,"text":"Knowledge + research","textPreview":"Knowledge + research","textChars":20,"textLines":1,"bbox":[762,418,350,40]}
+{"kind":"shape","id":"sh/wbup8bmp","slide":1,"bbox":[710,486,32,32]}
+{"kind":"textbox","id":"sh/va1oz6l4","slide":1,"text":"Chat + reports","textPreview":"Chat + reports","textChars":14,"textLines":1,"bbox":[762,482,350,40]}
+{"kind":"textbox","id":"sh/u9sn614z","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"notes","id":"nt/cq596o","slide":1,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nUse this as the opening: this deck is a pre-read so the live meeting can focus on running the product."}
+{"kind":"slide","id":"sl/u2pm80","slide":2,"title":"The meeting can focus on the product demo","textShapes":21}
+{"kind":"textbox","id":"sh/udk7qpwv","slide":2,"text":"The meeting can focus on the product demo","textPreview":"The meeting can focus on the product demo","textChars":41,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/hgvql4vm","slide":2,"text":"This pre-read aligns stakeholders before the live walkthrough.","textPreview":"This pre-read aligns stakeholders before the live walkthrough.","textChars":62,"textLines":1,"bbox":[42,122,840,54]}
+{"kind":"textbox","id":"sh/wf2psze1","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"textbox","id":"sh/jid8nedc","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[74,190,48,34]}
+{"kind":"textbox","id":"sh/ih47u9w7","slide":2,"text":"What we are building","textPreview":"What we are building","textChars":20,"textLines":1,"bbox":[145,188,320,38]}
+{"kind":"textbox","id":"sh/5kvqpovi","slide":2,"text":"A governed AI consulting workspace, not a generic chatbot.","textPreview":"A governed AI consulting workspace, not a generic chatbot.","textChars":58,"textLines":1,"bbox":[500,190,650,34]}
+{"kind":"shape","id":"sh/4jmpwjex","slide":2,"bbox":[70,238,1085,0]}
+{"kind":"textbox","id":"sh/zm9obad8","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[74,262,48,34]}
+{"kind":"textbox","id":"sh/yl07i5wn","slide":2,"text":"How users enter the system","textPreview":"How users enter the system","textChars":26,"textLines":1,"bbox":[145,260,320,38]}
+{"kind":"textbox","id":"sh/kry1cv6d","slide":2,"text":"Role-based logins protect data and separate responsibilities.","textPreview":"Role-based logins protect data and separate responsibilities.","textChars":61,"textLines":1,"bbox":[500,262,650,34]}
+{"kind":"shape","id":"sh/lc7i507y","slide":2,"bbox":[70,310,1085,0]}
+{"kind":"textbox","id":"sh/ypwjalo7","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[74,334,48,34]}
+{"kind":"textbox","id":"sh/jqp03qps","slide":2,"text":"Current implementation status","textPreview":"Current implementation status","textChars":29,"textLines":1,"bbox":[145,332,320,38]}
+{"kind":"textbox","id":"sh/sfy1gv69","slide":2,"text":"Frontend flow, architecture, backend foundations, and Prisma schema are in place.","textPreview":"Frontend flow, architecture, backend foundations, and Prisma schema are in place.","textChars":81,"textLines":1,"bbox":[500,334,650,34]}
+{"kind":"shape","id":"sh/tg72907u","slide":2,"bbox":[70,382,1085,0]}
+{"kind":"textbox","id":"sh/6dgje5oj","slide":2,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[74,406,48,34]}
+{"kind":"textbox","id":"sh/7epk7apo","slide":2,"text":"Demo flow","textPreview":"Demo flow","textChars":9,"textLines":1,"bbox":[145,404,320,38]}
+{"kind":"textbox","id":"sh/oje14b65","slide":2,"text":"Create/select workspace, onboard project, review discovery, explore AI outputs.","textPreview":"Create/select workspace, onboard project, review discovery, explore AI outputs.","textChars":79,"textLines":1,"bbox":[500,406,650,34]}
+{"kind":"shape","id":"sh/9knixg7q","slide":2,"bbox":[70,454,1085,0]}
+{"kind":"textbox","id":"sh/p4vql8v2","slide":2,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[74,478,48,34]}
+{"kind":"textbox","id":"sh/43mpc3ux","slide":2,"text":"Pending milestones","textPreview":"Pending milestones","textChars":18,"textLines":1,"bbox":[145,476,320,38]}
+{"kind":"textbox","id":"sh/32d8jydc","slide":2,"text":"Live auth, DB migrations, real discovery, knowledge ingestion, agents, reports.","textPreview":"Live auth, DB migrations, real discovery, knowledge ingestion, agents, reports.","textChars":79,"textLines":1,"bbox":[500,478,650,34]}
+{"kind":"shape","id":"sh/2147atcr","slide":2,"bbox":[70,526,1085,0]}
+{"kind":"textbox","id":"sh/d8vqp8ve","slide":2,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[74,550,48,34]}
+{"kind":"textbox","id":"sh/c7mpgnut","slide":2,"text":"Stakeholder decisions","textPreview":"Stakeholder decisions","textChars":21,"textLines":1,"bbox":[145,548,320,38]}
+{"kind":"textbox","id":"sh/r6d8nid8","slide":2,"text":"Confirm MVP scope, demo boundaries, priorities, and rollout plan.","textPreview":"Confirm MVP scope, demo boundaries, priorities, and rollout plan.","textChars":65,"textLines":1,"bbox":[500,550,650,34]}
+{"kind":"shape","id":"sh/q547edcn","slide":2,"bbox":[70,598,1085,0]}
+{"kind":"notes","id":"nt/u2pm80","slide":2,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nThe deck is intentionally structured as a stakeholder pre-read, not a technical appendix."}
+{"kind":"slide","id":"sl/3ymxr4","slide":3,"title":"We are building a governed AI consulting platform","textShapes":9}
+{"kind":"textbox","id":"sh/n2dcjadg","slide":3,"text":"We are building a governed AI consulting platform","textPreview":"We are building a governed AI consulting platform","textChars":49,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/o3mtsfe1","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"textbox","id":"sh/94vulkvm","slide":3,"text":"The product helps consulting teams turn a client company into an AI-ready project workspace: onboarding captures context, discovery builds a company profile, knowledge sources are organized, and AI workflows produce research, chat answers, and reports.","textPreview":"The product helps consulting teams turn a client company into an AI-ready project workspace: onboarding captures context, discovery build...","textChars":252,"textLines":1,"bbox":[42,158,590,230]}
+{"kind":"shape","id":"sh/exkbmlwz","slide":3,"bbox":[778,210,24,24]}
+{"kind":"textbox","id":"sh/zydsfqdk","slide":3,"text":"Company-specific answers instead of generic AI","textPreview":"Company-specific answers instead of generic AI","textChars":46,"textLines":1,"bbox":[825,202,380,42]}
+{"kind":"shape","id":"sh/0zmtove5","slide":3,"bbox":[778,282,24,24]}
+{"kind":"textbox","id":"sh/10vah0vq","slide":3,"text":"Tenant separation for each client organization","textPreview":"Tenant separation for each client organization","textChars":46,"textLines":1,"bbox":[825,274,380,42]}
+{"kind":"shape","id":"sh/ytobypc3","slide":3,"bbox":[778,354,24,24]}
+{"kind":"textbox","id":"sh/juxcrudo","slide":3,"text":"Human approval before outputs become trusted","textPreview":"Human approval before outputs become trusted","textChars":44,"textLines":1,"bbox":[825,346,380,42]}
+{"kind":"shape","id":"sh/7alwv2ls","slide":3,"bbox":[778,426,24,24]}
+{"kind":"textbox","id":"sh/69cv2xk7","slide":3,"text":"Reusable architecture for future agents and reports","textPreview":"Reusable architecture for future agents and reports","textChars":51,"textLines":1,"bbox":[825,418,380,42]}
+{"kind":"textbox","id":"sh/tc3exs3y","slide":3,"text":"Central idea","textPreview":"Central idea","textChars":12,"textLines":1,"bbox":[42,470,200,32]}
+{"kind":"textbox","id":"sh/sbud472d","slide":3,"text":"AI should work only after it understands the client, the project objective, and the approved knowledge context.","textPreview":"AI should work only after it understands the client, the project objective, and the approved knowledge context.","textChars":111,"textLines":1,"bbox":[42,505,620,85]}
+{"kind":"notes","id":"nt/3ymxr4","slide":3,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nExplain that the architecture is intentionally project-first and context-first."}
+{"kind":"slide","id":"sl/dr1hxa","slide":4,"title":"Different logins exist to protect control and accountability","textShapes":27}
+{"kind":"textbox","id":"sh/etgjy90r","slide":4,"text":"Different logins exist to protect control and accountability","textPreview":"Different logins exist to protect control and accountability","textChars":60,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/1gr2toz2","slide":4,"text":"Each role maps to a different responsibility level.","textPreview":"Each role maps to a different responsibility level.","textChars":51,"textLines":1,"bbox":[42,122,840,54]}
+{"kind":"textbox","id":"sh/gvy10jix","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"textbox","id":"sh/3i9kvyh8","slide":4,"text":"Super Admin","textPreview":"Super Admin","textChars":11,"textLines":1,"bbox":[42,210,240,36]}
+{"kind":"textbox","id":"sh/2h0j2t0n","slide":4,"text":"Runs the platform","textPreview":"Runs the platform","textChars":17,"textLines":1,"bbox":[42,258,230,52]}
+{"kind":"textbox","id":"sh/pkr2x8ze","slide":4,"text":"• All organizations","textPreview":"• All organizations","textChars":19,"textLines":1,"bbox":[42,345,240,34]}
+{"kind":"textbox","id":"sh/oji143yt","slide":4,"text":"• Plans, billing, models","textPreview":"• Plans, billing, models","textChars":24,"textLines":1,"bbox":[42,393,240,34]}
+{"kind":"textbox","id":"sh/jm50juh4","slide":4,"text":"• Prompt/model governance","textPreview":"• Prompt/model governance","textChars":25,"textLines":1,"bbox":[42,441,240,34]}
+{"kind":"shape","id":"sh/ilwjqp0j","slide":4,"bbox":[42,540,240,52]}
+{"kind":"textbox","id":"sh/c7qlgvyd","slide":4,"text":"Can change data","textPreview":"Can change data","textChars":15,"textLines":1,"bbox":[60,550,205,28]}
+{"kind":"textbox","id":"sh/d8zmp0fi","slide":4,"text":"Org Admin","textPreview":"Org Admin","textChars":9,"textLines":1,"bbox":[342,210,240,36]}
+{"kind":"textbox","id":"sh/q583elg7","slide":4,"text":"Owns one client workspace","textPreview":"Owns one client workspace","textChars":25,"textLines":1,"bbox":[342,258,230,52]}
+{"kind":"textbox","id":"sh/r6h4nqxs","slide":4,"text":"• Invite users","textPreview":"• Invite users","textChars":14,"textLines":1,"bbox":[342,345,240,34]}
+{"kind":"textbox","id":"sh/0balkve9","slide":4,"text":"• Create projects","textPreview":"• Create projects","textChars":17,"textLines":1,"bbox":[342,393,240,34]}
+{"kind":"textbox","id":"sh/1wjmt0fu","slide":4,"text":"• Approve outputs","textPreview":"• Approve outputs","textChars":17,"textLines":1,"bbox":[342,441,240,34]}
+{"kind":"shape","id":"sh/e983i5g3","slide":4,"bbox":[342,540,240,52]}
+{"kind":"textbox","id":"sh/za14raxo","slide":4,"text":"Can change data","textPreview":"Can change data","textChars":15,"textLines":1,"bbox":[360,550,205,28]}
+{"kind":"textbox","id":"sh/gf6loby5","slide":4,"text":"Consultant","textPreview":"Consultant","textChars":10,"textLines":1,"bbox":[642,210,240,36]}
+{"kind":"textbox","id":"sh/hgf2hgfq","slide":4,"text":"Runs project delivery","textPreview":"Runs project delivery","textChars":21,"textLines":1,"bbox":[642,258,230,52]}
+{"kind":"textbox","id":"sh/hw7ilc7e","slide":4,"text":"• Onboarding","textPreview":"• Onboarding","textChars":12,"textLines":1,"bbox":[642,345,240,34]}
+{"kind":"textbox","id":"sh/wvy1c7qt","slide":4,"text":"• Discovery review","textPreview":"• Discovery review","textChars":18,"textLines":1,"bbox":[642,393,240,34]}
+{"kind":"textbox","id":"sh/vup0j2p8","slide":4,"text":"• Research and reports","textPreview":"• Research and reports","textChars":22,"textLines":1,"bbox":[642,441,240,34]}
+{"kind":"shape","id":"sh/u9gjax8n","slide":4,"bbox":[642,540,240,52]}
+{"kind":"textbox","id":"sh/50r2pc7a","slide":4,"text":"Limited access","textPreview":"Limited access","textChars":14,"textLines":1,"bbox":[660,550,205,28]}
+{"kind":"textbox","id":"sh/4zi1g7q5","slide":4,"text":"Viewer","textPreview":"Viewer","textChars":6,"textLines":1,"bbox":[942,210,240,36]}
+{"kind":"textbox","id":"sh/jy90n2pk","slide":4,"text":"Reviews outcomes","textPreview":"Reviews outcomes","textChars":16,"textLines":1,"bbox":[942,258,230,52]}
+{"kind":"textbox","id":"sh/ixgjex8z","slide":4,"text":"• Read dashboards","textPreview":"• Read dashboards","textChars":17,"textLines":1,"bbox":[942,345,240,34]}
+{"kind":"textbox","id":"sh/t4r2tw7m","slide":4,"text":"• View profiles","textPreview":"• View profiles","textChars":15,"textLines":1,"bbox":[942,393,240,34]}
+{"kind":"textbox","id":"sh/s3i1krq1","slide":4,"text":"• See reports only","textPreview":"• See reports only","textChars":18,"textLines":1,"bbox":[942,441,240,34]}
+{"kind":"shape","id":"sh/qxs7ypk7","slide":4,"bbox":[942,540,240,52]}
+{"kind":"textbox","id":"sh/ry1oru1s","slide":4,"text":"Limited access","textPreview":"Limited access","textChars":14,"textLines":1,"bbox":[960,550,205,28]}
+{"kind":"notes","id":"nt/dr1hxa","slide":4,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nConnect this slide to the user's question: admin is only one login; the other roles keep client data and approvals safe."}
+{"kind":"slide","id":"sl/11p4ox","slide":5,"title":"Every project follows onboarding before AI work starts","textShapes":18}
+{"kind":"textbox","id":"sh/1ob610vq","slide":5,"text":"Every project follows onboarding before AI work starts","textPreview":"Every project follows onboarding before AI work starts","textChars":54,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/e1k765cz","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"shape","id":"sh/zmtozqdk","slide":5,"bbox":[55,330,1130,0]}
+{"kind":"shape","id":"sh/or2pcfu1","slide":5,"bbox":[46,321,18,18]}
+{"kind":"textbox","id":"sh/9svq5kvm","slide":5,"text":"Login","textPreview":"Login","textChars":5,"textLines":1,"bbox":[5,232,150,44]}
+{"kind":"textbox","id":"sh/mpk7a5cv","slide":5,"text":"User enters with role-based permissions","textPreview":"User enters with role-based permissions","textChars":39,"textLines":1,"bbox":[-17,380,160,82]}
+{"kind":"shape","id":"sh/nqt83adg","slide":5,"bbox":[228,321,18,18]}
+{"kind":"textbox","id":"sh/4vip0bex","slide":5,"text":"Organization","textPreview":"Organization","textChars":12,"textLines":1,"bbox":[187,232,150,44]}
+{"kind":"textbox","id":"sh/pwr6tgvi","slide":5,"text":"Client workspace is selected or created","textPreview":"Client workspace is selected or created","textChars":39,"textLines":1,"bbox":[165,380,160,82]}
+{"kind":"shape","id":"sh/h8rilk76","slide":5,"bbox":[410,321,18,18]}
+{"kind":"textbox","id":"sh/w7ihcf6l","slide":5,"text":"Project","textPreview":"Project","textChars":7,"textLines":1,"bbox":[369,232,150,44]}
+{"kind":"textbox","id":"sh/v690jap0","slide":5,"text":"Consulting engagement is created","textPreview":"Consulting engagement is created","textChars":32,"textLines":1,"bbox":[347,380,160,82]}
+{"kind":"shape","id":"sh/u50za5of","slide":5,"bbox":[592,321,18,18]}
+{"kind":"textbox","id":"sh/5cbipk72","slide":5,"text":"Onboarding","textPreview":"Onboarding","textChars":10,"textLines":1,"bbox":[551,232,150,44]}
+{"kind":"textbox","id":"sh/4b21gf6h","slide":5,"text":"Goals, website, industry, and context are captured","textPreview":"Goals, website, industry, and context are captured","textChars":50,"textLines":1,"bbox":[529,380,160,82]}
+{"kind":"shape","id":"sh/ja90napc","slide":5,"bbox":[774,321,18,18]}
+{"kind":"textbox","id":"sh/i90zepor","slide":5,"text":"Discovery","textPreview":"Discovery","textChars":9,"textLines":1,"bbox":[733,232,150,44]}
+{"kind":"textbox","id":"sh/t0bit47e","slide":5,"text":"System drafts a company profile","textPreview":"System drafts a company profile","textChars":31,"textLines":1,"bbox":[711,380,160,82]}
+{"kind":"shape","id":"sh/sf21kz6t","slide":5,"bbox":[956,321,18,18]}
+{"kind":"textbox","id":"sh/cjalg3e5","slide":5,"text":"Approval","textPreview":"Approval","textChars":8,"textLines":1,"bbox":[915,232,150,44]}
+{"kind":"textbox","id":"sh/dkj2p8fa","slide":5,"text":"Human validates the profile","textPreview":"Human validates the profile","textChars":27,"textLines":1,"bbox":[893,380,160,82]}
+{"kind":"shape","id":"sh/qhs3etwz","slide":5,"bbox":[1138,321,18,18]}
+{"kind":"textbox","id":"sh/ri1knyxk","slide":5,"text":"AI outputs","textPreview":"AI outputs","textChars":10,"textLines":1,"bbox":[1097,232,150,44]}
+{"kind":"textbox","id":"sh/07ulkne1","slide":5,"text":"Knowledge, research, chat, and reports unlock","textPreview":"Knowledge, research, chat, and reports unlock","textChars":45,"textLines":1,"bbox":[1075,380,160,82]}
+{"kind":"textbox","id":"sh/1832tsvm","slide":5,"text":"Why onboarding is mandatory","textPreview":"Why onboarding is mandatory","textChars":27,"textLines":1,"bbox":[42,535,380,34]}
+{"kind":"textbox","id":"sh/els3idwv","slide":5,"text":"It prevents generic answers and creates a trusted context boundary for every new project.","textPreview":"It prevents generic answers and creates a trusted context boundary for every new project.","textChars":89,"textLines":1,"bbox":[42,575,820,42]}
+{"kind":"notes","id":"nt/11p4ox","slide":5,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nClarify that onboarding repeats per project, not just once per account."}
+{"kind":"slide","id":"sl/arc72z","slide":6,"title":"A strong product foundation is already implemented","textShapes":15}
+{"kind":"textbox","id":"sh/xgry9kjm","slide":6,"text":"A strong product foundation is already implemented","textPreview":"A strong product foundation is already implemented","textChars":50,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/adgfe5kv","slide":6,"text":"The current build is demoable on the frontend and structured for backend integration.","textPreview":"The current build is demoable on the frontend and structured for backend integration.","textChars":85,"textLines":1,"bbox":[42,122,840,54]}
+{"kind":"textbox","id":"sh/be9g7a1g","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"shape","id":"sh/kjihkf2x","slide":6,"bbox":[42,185,350,160]}
+{"kind":"textbox","id":"sh/lkrydkji","slide":6,"text":"Monorepo + docs","textPreview":"Monorepo + docs","textChars":15,"textLines":1,"bbox":[66,209,300,34]}
+{"kind":"textbox","id":"sh/yh0fipk7","slide":6,"text":"Apps, packages, services, architecture docs, deployment docs, and milestone documentation.","textPreview":"Apps, packages, services, architecture docs, deployment docs, and milestone documentation.","textChars":90,"textLines":1,"bbox":[66,257,300,68]}
+{"kind":"shape","id":"sh/ji9gba1s","slide":6,"bbox":[442,185,350,160]}
+{"kind":"textbox","id":"sh/8n2hoz29","slide":6,"text":"Prisma data model","textPreview":"Prisma data model","textChars":17,"textLines":1,"bbox":[466,209,300,34]}
+{"kind":"textbox","id":"sh/t8byh4ju","slide":6,"text":"Organizations, users, memberships, projects, onboarding, discovery, company profiles, knowledge, AI, billing.","textPreview":"Organizations, users, memberships, projects, onboarding, discovery, company profiles, knowledge, AI, billing.","textChars":109,"textLines":1,"bbox":[466,257,300,68]}
+{"kind":"shape","id":"sh/98jihkf6","slide":6,"bbox":[842,185,350,160]}
+{"kind":"textbox","id":"sh/87ah8fyl","slide":6,"text":"Auth/RBAC backend","textPreview":"Auth/RBAC backend","textChars":17,"textLines":1,"bbox":[866,209,300,34]}
+{"kind":"textbox","id":"sh/7m10fax0","slide":6,"text":"Firebase token verifier, platform JWT, guards, tenant context, roles, and session repository.","textPreview":"Firebase token verifier, platform JWT, guards, tenant context, roles, and session repository.","textChars":93,"textLines":1,"bbox":[866,257,300,68]}
+{"kind":"shape","id":"sh/ml8z65gf","slide":6,"bbox":[42,405,350,160]}
+{"kind":"textbox","id":"sh/hcjilkf2","slide":6,"text":"Core APIs","textPreview":"Core APIs","textChars":9,"textLines":1,"bbox":[66,429,300,34]}
+{"kind":"textbox","id":"sh/gba1cfyh","slide":6,"text":"Organizations, projects, onboarding, discovery jobs, company profile, and knowledge endpoints.","textPreview":"Organizations, projects, onboarding, discovery jobs, company profile, and knowledge endpoints.","textChars":94,"textLines":1,"bbox":[66,477,300,68]}
+{"kind":"shape","id":"sh/va10juxw","slide":6,"bbox":[442,405,350,160]}
+{"kind":"textbox","id":"sh/u9szapgb","slide":6,"text":"Discovery worker","textPreview":"Discovery worker","textChars":16,"textLines":1,"bbox":[466,429,300,34]}
+{"kind":"textbox","id":"sh/xgzi90fy","slide":6,"text":"BullMQ worker foundation with progress, retry, profile persistence, and lifecycle transitions.","textPreview":"BullMQ worker foundation with progress, retry, profile persistence, and lifecycle transitions.","textChars":94,"textLines":1,"bbox":[466,477,300,68]}
+{"kind":"shape","id":"sh/cfqh0vyd","slide":6,"bbox":[842,405,350,160]}
+{"kind":"textbox","id":"sh/ozahgv69","slide":6,"text":"Frontend experience","textPreview":"Frontend experience","textChars":19,"textLines":1,"bbox":[866,429,300,34]}
+{"kind":"textbox","id":"sh/p03ip0nu","slide":6,"text":"Polished Magnafic AI routes for dashboard, projects, onboarding, discovery, profile, research, chat, reports, admin.","textPreview":"Polished Magnafic AI routes for dashboard, projects, onboarding, discovery, profile, research, chat, reports, admin.","textChars":116,"textLines":1,"bbox":[866,477,300,68]}
+{"kind":"notes","id":"nt/arc72z","slide":6,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nThese items reflect completed project files and validated type checks in the local workspace."}
+{"kind":"slide","id":"sl/3dwts4","slide":7,"title":"The stakeholder demo should show one clean journey","textShapes":16}
+{"kind":"textbox","id":"sh/j2dkvm9o","slide":7,"text":"The stakeholder demo should show one clean journey","textPreview":"The stakeholder demo should show one clean journey","textChars":50,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/k3ml4rq9","slide":7,"text":"Keep the meeting focused on the business flow, not engineering internals.","textPreview":"Keep the meeting focused on the business flow, not engineering internals.","textChars":73,"textLines":1,"bbox":[42,122,840,54]}
+{"kind":"textbox","id":"sh/l4v2xwre","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"textbox","id":"sh/adk3yh8r","slide":7,"text":"First half: setup and context","textPreview":"First half: setup and context","textChars":29,"textLines":1,"bbox":[42,200,500,40]}
+{"kind":"textbox","id":"sh/betkrm9c","slide":7,"text":"Second half: AI-ready outputs","textPreview":"Second half: AI-ready outputs","textChars":29,"textLines":1,"bbox":[680,200,500,40]}
+{"kind":"textbox","id":"sh/wf2l0rqx","slide":7,"text":"1. Open Magnafic AI","textPreview":"1. Open Magnafic AI","textChars":19,"textLines":1,"bbox":[70,270,470,34]}
+{"kind":"textbox","id":"sh/xgb2twri","slide":7,"text":"2. Show dashboard","textPreview":"2. Show dashboard","textChars":17,"textLines":1,"bbox":[70,325,470,34]}
+{"kind":"textbox","id":"sh/u9o3al8b","slide":7,"text":"3. Explain role-based access","textPreview":"3. Explain role-based access","textChars":28,"textLines":1,"bbox":[70,380,470,34]}
+{"kind":"textbox","id":"sh/vax4369w","slide":7,"text":"4. Open Projects","textPreview":"4. Open Projects","textChars":16,"textLines":1,"bbox":[70,435,470,34]}
+{"kind":"textbox","id":"sh/falc7qts","slide":7,"text":"5. Walk through demo project","textPreview":"5. Walk through demo project","textChars":28,"textLines":1,"bbox":[70,490,470,34]}
+{"kind":"textbox","id":"sh/e9cvyls7","slide":7,"text":"6. Complete onboarding","textPreview":"6. Complete onboarding","textChars":22,"textLines":1,"bbox":[710,270,470,34]}
+{"kind":"textbox","id":"sh/1w3u90by","slide":7,"text":"7. Show discovery progress","textPreview":"7. Show discovery progress","textChars":26,"textLines":1,"bbox":[710,325,470,34]}
+{"kind":"textbox","id":"sh/gbud0vad","slide":7,"text":"8. Review company profile","textPreview":"8. Review company profile","textChars":25,"textLines":1,"bbox":[710,380,470,34]}
+{"kind":"textbox","id":"sh/3y5cbqto","slide":7,"text":"9. Open knowledge/research","textPreview":"9. Open knowledge/research","textChars":26,"textLines":1,"bbox":[710,435,470,34]}
+{"kind":"textbox","id":"sh/2xcv25sj","slide":7,"text":"10. Show chat and reports screens","textPreview":"10. Show chat and reports screens","textChars":33,"textLines":1,"bbox":[710,490,470,34]}
+{"kind":"shape","id":"sh/p0nud0bu","slide":7,"bbox":[640,190,0,360]}
+{"kind":"shape","id":"sh/ozed4va9","slide":7,"bbox":[42,600,1120,48]}
+{"kind":"textbox","id":"sh/b25cfat0","slide":7,"text":"Demo message: Magnafic AI turns onboarding context into governed AI consulting outputs.","textPreview":"Demo message: Magnafic AI turns onboarding context into governed AI consulting outputs.","textChars":87,"textLines":1,"bbox":[64,611,1050,28]}
+{"kind":"notes","id":"nt/3dwts4","slide":7,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nUse this as the live demo checklist tomorrow."}
+{"kind":"slide","id":"sl/71zkqk","slide":8,"title":"The remaining work turns the prototype into a live MVP","textShapes":20}
+{"kind":"textbox","id":"sh/va5wb29o","slide":8,"text":"The remaining work turns the prototype into a live MVP","textPreview":"The remaining work turns the prototype into a live MVP","textChars":54,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/wved47q9","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"textbox","id":"sh/xwnedcru","slide":8,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[55,178,36,36]}
+{"kind":"textbox","id":"sh/ixgv6h8f","slide":8,"text":"Live auth/session","textPreview":"Live auth/session","textChars":17,"textLines":1,"bbox":[120,176,315,36]}
+{"kind":"textbox","id":"sh/jypwfm90","slide":8,"text":"Firebase login to backend session JWT and frontend token storage.","textPreview":"Firebase login to backend session JWT and frontend token storage.","textChars":65,"textLines":1,"bbox":[465,178,680,34]}
+{"kind":"textbox","id":"sh/kzyx87ql","slide":8,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[55,250,36,36]}
+{"kind":"textbox","id":"sh/507ehc7q","slide":8,"text":"Database migrations + seed","textPreview":"Database migrations + seed","textChars":26,"textLines":1,"bbox":[120,248,315,36]}
+{"kind":"textbox","id":"sh/y1cvud8b","slide":8,"text":"Run PostgreSQL schema, seed demo org/project/users, verify persistence.","textPreview":"Run PostgreSQL schema, seed demo org/project/users, verify persistence.","textChars":71,"textLines":1,"bbox":[465,250,680,34]}
+{"kind":"textbox","id":"sh/z2lw3i9g","slide":8,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[55,322,36,36]}
+{"kind":"textbox","id":"sh/zqp472ps","slide":8,"text":"Real discovery","textPreview":"Real discovery","textChars":14,"textLines":1,"bbox":[120,320,315,36]}
+{"kind":"textbox","id":"sh/epgnyxo7","slide":8,"text":"Fetch public website content safely and replace deterministic demo profile generation.","textPreview":"Fetch public website content safely and replace deterministic demo profile generation.","textChars":86,"textLines":1,"bbox":[465,322,680,34]}
+{"kind":"textbox","id":"sh/1s7m9c7y","slide":8,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[55,394,36,36]}
+{"kind":"textbox","id":"sh/0ry5076d","slide":8,"text":"Knowledge ingestion","textPreview":"Knowledge ingestion","textChars":19,"textLines":1,"bbox":[120,392,315,36]}
+{"kind":"textbox","id":"sh/rm543ipg","slide":8,"text":"Upload documents, parse, chunk, embed, and search with pgvector.","textPreview":"Upload documents, parse, chunk, embed, and search with pgvector.","textChars":64,"textLines":1,"bbox":[465,394,680,34]}
+{"kind":"textbox","id":"sh/qlwnudob","slide":8,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[55,466,36,36]}
+{"kind":"textbox","id":"sh/donm5s7m","slide":8,"text":"AI orchestration","textPreview":"AI orchestration","textChars":16,"textLines":1,"bbox":[120,464,315,36]}
+{"kind":"textbox","id":"sh/cne5wn61","slide":8,"text":"LiteLLM gateway, LangGraph agents, project-aware chat, and report generation.","textPreview":"LiteLLM gateway, LangGraph agents, project-aware chat, and report generation.","textChars":77,"textLines":1,"bbox":[465,466,680,34]}
+{"kind":"textbox","id":"sh/3y54zipk","slide":8,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[55,538,36,36]}
+{"kind":"textbox","id":"sh/ixc3qdoz","slide":8,"text":"Production hardening","textPreview":"Production hardening","textChars":20,"textLines":1,"bbox":[120,536,315,36]}
+{"kind":"textbox","id":"sh/6tcn2dsr","slide":8,"text":"Tests, CI/CD, Docker production setup, observability, and security review.","textPreview":"Tests, CI/CD, Docker production setup, observability, and security review.","textChars":74,"textLines":1,"bbox":[465,538,680,34]}
+{"kind":"notes","id":"nt/71zkqk","slide":8,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nThis slide separates demo-ready work from MVP-complete work."}
+{"kind":"slide","id":"sl/958l2r","slide":9,"title":"Recommended next milestones after the demo","textShapes":17}
+{"kind":"textbox","id":"sh/0ny9o7yl","slide":9,"text":"Recommended next milestones after the demo","textPreview":"Recommended next milestones after the demo","textChars":42,"textLines":1,"bbox":[42,34,930,98]}
+{"kind":"textbox","id":"sh/zmpsv2h0","slide":9,"text":"A practical order keeps visible progress aligned with real platform readiness.","textPreview":"A practical order keeps visible progress aligned with real platform readiness.","textChars":78,"textLines":1,"bbox":[42,122,840,54]}
+{"kind":"textbox","id":"sh/ylgrmxgf","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"shape","id":"sh/d07atszu","slide":9,"bbox":[42,246,248,250]}
+{"kind":"textbox","id":"sh/czy9kny9","slide":9,"text":"Milestone 1","textPreview":"Milestone 1","textChars":11,"textLines":1,"bbox":[66,270,180,30]}
+{"kind":"textbox","id":"sh/byp8riho","slide":9,"text":"Make login real","textPreview":"Make login real","textChars":15,"textLines":1,"bbox":[66,322,200,68]}
+{"kind":"textbox","id":"sh/qxgridg3","slide":9,"text":"Wire Firebase login, session API, role-aware navigation.","textPreview":"Wire Firebase login, session API, role-aware navigation.","textChars":56,"textLines":1,"bbox":[66,420,200,58]}
+{"kind":"shape","id":"sh/pwnqp8zy","slide":9,"bbox":[342,246,248,250]}
+{"kind":"textbox","id":"sh/ove9gnyd","slide":9,"text":"Milestone 2","textPreview":"Milestone 2","textChars":11,"textLines":1,"bbox":[366,270,180,30]}
+{"kind":"textbox","id":"sh/edoj6lw7","slide":9,"text":"Persist project flow","textPreview":"Persist project flow","textChars":20,"textLines":1,"bbox":[366,322,200,68]}
+{"kind":"textbox","id":"sh/fex0fqds","slide":9,"text":"Run DB migrations, seed data, connect onboarding to backend.","textPreview":"Run DB migrations, seed data, connect onboarding to backend.","textChars":60,"textLines":1,"bbox":[366,420,200,58]}
+{"kind":"shape","id":"sh/0f618ved","slide":9,"bbox":[642,246,248,250]}
+{"kind":"textbox","id":"sh/1gfih0vi","slide":9,"text":"Milestone 3","textPreview":"Milestone 3","textChars":11,"textLines":1,"bbox":[666,270,180,30]}
+{"kind":"textbox","id":"sh/q94j21wv","slide":9,"text":"Make discovery real","textPreview":"Make discovery real","textChars":19,"textLines":1,"bbox":[666,322,200,68]}
+{"kind":"textbox","id":"sh/rad0b6dg","slide":9,"text":"Website fetch, extraction, profile approval, retry/error handling.","textPreview":"Website fetch, extraction, profile approval, retry/error handling.","textChars":66,"textLines":1,"bbox":[666,420,200,58]}
+{"kind":"shape","id":"sh/sbm14be1","slide":9,"bbox":[942,246,248,250]}
+{"kind":"textbox","id":"sh/dcvidgvm","slide":9,"text":"Milestone 4","textPreview":"Milestone 4","textChars":11,"textLines":1,"bbox":[966,270,180,30]}
+{"kind":"textbox","id":"sh/i54zy1wz","slide":9,"text":"Enable AI outputs","textPreview":"Enable AI outputs","textChars":17,"textLines":1,"bbox":[966,322,200,68]}
+{"kind":"textbox","id":"sh/36d076dk","slide":9,"text":"Knowledge upload, embeddings, research agent, chat, reports.","textPreview":"Knowledge upload, embeddings, research agent, chat, reports.","textChars":60,"textLines":1,"bbox":[966,420,200,58]}
+{"kind":"textbox","id":"sh/7q9gf2tc","slide":9,"text":"Suggested meeting ask","textPreview":"Suggested meeting ask","textChars":21,"textLines":1,"bbox":[42,574,300,32]}
+{"kind":"textbox","id":"sh/6p0f6xcr","slide":9,"text":"Approve the demo story and prioritize the first two milestones for the next implementation sprint.","textPreview":"Approve the demo story and prioritize the first two milestones for the next implementation sprint.","textChars":98,"textLines":1,"bbox":[42,610,900,36]}
+{"kind":"notes","id":"nt/958l2r","slide":9,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nEnd with a concrete decision rather than a generic status update."}
+{"kind":"slide","id":"sl/fr4rlt","slide":10,"title":"Magnafic AI","textShapes":4}
+{"kind":"textbox","id":"sh/83ulcja1","slide":10,"text":"Magnafic AI","textPreview":"Magnafic AI","textChars":11,"textLines":1,"bbox":[42,42,220,40]}
+{"kind":"textbox","id":"sh/n2l4jetg","slide":10,"text":"Ready for stakeholder walkthrough","textPreview":"Ready for stakeholder walkthrough","textChars":33,"textLines":1,"bbox":[42,180,920,118]}
+{"kind":"textbox","id":"sh/m1s3a9sv","slide":10,"text":"Run the frontend demo\nAlign on MVP boundaries\nStart live integration milestones","textPreview":"Run the frontend demo | Align on MVP boundaries | Start live integration milestones","textChars":79,"textLines":3,"bbox":[42,520,560,110]}
+{"kind":"textbox","id":"sh/l0j2hobq","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1182,658,56,24]}
+{"kind":"notes","id":"nt/fr4rlt","slide":10,"text":"[Sources]\nInternal implementation state from the Magnafic AI workspace and conversation history.\n\nClose by switching from deck to the running app."}

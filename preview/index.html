@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agentic AI Platform Flow Preview</title>
+  <style>
+    :root {
+      --bg: #f3f7fb;
+      --panel: #ffffff;
+      --ink: #050650;
+      --muted: #64748b;
+      --line: #dbe7f3;
+      --accent: #01008a;
+      --accent-soft: #e8edff;
+      --success: #05865c;
+      --warning: #b7791f;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--ink); }
+    header { height: 96px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.78); backdrop-filter: blur(18px); position: sticky; top: 0; z-index: 5; }
+    .brand { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 24px; letter-spacing: -.04em; }
+    .mark { width: 48px; height: 36px; position: relative; }
+    .mark:before, .mark:after { content: ''; position: absolute; top: 4px; width: 18px; height: 34px; border-radius: 100% 100% 0 0; border-top: 9px solid var(--accent); transform: rotate(17deg); }
+    .mark:before { left: 6px; } .mark:after { right: 6px; transform: rotate(-17deg); }
+    nav { display: flex; gap: 10px; flex-wrap: wrap; }
+    nav button { border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 10px 14px; border-radius: 999px; font-weight: 700; cursor: pointer; }
+    nav button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    main { padding: 34px 40px 60px; max-width: 1240px; margin: auto; }
+    .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 24px; align-items: stretch; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 22px 55px rgba(1,0,138,.08); padding: 28px; }
+    h1 { font-size: 48px; line-height: 1.02; margin: 0 0 14px; letter-spacing: -.06em; }
+    h2 { font-size: 25px; margin: 0 0 18px; letter-spacing: -.04em; }
+    p { color: var(--muted); line-height: 1.7; margin: 0; }
+    .flow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+    .pill { background: var(--accent-soft); color: var(--accent); border: 1px solid #d8dfff; border-radius: 999px; padding: 9px 12px; font-size: 13px; font-weight: 800; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+    .step { border: 1px solid var(--line); background: #fff; border-radius: 22px; padding: 20px; min-height: 150px; }
+    .step strong { display: block; font-size: 18px; margin-bottom: 8px; }
+    .status { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; background: #ecfdf5; color: var(--success); margin-top: 18px; }
+    .wizard { display: grid; grid-template-columns: 260px 1fr; gap: 22px; }
+    .side { display: grid; gap: 10px; align-content: start; }
+    .side div { padding: 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); font-weight: 800; color: var(--muted); }
+    .side div.current { background: var(--accent); color: #fff; }
+    label { display: block; font-size: 13px; font-weight: 900; margin-bottom: 8px; color: var(--ink); }
+    input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 16px; padding: 14px 15px; font: inherit; color: var(--ink); background: #fbfdff; }
+    textarea { min-height: 106px; resize: vertical; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
+    .primary { background: var(--accent); color: #fff; border: 0; padding: 13px 18px; border-radius: 16px; font-weight: 900; cursor: pointer; }
+    .ghost { background: #fff; color: var(--accent); border: 1px solid #cfd8ff; padding: 13px 18px; border-radius: 16px; font-weight: 900; cursor: pointer; }
+    .progress-list { display: grid; gap: 13px; }
+    .progress-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: #fff; }
+    .bar { height: 12px; background: #e7edf5; border-radius: 99px; overflow: hidden; margin: 20px 0; }
+    .bar span { display: block; height: 100%; width: 72%; background: linear-gradient(90deg, var(--accent), #6d5dfc); }
+    .profile { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .profile section { border: 1px solid var(--line); background: #fff; border-radius: 20px; padding: 18px; }
+    .hidden { display: none; }
+    @media (max-width: 900px) { .hero, .wizard, .profile { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } header { height: auto; padding: 18px; align-items: flex-start; flex-direction: column; } main { padding: 22px; } h1 { font-size: 34px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand"><div class="mark"></div>Magnafic AI</div>
+    <nav>
+      <button class="active" onclick="show('overview', this)">Flow</button>
+      <button onclick="show('onboarding', this)">Onboarding</button>
+      <button onclick="show('discovery', this)">Discovery</button>
+      <button onclick="show('profile', this)">Profile Review</button>
+    </nav>
+  </header>
+  <main>
+    <section id="overview" class="view">
+      <div class="hero">
+        <div class="card">
+          <h1>Enterprise AI consulting workspace</h1>
+          <p>Projects now move through onboarding and async company discovery before research, knowledge, LangGraph, AI chat, and reports.</p>
+          <div class="flow">
+            <span class="pill">Auth</span><span class="pill">Organizations</span><span class="pill">Projects</span><span class="pill">Onboarding</span><span class="pill">Discovery</span><span class="pill">Research</span><span class="pill">Knowledge</span><span class="pill">AI Ready</span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Lifecycle state</h2>
+          <p>Current project: <strong>DISCOVERY_RUNNING</strong></p>
+          <div class="bar"><span></span></div>
+          <p>Heavy work is queued through BullMQ, so the UI stays responsive while discovery enriches the company profile.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="step"><strong>1. Project Created</strong><p>User creates a project and is redirected to onboarding.</p><span class="status">? Complete</span></div>
+        <div class="step"><strong>2. Onboarding</strong><p>Autosaved wizard captures company context, goals, challenges, competitors, and docs.</p><span class="status">? Complete</span></div>
+        <div class="step"><strong>3. Discovery</strong><p>Async discovery validates website, extracts content, profiles company, and prepares knowledge.</p><span class="status">Running</span></div>
+      </div>
+    </section>
+    <section id="onboarding" class="view hidden">
+      <div class="wizard">
+        <aside class="side"><div class="current">Company basics</div><div>Business model</div><div>Goals</div><div>Competitors</div><div>Documents</div></aside>
+        <div class="card">
+          <h2>Project Onboarding</h2>
+          <div class="form-grid">
+            <div><label>Company Name</label><input value="Magnafic AI" /></div>
+            <div><label>Website URL</label><input value="https://magnafic.ai" /></div>
+            <div><label>Industry</label><input value="AI Consulting" /></div>
+            <div><label>Company Size</label><input value="11-50" /></div>
+            <div><label>Business Model</label><input value="B2B Services + SaaS" /></div>
+            <div><label>Target Market</label><input value="Mid-market businesses" /></div>
+          </div>
+          <div style="margin-top:16px"><label>Primary Challenges</label><textarea>Scaling research workflows, faster strategy delivery, repeatable AI-assisted consulting.</textarea></div>
+          <div class="actions"><span class="status">Autosaved 4 seconds ago</span><button class="primary" onclick="showById('discovery')">Complete onboarding ?</button></div>
+        </div>
+      </div>
+    </section>
+    <section id="discovery" class="view hidden">
+      <div class="card">
+        <h1>Discovery Progress</h1>
+        <p>The job returned immediately and is progressing in the background.</p>
+        <div class="bar"><span></span></div>
+        <div class="progress-list">
+          <div class="progress-item"><strong>? Reading website</strong><span>Done</span></div>
+          <div class="progress-item"><strong>? Finding products</strong><span>Done</span></div>
+          <div class="progress-item"><strong>? Understanding services</strong><span>Done</span></div>
+          <div class="progress-item"><strong>? Detecting competitors</strong><span>Done</span></div>
+          <div class="progress-item"><strong>? Building company profile</strong><span>Running</span></div>
+          <div class="progress-item"><strong>? Creating knowledge base</strong><span>Queued</span></div>
+          <div class="progress-item"><strong>? Preparing AI workspace</strong><span>Queued</span></div>
+        </div>
+        <div class="actions"><button class="ghost">Retry</button><button class="primary" onclick="showById('profile')">Preview generated profile</button></div>
+      </div>
+    </section>
+    <section id="profile" class="view hidden">
+      <div class="card">
+        <h1>Company Profile Review</h1>
+        <p>Edit AI-generated company context before it becomes the official project profile.</p>
+        <div class="profile" style="margin-top:22px">
+          <section><h2>Mission</h2><p>Help businesses turn complex market questions into clear AI-assisted strategy.</p></section>
+          <section><h2>Vision</h2><p>Make high-quality consulting workflows faster, evidence-backed, and repeatable.</p></section>
+          <section><h2>Products & Services</h2><p>AI strategy workshops, market research, competitor analysis, roadmap planning.</p></section>
+          <section><h2>Target Customers</h2><p>Founders, innovation leaders, consulting teams, and mid-market operators.</p></section>
+          <section><h2>Pain Points</h2><p>Slow research cycles, fragmented knowledge, inconsistent report quality.</p></section>
+          <section><h2>USP</h2><p>Company-aware AI agents grounded in verified onboarding and discovery context.</p></section>
+        </div>
+        <div class="actions"><button class="ghost">Edit profile</button><button class="primary">Approve and prepare AI workspace</button></div>
+      </div>
+    </section>
+  </main>
+<script>
+  function show(id, btn) {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function showById(id) {
+    const buttons = Array.from(document.querySelectorAll('nav button'));
+    const button = buttons.find(b => b.textContent.toLowerCase().includes(id === 'profile' ? 'profile' : id));
+    show(id, button);
+  }
+</script>
+</body>
+</html>

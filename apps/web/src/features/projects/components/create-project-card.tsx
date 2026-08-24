@@ -1,0 +1,53 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useCreateProject } from '../../../lib/api/query-hooks';
+import { Card, Pill } from '../../../components/platform/app-shell';
+import { canCreateProject, useAuth } from '../../../lib/auth/session';
+
+export function CreateProjectCard() {
+  const router = useRouter();
+  const { session } = useAuth();
+  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const createProject = useCreateProject(context);
+  const [name, setName] = useState('New AI Strategy Project');
+  const [slug, setSlug] = useState('new-ai-strategy-project');
+  const [description, setDescription] = useState('Company onboarding and discovery workspace.');
+  const [message, setMessage] = useState('New projects redirect to onboarding.');
+
+  async function submit() {
+    if (!canCreateProject(session.user.role)) {
+      setMessage('Viewer login is read-only. Switch to Org Admin or Consultant to create projects.');
+      return;
+    }
+
+    if (!context.accessToken) {
+      setMessage('API session required. Log in with live auth before creating a project.');
+      return;
+    }
+
+    const project = await createProject.mutateAsync({ name, slug, description });
+    router.push(project.nextRoute);
+  }
+
+  return (
+    <Card>
+      <div className="pill-row">
+        <Pill>Project creation</Pill>
+        <Pill tone="green">Redirects to onboarding</Pill>
+        <Pill tone={canCreateProject(session.user.role) ? 'green' : 'slate'}>{session.user.displayName}</Pill>
+      </div>
+      <h2 className="section-gap">Create project</h2>
+      <div className="form-grid">
+        <div className="field"><label>Name</label><input value={name} onChange={(event) => setName(event.target.value)} /></div>
+        <div className="field"><label>Slug</label><input value={slug} onChange={(event) => setSlug(event.target.value)} /></div>
+      </div>
+      <div className="field section-gap"><label>Description</label><textarea value={description} onChange={(event) => setDescription(event.target.value)} /></div>
+      <div className="actions section-gap topbar-actions">
+        <button className="button button-primary" onClick={submit} disabled={createProject.isPending}>Create and onboard</button>
+        <p>{message}</p>
+      </div>
+    </Card>
+  );
+}
