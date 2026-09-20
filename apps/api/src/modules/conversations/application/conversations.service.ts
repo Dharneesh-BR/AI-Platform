@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import type { AuthenticatedUser, PlatformRole } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -24,6 +24,8 @@ export interface AddMessageInput {
 
 @Injectable()
 export class ConversationsService {
+  private readonly logger = new Logger(ConversationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly agentsService: AgentsService,
@@ -155,10 +157,19 @@ export class ConversationsService {
 
     try {
       runtimeResult = await this.agentRuntimeService.execute(runtimeInput);
-    } catch {
+      if (!runtimeResult.answer?.trim()) {
+        runtimeResult.answer = this.fallbackAnswer(conversation.project, input.content);
+        runtimeResult.model = runtimeResult.model ?? 'fallback';
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Agent runtime unavailable; returning project-aware fallback. conversationId=${input.conversationId} reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       runtimeResult = {
         runId: null,
-        answer: this.fallbackAnswer(conversation.project.name, input.content),
+        answer: this.fallbackAnswer(conversation.project, input.content),
         agentSlug: input.agentSlug ?? 'magnafic-ai',
         agentName: 'Magnafic AI',
         model: 'fallback',
@@ -212,17 +223,102 @@ export class ConversationsService {
     }
   }
 
-  private fallbackAnswer(projectName: string, userInput: string): string {
+  private fallbackAnswer(
+    project: {
+      name: string;
+      description: string | null;
+      projectProfile: {
+        companyName: string;
+        websiteUrl: string | null;
+        industry: string | null;
+        businessModel: string | null;
+        targetMarket: string | null;
+        businessGoals: unknown;
+        primaryChallenges: unknown;
+      } | null;
+      companyProfiles: Array<{
+        mission: string | null;
+        vision: string | null;
+        industry: string | null;
+        targetCustomers: unknown;
+        products: unknown;
+        services: unknown;
+        painPoints: unknown;
+        uniqueSellingProposition: string | null;
+        summaries: unknown;
+      }>;
+      researchSources: Array<{
+        title: string;
+        content: unknown;
+      }>;
+    },
+    userInput: string,
+  ): string {
+    const projectProfile = project.projectProfile;
+    const companyProfile = project.companyProfiles[0];
+    const companyName = projectProfile?.companyName || project.name;
+    const products = this.asStringArray(companyProfile?.products);
+    const services = this.asStringArray(companyProfile?.services);
+    const painPoints = this.asStringArray(companyProfile?.painPoints);
+    const challenges = this.asStringArray(projectProfile?.primaryChallenges);
+    const targetCustomers = this.asStringArray(companyProfile?.targetCustomers);
+    const opportunityAreas = [
+      ...products.slice(0, 2),
+      ...services.slice(0, 2),
+      projectProfile?.industry,
+    ].filter((item): item is string => Boolean(item));
+    const priorityGaps = [
+      ...painPoints.slice(0, 3),
+      ...challenges.slice(0, 3),
+    ];
+
     return [
-      `Here is a practical first-pass answer for ${projectName}.`,
+      `Here is a project-aware first-pass answer for ${companyName}.`,
       '',
       `Question: ${userInput}`,
       '',
+      'Current business context:',
+      `- Industry: ${companyProfile?.industry ?? projectProfile?.industry ?? 'Not provided'}`,
+      `- Website: ${projectProfile?.websiteUrl ?? 'Not provided'}`,
+      `- Business model: ${projectProfile?.businessModel ?? project.description ?? 'Not provided'}`,
+      `- Target customers: ${targetCustomers.length ? targetCustomers.join(', ') : projectProfile?.targetMarket ?? 'Not provided'}`,
+      `- Positioning: ${companyProfile?.uniqueSellingProposition ?? companyProfile?.mission ?? 'Not enough detail yet'}`,
+      '',
+      'Useful focus areas:',
+      ...(opportunityAreas.length
+        ? opportunityAreas.slice(0, 4).map((item) => `- ${item}`)
+        : ['- Clarify the highest-value customer segments', '- Turn the website discovery into a sharper offer map']),
+      '',
+      'Priority gaps to close next:',
+      ...(priorityGaps.length
+        ? priorityGaps.slice(0, 4).map((item) => `- ${item}`)
+        : ['- Customer acquisition proof points', '- Competitive differentiation', '- Operational workflow details']),
+      '',
       'Recommended next steps:',
-      '1. Confirm the project onboarding details are accurate.',
-      '2. Upload source documents or paste business context into Knowledge.',
-      '3. Ask a narrower follow-up question after the knowledge base has processed.',
-      '4. Generate a report once the key project facts are in place.',
-    ].join('\n');
+      `1. Use the generated profile as the baseline for ${companyName}.`,
+      `2. Validate the products/services and target customers against the actual website and sales reality.`,
+      `3. Add one or two source documents later, but do not block the MVP flow on that.`,
+      `4. Generate the readiness/growth report and use the gaps above as the first action plan.`,
+    ].join('\n').trim();
+  }
+
+  private asStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => {
+        if (typeof item === 'string') {
+          return item;
+        }
+        if (item && typeof item === 'object') {
+          const record = item as Record<string, unknown>;
+          const label = record.name ?? record.title ?? record.label ?? record.description;
+          return typeof label === 'string' ? label : undefined;
+        }
+        return undefined;
+      })
+      .filter((item): item is string => Boolean(item?.trim()));
   }
 }
