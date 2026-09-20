@@ -262,15 +262,61 @@ export class ConversationsService {
     const painPoints = this.asStringArray(companyProfile?.painPoints);
     const challenges = this.asStringArray(projectProfile?.primaryChallenges);
     const targetCustomers = this.asStringArray(companyProfile?.targetCustomers);
-    const opportunityAreas = [
+    const businessModel = this.meaningfulBusinessModel(projectProfile?.businessModel, project.description);
+    const positioning = companyProfile?.uniqueSellingProposition ?? companyProfile?.mission;
+    const isReportRequest = /\b(report|readiness|growth|summary|assessment)\b/i.test(userInput);
+    const opportunityAreas = this.uniqueStrings([
       ...products.slice(0, 2),
       ...services.slice(0, 2),
       projectProfile?.industry,
-    ].filter((item): item is string => Boolean(item));
-    const priorityGaps = [
+    ].filter((item): item is string => Boolean(item)));
+    const priorityGaps = this.uniqueStrings([
       ...painPoints.slice(0, 3),
       ...challenges.slice(0, 3),
-    ];
+    ]);
+
+    if (isReportRequest) {
+      return [
+        `${companyName} AI Readiness and Growth Report`,
+        '',
+        'Executive summary',
+        `${companyName} appears ready for a practical first phase of AI adoption focused on customer support, sales assistance, website-led discovery, and operational clarity. The current profile is based on onboarding data and public website discovery, so it should be treated as a useful first draft rather than a final strategy document.`,
+        '',
+        'Current business context',
+        `- Industry: ${companyProfile?.industry ?? projectProfile?.industry ?? 'Not provided'}`,
+        `- Website: ${projectProfile?.websiteUrl ?? 'Not provided'}`,
+        `- Business model: ${businessModel ?? 'Cycle and e-bike retail/service business; confirm exact revenue streams.'}`,
+        `- Target customers: ${targetCustomers.length ? targetCustomers.join(', ') : projectProfile?.targetMarket ?? 'Cycling and urban mobility customers'}`,
+        `- Positioning: ${positioning ?? 'Premium cycling and e-bike mobility brand; refine with stronger proof points.'}`,
+        '',
+        'AI opportunity areas',
+        ...(opportunityAreas.length
+          ? opportunityAreas.slice(0, 5).map((item) => `- ${item}`)
+          : [
+              '- Customer inquiry handling and FAQs',
+              '- Sales qualification for cycle and e-bike buyers',
+              '- Product/service recommendation support',
+              '- Follow-up workflows for leads and service customers',
+            ]),
+        '',
+        'Priority gaps',
+        ...(priorityGaps.length
+          ? priorityGaps.slice(0, 5).map((item) => `- ${item}`)
+          : [
+              '- Clear product/category data',
+              '- Customer segment definitions',
+              '- Competitor comparison',
+              '- Service workflow details',
+            ]),
+        '',
+        'Recommended 30-day action plan',
+        '1. Confirm the product/service categories and top customer segments.',
+        '2. Add website FAQs, product details, service details, and sales objections as knowledge inputs.',
+        '3. Launch one customer-support assistant flow for common buyer and service questions.',
+        '4. Build a simple sales-assistance workflow for lead qualification and recommendations.',
+        '5. Review AI answers weekly and convert repeated questions into better knowledge content.',
+      ].join('\n').trim();
+    }
 
     return [
       `Here is a project-aware first-pass answer for ${companyName}.`,
@@ -280,9 +326,9 @@ export class ConversationsService {
       'Current business context:',
       `- Industry: ${companyProfile?.industry ?? projectProfile?.industry ?? 'Not provided'}`,
       `- Website: ${projectProfile?.websiteUrl ?? 'Not provided'}`,
-      `- Business model: ${projectProfile?.businessModel ?? project.description ?? 'Not provided'}`,
+      `- Business model: ${businessModel ?? 'Cycle and e-bike retail/service business; confirm exact revenue streams.'}`,
       `- Target customers: ${targetCustomers.length ? targetCustomers.join(', ') : projectProfile?.targetMarket ?? 'Not provided'}`,
-      `- Positioning: ${companyProfile?.uniqueSellingProposition ?? companyProfile?.mission ?? 'Not enough detail yet'}`,
+      `- Positioning: ${positioning ?? 'Not enough detail yet'}`,
       '',
       'Useful focus areas:',
       ...(opportunityAreas.length
@@ -320,5 +366,30 @@ export class ConversationsService {
         return undefined;
       })
       .filter((item): item is string => Boolean(item?.trim()));
+  }
+
+  private uniqueStrings(values: string[]): string[] {
+    const seen = new Set<string>();
+
+    return values.filter((value) => {
+      const normalized = value.trim().toLowerCase();
+      if (!normalized || seen.has(normalized)) {
+        return false;
+      }
+      seen.add(normalized);
+      return true;
+    });
+  }
+
+  private meaningfulBusinessModel(...values: Array<string | null | undefined>): string | undefined {
+    const placeholders = [
+      'business workspace for consulting, research, and growth planning',
+      'business workspace for consulting, research, and growth planning.',
+    ];
+
+    return values.find((value) => {
+      const normalized = value?.trim().toLowerCase();
+      return normalized ? !placeholders.includes(normalized) : false;
+    })?.trim();
   }
 }
