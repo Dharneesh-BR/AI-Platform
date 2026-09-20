@@ -9,9 +9,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService, { strict: false });
   const configuredCorsOrigin = configService?.get<string>('CORS_ORIGIN');
-  const corsOrigin = configuredCorsOrigin
-    ? configuredCorsOrigin.split(',').map((origin) => origin.trim()).filter(Boolean)
-    : true;
+  const defaultCorsOrigins = [
+    'https://magnafic.ai',
+    'https://www.magnafic.ai',
+    'https://magnaficaidplatform.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+  const corsOrigin = [
+    ...defaultCorsOrigins,
+    ...(configuredCorsOrigin
+      ? configuredCorsOrigin.split(',').map((origin) => origin.trim()).filter(Boolean)
+      : []),
+  ];
 
   app.use(helmet());
   app.enableCors({ origin: corsOrigin, credentials: true });
