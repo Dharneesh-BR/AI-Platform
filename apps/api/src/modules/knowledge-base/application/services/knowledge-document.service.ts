@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DocumentSourceType, KnowledgeDocumentStatus, ResearchSourceType } from '@prisma/client';
 import { QUEUE_NAMES } from '../../../../common/queue/queue.constants';
 import { QueueInfrastructureService } from '../../../../common/queue/queue-infrastructure.service';
@@ -7,6 +7,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { DocumentProcessingJobPayload } from '../ports/document-processing-job.payload';
 import { RagConfigService } from './rag-config.service';
 import { LocalKnowledgeStorageService } from '../../infrastructure/storage/local-knowledge-storage.service';
+import { DocumentProcessingService } from './document-processing.service';
 
 export interface UploadKnowledgeDocumentInput {
   organizationId: string;
@@ -20,11 +21,14 @@ export interface UploadKnowledgeDocumentInput {
 
 @Injectable()
 export class KnowledgeDocumentService {
+  private readonly logger = new Logger(KnowledgeDocumentService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly queueInfrastructureService: QueueInfrastructureService,
     private readonly storage: LocalKnowledgeStorageService,
     private readonly ragConfig: RagConfigService,
+    private readonly documentProcessingService: DocumentProcessingService,
   ) {}
 
   async list(organizationId: string, projectId: string) {
@@ -267,8 +271,22 @@ export class KnowledgeDocumentService {
   }
 
   private async enqueueProcessing(payload: DocumentProcessingJobPayload): Promise<void> {
-    const queue = this.queueInfrastructureService.getQueue<DocumentProcessingJobPayload>(QUEUE_NAMES.documentProcessing);
-    await queue.add('process-document', payload, this.queueInfrastructureService.getJobOptions(payload.documentId));
+    if (process.env.DOCUMENT_WORKER_ENABLED === 'false') {
+      await this.documentProcessingService.process(payload);
+      return;
+    }
+
+    try {
+      const queue = this.queueInfrastructureService.getQueue<DocumentProcessingJobPayload>(QUEUE_NAMES.documentProcessing);
+      await queue.add('process-document', payload, this.queueInfrastructureService.getJobOptions(payload.documentId));
+    } catch (error) {
+      this.logger.warn(
+        `Document queue unavailable; processing inline. documentId=${payload.documentId} reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      await this.documentProcessingService.process(payload);
+    }
   }
 
   private async ensureProject(organizationId: string, projectId: string): Promise<void> {

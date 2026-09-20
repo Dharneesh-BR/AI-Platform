@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ProjectLifecycleState } from '@platform/domain';
 import type { AuthenticatedUser } from '../../../../common/auth';
 import {
@@ -21,6 +21,8 @@ import {
 
 @Injectable()
 export class CompleteOnboardingUseCase {
+  private readonly logger = new Logger(CompleteOnboardingUseCase.name);
+
   constructor(
     @Inject(PROJECT_PROFILE_REPOSITORY)
     private readonly projectProfileRepository: ProjectProfileRepository,
@@ -62,7 +64,15 @@ export class CompleteOnboardingUseCase {
       competitors: profile.competitors,
     };
 
-    await this.discoveryQueue.enqueue(job, discoveryPayload);
+    try {
+      await this.discoveryQueue.enqueue(job, discoveryPayload);
+    } catch (error) {
+      this.logger.warn(
+        `Discovery queue unavailable; continuing with inline discovery. jobId=${job.id} reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
 
     if (process.env.DISCOVERY_WORKER_ENABLED !== 'true') {
       await this.discoveryWorkerProcessorService.processPayload({
