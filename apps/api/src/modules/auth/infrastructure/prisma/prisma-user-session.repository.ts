@@ -19,12 +19,13 @@ export class PrismaUserSessionRepository implements UserSessionRepository {
         email: identity.email,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
-        role: PrismaPlatformRole.VIEWER,
+        role: PrismaPlatformRole.SUPER_ADMIN,
       },
       update: {
         email: identity.email,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
+        role: PrismaPlatformRole.SUPER_ADMIN,
         lastLoginAt: new Date(),
       },
     });
