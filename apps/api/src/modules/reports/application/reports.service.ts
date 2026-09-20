@@ -77,7 +77,6 @@ export class ReportsService {
       include: {
         projectProfile: true,
         companyProfiles: {
-          where: { isApproved: true },
           take: 1,
           orderBy: { version: 'desc' },
         },

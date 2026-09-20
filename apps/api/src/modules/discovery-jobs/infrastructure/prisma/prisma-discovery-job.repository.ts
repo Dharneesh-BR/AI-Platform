@@ -57,7 +57,7 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
       { key: 'understand_services', label: 'Understanding services', status: 'PENDING' },
       { key: 'detect_competitors', label: 'Detecting competitors', status: 'PENDING' },
       { key: 'build_profile', label: 'Building company profile', status: 'PENDING' },
-      { key: 'create_knowledge', label: 'Creating knowledge base', status: 'PENDING' },
+      { key: 'save_context', label: 'Saving project context', status: 'PENDING' },
       { key: 'prepare_workspace', label: 'Preparing AI workspace', status: 'PENDING' },
     ];
   }
