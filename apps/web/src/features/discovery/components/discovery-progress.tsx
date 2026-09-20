@@ -73,7 +73,7 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
               onClick={handleStartDiscovery}
               disabled={completeOnboardingMutation.isPending}
             >
-              {completeOnboardingMutation.isPending ? 'Starting discovery...' : 'Run discovery now'}
+              {completeOnboardingMutation.isPending ? 'Generating profile...' : 'Generate company profile now'}
             </button>
           ) : null}
           {completeOnboardingMutation.isError ? (

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProjectLifecycleState } from '@platform/domain';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -27,6 +27,47 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     });
 
     return profile ? this.mapProfile(profile) : null;
+  }
+
+  async findOrCreateDefault(
+    organizationId: string,
+    projectId: string,
+    actor: AuthenticatedUser,
+  ): Promise<ProjectProfileEntity> {
+    const existing = await this.findByProjectId(organizationId, projectId, actor);
+
+    if (existing) {
+      return existing;
+    }
+
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        organizationId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
+
+    const profile = await this.prisma.projectProfile.create({
+      data: this.defaultProfileData({
+        organizationId,
+        projectId: project.id,
+        actor,
+        companyName: project.name,
+        businessModel: project.description,
+      }),
+    });
+
+    return this.mapProfile(profile);
   }
 
   async upsert(input: UpsertProjectProfileInput): Promise<ProjectProfileEntity> {
@@ -92,9 +133,10 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     projectId: string,
     actor: AuthenticatedUser,
   ): Promise<ProjectProfileEntity> {
+    const existing = await this.findOrCreateDefault(organizationId, projectId, actor);
     const profile = await this.prisma.projectProfile.update({
       where: {
-        projectId,
+        id: existing.id,
       },
       data: {
         completedAt: new Date(),
@@ -103,6 +145,41 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     });
 
     return this.mapProfile(profile);
+  }
+
+  private defaultProfileData(input: {
+    organizationId: string;
+    projectId: string;
+    actor: AuthenticatedUser;
+    companyName: string;
+    businessModel?: string | null;
+  }): Prisma.ProjectProfileUncheckedCreateInput {
+    return {
+      tenantId: input.organizationId,
+      organizationId: input.organizationId,
+      projectId: input.projectId,
+      companyName: input.companyName,
+      businessModel:
+        input.businessModel ??
+        'Business workspace for consulting, research, and growth planning.',
+      businessGoals: this.toJsonArray([
+        'Clarify positioning',
+        'Understand customers',
+        'Prioritize growth opportunities',
+      ]),
+      primaryChallenges: this.toJsonArray([
+        'Scattered business context',
+        'Manual research',
+        'Unclear next priorities',
+      ]),
+      competitors: this.toJsonArray([]),
+      documents: this.toJsonArray([]),
+      brandGuidelines: this.toJsonArray([]),
+      strategyDocuments: this.toJsonArray([]),
+      onboardingStep: 'company-basics',
+      createdBy: input.actor.id,
+      updatedBy: input.actor.id,
+    };
   }
 
   private mapProfile(profile: {

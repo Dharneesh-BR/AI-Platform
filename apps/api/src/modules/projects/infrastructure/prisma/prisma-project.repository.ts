@@ -15,16 +15,49 @@ export class PrismaProjectRepository implements ProjectRepository {
     let project: Project;
 
     try {
-      project = await this.prisma.project.create({
-        data: {
-          organizationId: input.organizationId,
-          name: input.name,
-          slug: input.slug,
-          description: input.description,
-          lifecycleState: PrismaProjectLifecycleState.CREATED,
-          createdBy: input.actor.id,
-          updatedBy: input.actor.id,
-        },
+      project = await this.prisma.$transaction(async (tx) => {
+        const createdProject = await tx.project.create({
+          data: {
+            organizationId: input.organizationId,
+            name: input.name,
+            slug: input.slug,
+            description: input.description,
+            lifecycleState: PrismaProjectLifecycleState.CREATED,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
+          },
+        });
+
+        await tx.projectProfile.create({
+          data: {
+            tenantId: input.organizationId,
+            organizationId: input.organizationId,
+            projectId: createdProject.id,
+            companyName: input.name,
+            businessModel:
+              input.description ??
+              'Business workspace for consulting, research, and growth planning.',
+            businessGoals: [
+              'Clarify positioning',
+              'Understand customers',
+              'Prioritize growth opportunities',
+            ] as Prisma.InputJsonArray,
+            primaryChallenges: [
+              'Scattered business context',
+              'Manual research',
+              'Unclear next priorities',
+            ] as Prisma.InputJsonArray,
+            competitors: [] as Prisma.InputJsonArray,
+            documents: [] as Prisma.InputJsonArray,
+            brandGuidelines: [] as Prisma.InputJsonArray,
+            strategyDocuments: [] as Prisma.InputJsonArray,
+            onboardingStep: 'company-basics',
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
+          },
+        });
+
+        return createdProject;
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

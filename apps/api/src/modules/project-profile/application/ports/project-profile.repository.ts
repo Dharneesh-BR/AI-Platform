@@ -28,6 +28,11 @@ export interface ProjectProfileRepository {
     projectId: string,
     actor: AuthenticatedUser,
   ): Promise<ProjectProfileEntity | null>;
+  findOrCreateDefault(
+    organizationId: string,
+    projectId: string,
+    actor: AuthenticatedUser,
+  ): Promise<ProjectProfileEntity>;
   upsert(input: UpsertProjectProfileInput): Promise<ProjectProfileEntity>;
   complete(
     organizationId: string,
@@ -35,4 +40,3 @@ export interface ProjectProfileRepository {
     actor: AuthenticatedUser,
   ): Promise<ProjectProfileEntity>;
 }
-

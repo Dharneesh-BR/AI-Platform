@@ -64,17 +64,19 @@ export class CompleteOnboardingUseCase {
       competitors: profile.competitors,
     };
 
-    try {
-      await this.discoveryQueue.enqueue(job, discoveryPayload);
-    } catch (error) {
-      this.logger.warn(
-        `Discovery queue unavailable; continuing with inline discovery. jobId=${job.id} reason=${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+    if (process.env.DISCOVERY_QUEUE_ENABLED === 'true') {
+      try {
+        await this.discoveryQueue.enqueue(job, discoveryPayload);
+      } catch (error) {
+        this.logger.warn(
+          `Discovery queue unavailable; continuing with inline discovery. jobId=${job.id} reason=${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
     }
 
-    if (process.env.DISCOVERY_WORKER_ENABLED !== 'true') {
+    if (process.env.DISCOVERY_INLINE_DISABLED !== 'true') {
       await this.discoveryWorkerProcessorService.processPayload({
         discoveryJobId: job.id,
         organizationId,

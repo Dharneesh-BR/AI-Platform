@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { AuthenticatedUser } from '../../../../common/auth';
 import type { ProjectProfileEntity } from '../../domain/entities/project-profile.entity';
 import {
@@ -18,17 +18,10 @@ export class GetProjectProfileUseCase {
     projectId: string,
     actor: AuthenticatedUser,
   ): Promise<ProjectProfileEntity> {
-    const profile = await this.projectProfileRepository.findByProjectId(
+    return this.projectProfileRepository.findOrCreateDefault(
       organizationId,
       projectId,
       actor,
     );
-
-    if (!profile) {
-      throw new NotFoundException('Project profile not found.');
-    }
-
-    return profile;
   }
 }
-
