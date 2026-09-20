@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, Pill, ProgressBar } from '../../../components/platform/app-shell';
-import { useDiscoveryStatus } from '../../../lib/api/query-hooks';
+import { useCompleteOnboarding, useDiscoveryStatus } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
 
 interface DiscoveryProgressProps {
@@ -22,7 +22,20 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
     accessToken: session.accessToken,
     organizationId: session.organizationId,
   });
+  const completeOnboardingMutation = useCompleteOnboarding(projectId, {
+    accessToken: session.accessToken,
+    organizationId: session.organizationId,
+  });
   const status = discoveryQuery.data;
+  const isFinished = status?.status === 'SUCCEEDED' || status?.status === 'COMPLETED';
+  const isRunning = status?.status === 'RUNNING';
+  const isWaiting = !status || status.status === 'PENDING' || status.status === 'QUEUED';
+  const canStartDiscovery = isWaiting || status?.status === 'FAILED';
+
+  const handleStartDiscovery = async () => {
+    await completeOnboardingMutation.mutateAsync();
+    await discoveryQuery.refetch();
+  };
 
   return (
     <div>
@@ -46,7 +59,26 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
           </div>
           <h2 className="section-gap">{status?.progress ?? 0}% complete</h2>
           <ProgressBar value={status?.progress ?? 0} />
-          <p className="section-gap">Current step: {status?.currentStep ?? 'Waiting for discovery job data.'}</p>
+          <p className="section-gap">
+            {isFinished
+              ? 'Discovery is complete. Review the profile and continue the project.'
+              : isRunning
+                ? `Current step: ${status?.currentStep ?? 'Preparing discovery.'}`
+                : 'Discovery has not completed yet. Start it now to build the first company profile.'}
+          </p>
+          {canStartDiscovery ? (
+            <button
+              className="button button-primary section-gap"
+              type="button"
+              onClick={handleStartDiscovery}
+              disabled={completeOnboardingMutation.isPending}
+            >
+              {completeOnboardingMutation.isPending ? 'Starting discovery...' : 'Run discovery now'}
+            </button>
+          ) : null}
+          {completeOnboardingMutation.isError ? (
+            <p className="form-error">Discovery could not start. Please check the API deployment and try again.</p>
+          ) : null}
         </Card>
         <Card>
           <h2>System guarantees</h2>

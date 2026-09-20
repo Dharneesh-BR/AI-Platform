@@ -30,6 +30,11 @@ function toList(value: string): string[] {
     .filter(Boolean);
 }
 
+function withFallbackList(value: string, fallback: string[]): string[] {
+  const parsed = toList(value);
+  return parsed.length ? parsed : fallback;
+}
+
 export function OnboardingForm({ projectId }: OnboardingFormProps) {
   const router = useRouter();
   const { session } = useAuth();
@@ -83,10 +88,18 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
       websiteUrl: form.websiteUrl.trim() || null,
       industry: form.industry.trim() || null,
       companySize: form.companySize || null,
-      businessModel: form.businessModel.trim() || null,
+      businessModel: form.businessModel.trim() || 'Business workspace for consulting, research, and growth planning',
       targetMarket: form.targetMarket.trim() || null,
-      businessGoals: toList(form.businessGoals),
-      primaryChallenges: toList(form.primaryChallenges),
+      businessGoals: withFallbackList(form.businessGoals, [
+        'Clarify positioning',
+        'Understand customers',
+        'Prioritize growth opportunities',
+      ]),
+      primaryChallenges: withFallbackList(form.primaryChallenges, [
+        'Scattered business context',
+        'Manual research',
+        'Unclear next priorities',
+      ]),
       competitors: toList(form.competitors),
       onboardingStep: 'company-basics-complete',
     }),
@@ -107,7 +120,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
 
     try {
       await upsertProfile.mutateAsync(payload);
-      setMessage('Company basics saved. You can complete onboarding now.');
+      setMessage('Basics saved.');
       return true;
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to save onboarding. Please retry.');
@@ -124,6 +137,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
     }
 
     try {
+      setMessage('Starting discovery...');
       await completeOnboarding.mutateAsync();
       router.push(`/projects/${projectId}/discovery`);
     } catch (error) {
@@ -163,30 +177,6 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
             <option>1000+</option>
           </select>
         </div>
-        <div className="field">
-          <label>Business Model</label>
-          <input value={form.businessModel} onChange={(event) => updateField('businessModel', event.target.value)} />
-        </div>
-        <div className="field">
-          <label>Target Market</label>
-          <input value={form.targetMarket} onChange={(event) => updateField('targetMarket', event.target.value)} />
-        </div>
-      </div>
-
-      <div className="field section-gap">
-        <label>Business Goals</label>
-        <textarea value={form.businessGoals} onChange={(event) => updateField('businessGoals', event.target.value)} />
-      </div>
-      <div className="field section-gap">
-        <label>Primary Challenges</label>
-        <textarea
-          value={form.primaryChallenges}
-          onChange={(event) => updateField('primaryChallenges', event.target.value)}
-        />
-      </div>
-      <div className="field section-gap">
-        <label>Competitive Context</label>
-        <textarea value={form.competitors} onChange={(event) => updateField('competitors', event.target.value)} />
       </div>
 
       <div className="actions section-gap topbar-actions">

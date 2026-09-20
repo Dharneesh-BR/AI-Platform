@@ -55,6 +55,17 @@ const promptSuggestions: Record<string, string[]> = {
   ],
 };
 
+const defaultAgent: BusinessAgentProfile = {
+  name: 'Magnafic AI',
+  slug: 'magnafic-ai',
+  department: 'Strategy',
+  description: 'General AI strategy consultant for project onboarding, knowledge, research, and reporting.',
+  capabilities: ['rag', 'analysis', 'writing', 'planning'],
+  allowedSpecialists: ['rag', 'analysis', 'writing', 'research'],
+  allowedTools: ['knowledge_search'],
+  enabled: true,
+};
+
 function agentInitial(name: string): string {
   return name
     .split(/\s+/)
@@ -88,7 +99,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
   const context = { accessToken: session.accessToken, organizationId: session.organizationId };
   const agentsQuery = useBusinessAgents(context);
   const projectsQuery = useProjects(context);
-  const agents = agentsQuery.data ?? [];
+  const agents = agentsQuery.data?.length ? agentsQuery.data : [defaultAgent];
   const [selectedAgentSlug, setSelectedAgentSlug] = useState(initialAgentSlug);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const selectedProject = (projectsQuery.data ?? []).find((project) => project.id === selectedProjectId) ?? (projectsQuery.data ?? [])[0];
@@ -231,7 +242,6 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
   }
 
   const isBusy = addMessage.isPending || createConversation.isPending;
-  const isLoading = agentsQuery.isLoading || projectsQuery.isLoading;
 
   return (
     <section className="workforce-chat-shell">
@@ -274,8 +284,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
           ))}
         </div>
 
-        {agentsQuery.isError ? <p className="rail-note">Agents could not be loaded from the API.</p> : null}
-        {!isLoading && agents.length === 0 ? <p className="rail-note">No Workforce agents are enabled yet.</p> : null}
+        {agentsQuery.isError ? <p className="rail-note">Using the default Magnafic AI agent while the agent directory is unavailable.</p> : null}
       </aside>
 
       <div className="workforce-chat-main">

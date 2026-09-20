@@ -37,7 +37,7 @@ export class BusinessAgentProfileService {
         OR: [{ organizationId: null }, ...(organizationId ? [{ organizationId }] : [])],
       },
       orderBy: [{ organizationId: 'asc' }, { department: 'asc' }],
-    });
+    }).catch(() => []);
 
     const mergedProfiles = this.mergeProfiles(sanityProfiles, profiles.map((profile) => this.toView(profile)));
     return mergedProfiles.length ? mergedProfiles : [DEFAULT_AGENT_PROFILE];
@@ -58,7 +58,7 @@ export class BusinessAgentProfileService {
         OR: [{ organizationId: organizationId ?? undefined }, { organizationId: null }],
       },
       orderBy: { organizationId: 'desc' },
-    });
+    }).catch(() => null);
 
     if (!profile) {
       if (normalizedSlug === DEFAULT_AGENT_SLUG) {

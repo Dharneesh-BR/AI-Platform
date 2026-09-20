@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ProjectProfileModule } from '../project-profile/project-profile.module';
 import { COMPANY_PROFILE_REPOSITORY } from './application/ports/company-profile.repository';
 import { ApproveCompanyProfileUseCase } from './application/use-cases/approve-company-profile.use-case';
 import { GetCompanyProfileUseCase } from './application/use-cases/get-company-profile.use-case';
@@ -7,6 +8,7 @@ import { PrismaCompanyProfileRepository } from './infrastructure/prisma/prisma-c
 import { CompanyProfileController } from './presentation/controllers/company-profile.controller';
 
 @Module({
+  imports: [ProjectProfileModule],
   controllers: [CompanyProfileController],
   providers: [
     ApproveCompanyProfileUseCase,
