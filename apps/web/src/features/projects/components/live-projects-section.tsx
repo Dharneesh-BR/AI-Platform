@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ProjectSummary } from '@platform/contracts';
-import { useProjects } from '../../../lib/api/query-hooks';
+import { useDeleteProject, useProjects } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
 import { Card, MetricCard, Pill, ProgressBar } from '../../../components/platform/app-shell';
 import { CreateProjectCard } from './create-project-card';
@@ -10,6 +10,57 @@ import { getLifecycleProgress, getLifecycleTone, getProjectRoute } from './proje
 
 function countByLifecycle(projects: ProjectSummary[], state: string): number {
   return projects.filter((project) => project.lifecycleState === state).length;
+}
+
+interface ProjectListCardProps {
+  project: ProjectSummary;
+  organizationId?: string;
+  accessToken?: string;
+}
+
+function ProjectListCard({ project, organizationId, accessToken }: ProjectListCardProps) {
+  const deleteProject = useDeleteProject(project.id, { accessToken, organizationId });
+
+  async function handleDelete() {
+    const confirmed = window.confirm(`Delete "${project.name}"? This removes it from your active project list.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    await deleteProject.mutateAsync();
+  }
+
+  return (
+    <Card>
+      <div className="topbar" style={{ marginBottom: 0 }}>
+        <div>
+          <h2>{project.name}</h2>
+          <p>{project.description}</p>
+        </div>
+        <div className="pill-row">
+          <Pill tone="green">Live API</Pill>
+          <Pill tone={getLifecycleTone(project.lifecycleState)}>{project.lifecycleState}</Pill>
+        </div>
+      </div>
+      <div className="section-gap">
+        <ProgressBar value={getLifecycleProgress(project.lifecycleState)} />
+      </div>
+      <div className="topbar-actions section-gap">
+        <Link className="button button-primary" href={getProjectRoute(project.id, project.nextRoute)}>
+          Open project
+        </Link>
+        <button
+          className="button button-muted"
+          type="button"
+          onClick={() => void handleDelete()}
+          disabled={deleteProject.isPending}
+        >
+          {deleteProject.isPending ? 'Deleting...' : 'Delete project'}
+        </button>
+      </div>
+    </Card>
+  );
 }
 
 export function LiveProjectsSection() {
@@ -64,21 +115,12 @@ export function LiveProjectsSection() {
 
       <section className="stack section-gap">
         {projects.map((project) => (
-          <Link key={project.id} href={getProjectRoute(project.id, project.nextRoute)} className="card">
-            <div className="topbar" style={{ marginBottom: 0 }}>
-              <div>
-                <h2>{project.name}</h2>
-                <p>{project.description}</p>
-              </div>
-              <div className="pill-row">
-                <Pill tone="green">Live API</Pill>
-                <Pill tone={getLifecycleTone(project.lifecycleState)}>{project.lifecycleState}</Pill>
-              </div>
-            </div>
-            <div className="section-gap">
-              <ProgressBar value={getLifecycleProgress(project.lifecycleState)} />
-            </div>
-          </Link>
+          <ProjectListCard
+            key={project.id}
+            project={project}
+            accessToken={session.accessToken}
+            organizationId={session.organizationId}
+          />
         ))}
       </section>
     </>

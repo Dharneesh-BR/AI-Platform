@@ -116,6 +116,14 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         <div className="topbar-actions">
           <Link className="button button-muted" href={getModuleHref(project.id, 'company-profile')}>Review profile</Link>
           <Link className="button button-primary" href={project.nextRoute}>Continue setup</Link>
+          <button
+            className="button button-muted"
+            type="button"
+            onClick={() => void handleDeleteProject()}
+            disabled={deleteProject.isPending}
+          >
+            {deleteProject.isPending ? 'Deleting...' : 'Delete project'}
+          </button>
         </div>
       </header>
 
