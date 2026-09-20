@@ -2,13 +2,20 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import {
-  MembershipStatus,
-  PlatformRole,
-  PrismaClient,
-} from '@prisma/client';
+import prismaClientPackage from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+const { MembershipStatus, PlatformRole, PrismaClient } = prismaClientPackage;
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('DATABASE_URL is required to seed the live database.');
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString }),
+});
 
 const envPath = resolve('.env');
 
