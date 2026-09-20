@@ -151,7 +151,22 @@ export class ConversationsService {
       };
     }
 
-    const runtimeResult = await this.agentRuntimeService.execute(runtimeInput);
+    let runtimeResult;
+
+    try {
+      runtimeResult = await this.agentRuntimeService.execute(runtimeInput);
+    } catch {
+      runtimeResult = {
+        runId: null,
+        answer: this.fallbackAnswer(conversation.project.name, input.content),
+        agentSlug: input.agentSlug ?? 'magnafic-ai',
+        agentName: 'Magnafic AI',
+        model: 'fallback',
+        totalTokens: 0,
+        verification: null,
+        sources: [],
+      };
+    }
 
     await this.prisma.conversationMessage.create({
       data: {
@@ -195,5 +210,19 @@ export class ConversationsService {
     if (!project) {
       throw new NotFoundException('Project not found.');
     }
+  }
+
+  private fallbackAnswer(projectName: string, userInput: string): string {
+    return [
+      `Here is a practical first-pass answer for ${projectName}.`,
+      '',
+      `Question: ${userInput}`,
+      '',
+      'Recommended next steps:',
+      '1. Confirm the project onboarding details are accurate.',
+      '2. Upload source documents or paste business context into Knowledge.',
+      '3. Ask a narrower follow-up question after the knowledge base has processed.',
+      '4. Generate a report once the key project facts are in place.',
+    ].join('\n');
   }
 }

@@ -4,6 +4,22 @@ import { AgentCapabilitySchema, type BusinessAgentProfileView } from './agent-ru
 import { SanityAgentProfileClient } from './sanity-agent-profile.client';
 
 const DEFAULT_AGENT_SLUG = 'magnafic-ai';
+const DEFAULT_AGENT_PROFILE: BusinessAgentProfileView = {
+  source: 'database',
+  name: 'Magnafic AI',
+  slug: DEFAULT_AGENT_SLUG,
+  department: 'Strategy',
+  description: 'General AI strategy consultant for project onboarding, knowledge, research, and reporting.',
+  systemInstructions:
+    'You are Magnafic AI, a practical consulting assistant. Use project context, knowledge sources, and company profile data to give concise next steps.',
+  capabilities: ['rag', 'analysis', 'writing', 'planning'],
+  allowedSpecialists: ['rag', 'analysis', 'writing', 'research'],
+  allowedTools: ['knowledge_search'],
+  knowledgeScopes: ['GENERAL', 'COMPANY_PROFILE'],
+  modelPolicy: {},
+  verificationPolicy: {},
+  enabled: true,
+};
 
 @Injectable()
 export class BusinessAgentProfileService {
@@ -23,7 +39,8 @@ export class BusinessAgentProfileService {
       orderBy: [{ organizationId: 'asc' }, { department: 'asc' }],
     });
 
-    return this.mergeProfiles(sanityProfiles, profiles.map((profile) => this.toView(profile)));
+    const mergedProfiles = this.mergeProfiles(sanityProfiles, profiles.map((profile) => this.toView(profile)));
+    return mergedProfiles.length ? mergedProfiles : [DEFAULT_AGENT_PROFILE];
   }
 
   async getBySlug(slug?: string, organizationId?: string): Promise<BusinessAgentProfileView> {
@@ -44,6 +61,10 @@ export class BusinessAgentProfileService {
     });
 
     if (!profile) {
+      if (normalizedSlug === DEFAULT_AGENT_SLUG) {
+        return DEFAULT_AGENT_PROFILE;
+      }
+
       throw new NotFoundException(`Business agent '${normalizedSlug}' is not available.`);
     }
 

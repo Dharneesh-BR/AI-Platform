@@ -13,6 +13,7 @@ import {
   DISCOVERY_QUEUE,
   type DiscoveryQueue,
 } from '../../../discovery-jobs/application/ports/discovery-queue.port';
+import { DiscoveryWorkerProcessorService } from '../../../company-discovery/application/services/discovery-worker-processor.service';
 import {
   PROJECT_LIFECYCLE_REPOSITORY,
   type ProjectLifecycleRepository,
@@ -29,6 +30,7 @@ export class CompleteOnboardingUseCase {
     private readonly discoveryJobRepository: DiscoveryJobRepository,
     @Inject(DISCOVERY_QUEUE)
     private readonly discoveryQueue: DiscoveryQueue,
+    private readonly discoveryWorkerProcessorService: DiscoveryWorkerProcessorService,
   ) {}
 
   async execute(
@@ -51,14 +53,26 @@ export class CompleteOnboardingUseCase {
       idempotencyKey,
     );
 
-    await this.discoveryQueue.enqueue(job, {
+    const discoveryPayload = {
       companyName: profile.companyName,
       websiteUrl: profile.websiteUrl,
       industry: profile.industry,
       businessGoals: profile.businessGoals,
       primaryChallenges: profile.primaryChallenges,
       competitors: profile.competitors,
-    });
+    };
+
+    await this.discoveryQueue.enqueue(job, discoveryPayload);
+
+    if (process.env.DISCOVERY_WORKER_ENABLED !== 'true') {
+      await this.discoveryWorkerProcessorService.processPayload({
+        discoveryJobId: job.id,
+        organizationId,
+        projectId,
+        actorUserId: actor.id,
+        ...discoveryPayload,
+      });
+    }
 
     return {
       state,

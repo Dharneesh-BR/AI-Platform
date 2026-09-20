@@ -9,10 +9,6 @@ const navigationItems = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/projects', label: 'Projects' },
   { href: '/workforce', label: 'AI Workforce' },
-  { href: '/prompt-library', label: 'Prompt Library' },
-  { href: '/model-management', label: 'Models' },
-  { href: '/billing', label: 'Billing' },
-  { href: '/settings', label: 'Settings' },
 ];
 
 interface AppShellProps {
@@ -23,7 +19,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, eyebrow, title, description }: AppShellProps) {
-  const { isAuthLoading, session } = useAuth();
+  const { isAuthLoading, session, signOut } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -39,10 +35,15 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
         <section className="card" aria-live="polite">
           <span className="eyebrow">Secure Workspace</span>
           <h1>Checking your Magnafic AI session...</h1>
-          <p>Protected pages require Firebase sign-in and a valid organization membership.</p>
+          <p>Protected pages require Firebase sign-in.</p>
         </section>
       </main>
     );
+  }
+
+  async function handleSignOut() {
+    await signOut();
+    router.replace('/login');
   }
 
   return (
@@ -82,9 +83,9 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
             {description ? <p>{description}</p> : null}
           </div>
           <div className="topbar-actions">
-            <Link className="button button-muted" href="/login">
-              {session.mode === 'api' ? 'Account' : 'Sign in'}
-            </Link>
+            <button className="button button-muted" type="button" onClick={() => void handleSignOut()}>
+              Sign out
+            </button>
             <Link className="button button-primary" href="/projects">Open projects</Link>
           </div>
         </header>

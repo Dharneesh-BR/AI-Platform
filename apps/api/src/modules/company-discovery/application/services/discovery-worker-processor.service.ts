@@ -34,7 +34,10 @@ export class DiscoveryWorkerProcessorService {
   ) {}
 
   async process(job: Job<DiscoveryJobPayload>): Promise<void> {
-    const payload = job.data;
+    await this.processPayload(job.data);
+  }
+
+  async processPayload(payload: DiscoveryJobPayload): Promise<void> {
     const state = this.steps.map((step) => ({ ...step }));
 
     try {

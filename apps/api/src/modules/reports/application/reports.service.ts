@@ -106,50 +106,106 @@ export class ReportsService {
     input: CreateReportInput,
     project: Awaited<ReturnType<ReportsService['ensureProject']>>,
   ): Promise<Array<{ title: string; kind: string; content: unknown }>> {
-    const aiResult = await this.liteLlmGateway.generateText({
-      temperature: 0.25,
-      maxTokens: 1400,
-      metadata: {
-        feature: 'report-generation',
-        organizationId: input.organizationId,
-        projectId: input.projectId,
-      },
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You generate concise stakeholder-ready consulting report sections. Return strict JSON only with this shape: ' +
-            '{"sections":[{"title":"string","kind":"narrative|findings|roadmap|risks","content":{"text":"string","bullets":["string"]}}]}',
+    try {
+      const aiResult = await this.liteLlmGateway.generateText({
+        temperature: 0.25,
+        maxTokens: 1400,
+        metadata: {
+          feature: 'report-generation',
+          organizationId: input.organizationId,
+          projectId: input.projectId,
         },
-        {
-          role: 'user',
-          content: [
-            `Report title: ${input.title}`,
-            `Project: ${project.name}`,
-            `Project description: ${project.description ?? 'Not provided'}`,
-            `Onboarding profile: ${JSON.stringify(project.projectProfile ?? {})}`,
-            `Approved company profile: ${JSON.stringify(project.companyProfiles[0] ?? {})}`,
-            `Knowledge sources: ${JSON.stringify(
-              project.researchSources.map((source) => ({
-                title: source.title,
-                type: source.type,
-                content: source.content,
-              })),
-            )}`,
-            `Research plans: ${JSON.stringify(
-              project.researchPlans.map((plan) => ({
-                title: plan.title,
-                question: plan.question,
-                findings: plan.findings,
-                citations: plan.citations,
-              })),
-            )}`,
-          ].join('\n\n'),
-        },
-      ],
-    });
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You generate concise stakeholder-ready consulting report sections. Return strict JSON only with this shape: ' +
+              '{"sections":[{"title":"string","kind":"narrative|findings|roadmap|risks","content":{"text":"string","bullets":["string"]}}]}',
+          },
+          {
+            role: 'user',
+            content: [
+              `Report title: ${input.title}`,
+              `Project: ${project.name}`,
+              `Project description: ${project.description ?? 'Not provided'}`,
+              `Onboarding profile: ${JSON.stringify(project.projectProfile ?? {})}`,
+              `Approved company profile: ${JSON.stringify(project.companyProfiles[0] ?? {})}`,
+              `Knowledge sources: ${JSON.stringify(
+                project.researchSources.map((source) => ({
+                  title: source.title,
+                  type: source.type,
+                  content: source.content,
+                })),
+              )}`,
+              `Research plans: ${JSON.stringify(
+                project.researchPlans.map((plan) => ({
+                  title: plan.title,
+                  question: plan.question,
+                  findings: plan.findings,
+                  citations: plan.citations,
+                })),
+              )}`,
+            ].join('\n\n'),
+          },
+        ],
+      });
 
-    return this.parseSections(aiResult.content, aiResult.provider, aiResult.model);
+      return this.parseSections(aiResult.content, aiResult.provider, aiResult.model);
+    } catch {
+      return this.fallbackSections(project);
+    }
+  }
+
+  private fallbackSections(
+    project: Awaited<ReturnType<ReportsService['ensureProject']>>,
+  ): Array<{ title: string; kind: string; content: unknown }> {
+    const profile = project.companyProfiles[0];
+    const onboarding = project.projectProfile;
+    const goals = Array.isArray(onboarding?.businessGoals) ? onboarding.businessGoals : [];
+    const challenges = Array.isArray(onboarding?.primaryChallenges) ? onboarding.primaryChallenges : [];
+    const products = Array.isArray(profile?.products) ? profile.products : [];
+    const services = Array.isArray(profile?.services) ? profile.services : [];
+
+    return [
+      {
+        title: 'Executive Summary',
+        kind: 'narrative',
+        content: {
+          text: `${project.name} has an initial AI-ready workspace with onboarding context, discovery output, and project knowledge available for strategy work.`,
+          bullets: [
+            onboarding?.companyName ? `Company context captured for ${onboarding.companyName}.` : 'Company context is ready for refinement.',
+            profile?.industry || onboarding?.industry ? `Industry context: ${profile?.industry ?? onboarding?.industry}.` : 'Industry context can be enriched during onboarding.',
+            'Next step: add source documents and use the AI workforce to turn context into recommendations.',
+          ],
+          generatedBy: 'fallback-report-generator',
+        },
+      },
+      {
+        title: 'Current Business Context',
+        kind: 'findings',
+        content: {
+          text: 'This section summarizes what the platform currently knows.',
+          bullets: [
+            ...goals.slice(0, 4).map((goal) => `Goal: ${String(goal)}`),
+            ...challenges.slice(0, 4).map((challenge) => `Challenge: ${String(challenge)}`),
+            ...products.slice(0, 3).map((product) => `Product: ${String(product)}`),
+            ...services.slice(0, 3).map((service) => `Service: ${String(service)}`),
+          ].slice(0, 8),
+        },
+      },
+      {
+        title: 'Recommended Next Actions',
+        kind: 'roadmap',
+        content: {
+          text: 'Use the next week to convert setup into evidence-backed decisions.',
+          bullets: [
+            'Upload company documents, notes, product details, and customer context.',
+            'Ask the AI workforce to identify priority customer segments and positioning opportunities.',
+            'Generate a refined report after knowledge sources have processed.',
+          ],
+        },
+      },
+    ];
   }
 
   private parseSections(

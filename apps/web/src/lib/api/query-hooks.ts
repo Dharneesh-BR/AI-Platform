@@ -10,6 +10,7 @@ import {
 } from './organizations';
 import {
   createProject,
+  deleteProject,
   getProject,
   listProjects,
 } from './projects';
@@ -108,6 +109,19 @@ export function useProject(projectId: string, context?: QueryAuthContext) {
     queryKey: ['project', projectId, context?.organizationId],
     queryFn: () => getProject(apiClient, projectId),
     enabled: Boolean(hasOrganizationContext(context) && projectId),
+  });
+}
+
+export function useDeleteProject(projectId: string, context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteProject(apiClient, projectId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['projects', context?.organizationId] });
+      void queryClient.removeQueries({ queryKey: ['project', projectId, context?.organizationId] });
+    },
   });
 }
 

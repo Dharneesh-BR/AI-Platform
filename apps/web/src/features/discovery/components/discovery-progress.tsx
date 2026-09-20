@@ -30,11 +30,11 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
         <div>
           <span className="eyebrow">Async Company Discovery</span>
           <h1>Discovery runs in the background.</h1>
-          <p>Heavy analysis is handled through BullMQ, with progress polling so the interface never blocks.</p>
+          <p>Discovery builds a first company profile from onboarding inputs and prepares the project workspace.</p>
         </div>
         <div className="topbar-actions">
           <Link className="button button-muted" href={`/projects/${projectId}`}>Back to project</Link>
-          <Link className="button button-primary" href={`/projects/${projectId}/company-profile`}>Open company profile</Link>
+          <Link className="button button-primary" href={`/projects/${projectId}/company-profile`}>Review profile</Link>
         </div>
       </header>
 
@@ -51,9 +51,9 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
         <Card>
           <h2>System guarantees</h2>
           <div className="timeline">
-            <div className="timeline-item"><strong>No blocking HTTP</strong><span>Queue-first processing</span></div>
-            <div className="timeline-item"><strong>Retry support</strong><span>Exponential backoff</span></div>
-            <div className="timeline-item"><strong>Tenant isolation</strong><span>Organization scoped job data</span></div>
+            <div className="timeline-item"><strong>Company profile</strong><span>Generated from onboarding inputs</span></div>
+            <div className="timeline-item"><strong>Knowledge seed</strong><span>Discovery profile is saved as project context</span></div>
+            <div className="timeline-item"><strong>Next action</strong><span>Review profile, then add documents</span></div>
           </div>
         </Card>
       </section>
@@ -73,7 +73,10 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
             ))}
           </div>
         ) : (
-          <p className="section-gap">No discovery job is available yet. Complete onboarding to enqueue discovery.</p>
+          <div className="section-gap">
+            <p>No discovery job is available yet. Complete onboarding to start discovery.</p>
+            <Link className="button button-primary" href={`/projects/${projectId}/onboarding`}>Open onboarding</Link>
+          </div>
         )}
       </section>
     </div>

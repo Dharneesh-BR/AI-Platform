@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, MetricCard, Pill, ProgressBar } from '../../../components/platform/app-shell';
 import { useAuth } from '../../../lib/auth/session';
-import { useProject } from '../../../lib/api/query-hooks';
+import { useDeleteProject, useProject } from '../../../lib/api/query-hooks';
 import { getLifecycleProgress, getLifecycleTone } from './project-lifecycle';
 
 interface ProjectWorkspaceProps {
@@ -16,12 +17,19 @@ function getModuleHref(projectId: string, module: string): string {
 }
 
 export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
+  const router = useRouter();
   const { session } = useAuth();
   const normalizedProjectId = projectId;
-  const projectQuery = useProject(normalizedProjectId, {
+  const context = {
     accessToken: session.accessToken,
     organizationId: session.organizationId,
+  };
+  const projectQuery = useProject(normalizedProjectId, {
+    accessToken: context.accessToken,
+    organizationId: context.organizationId,
   });
+  const deleteProject = useDeleteProject(normalizedProjectId, context);
+  const [deleteMessage, setDeleteMessage] = useState('');
   const project = projectQuery.data;
   const lifecycleProgress = project ? getLifecycleProgress(project.lifecycleState) : 0;
   const enabledModules = useMemo(
@@ -80,6 +88,23 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     );
   }
 
+  const activeProject = project;
+
+  async function handleDeleteProject() {
+    const confirmed = window.confirm(`Delete "${activeProject.name}"? This removes it from your active project list.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteProject.mutateAsync();
+      router.replace('/projects');
+    } catch (error) {
+      setDeleteMessage(error instanceof Error ? error.message : 'Unable to delete project.');
+    }
+  }
+
   return (
     <div>
       <header className="topbar">
@@ -90,7 +115,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         </div>
         <div className="topbar-actions">
           <Link className="button button-muted" href={getModuleHref(project.id, 'company-profile')}>Review profile</Link>
-          <Link className="button button-primary" href={getModuleHref(project.id, 'research')}>Start research</Link>
+          <Link className="button button-primary" href={project.nextRoute}>Continue setup</Link>
         </div>
       </header>
 
@@ -101,6 +126,17 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       </section>
 
       <section className="grid-2 section-gap">
+        <Card>
+          <h2>Recommended next step</h2>
+          <p>
+            Use this order for the MVP workflow: finish onboarding, review discovery, add knowledge,
+            chat with the AI workforce, then generate a report.
+          </p>
+          <div className="topbar-actions section-gap">
+            <Link className="button button-primary" href={project.nextRoute}>Continue</Link>
+            <Link className="button button-muted" href={getModuleHref(project.id, 'knowledge')}>Add knowledge</Link>
+          </div>
+        </Card>
         <Card>
           <div className="pill-row">
             <Pill tone="green">Live API</Pill>
@@ -128,6 +164,23 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           </div>
         </Card>
       </section>
+
+      <Card className="section-gap">
+        <div className="pill-row">
+          <Pill tone="amber">Project actions</Pill>
+        </div>
+        <h2 className="section-gap">Delete project</h2>
+        <p>Remove this project from the active workspace list. Existing database records are archived, not hard-deleted.</p>
+        <button
+          className="button button-muted section-gap"
+          type="button"
+          onClick={() => void handleDeleteProject()}
+          disabled={deleteProject.isPending}
+        >
+          {deleteProject.isPending ? 'Deleting...' : 'Delete project'}
+        </button>
+        {deleteMessage ? <p className="section-gap">{deleteMessage}</p> : null}
+      </Card>
     </div>
   );
 }

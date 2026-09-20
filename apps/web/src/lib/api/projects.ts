@@ -28,3 +28,6 @@ export function updateProject(
   return apiClient.patch<ProjectSummary, UpdateProjectRequest>(`/projects/${projectId}`, payload);
 }
 
+export function deleteProject(apiClient: ApiClient, projectId: string): Promise<void> {
+  return apiClient.delete<void>(`/projects/${projectId}`);
+}

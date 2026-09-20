@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { Pill } from '../../../components/platform/app-shell';
-import { useCompleteOnboarding, useUpsertProjectProfile } from '../../../lib/api/query-hooks';
+import { useCompleteOnboarding, useProject, useProjectProfile, useUpsertProjectProfile } from '../../../lib/api/query-hooks';
 import type { UpsertProjectProfilePayload } from '../../../lib/api/onboarding';
 import { useAuth } from '../../../lib/auth/session';
 
@@ -12,17 +12,15 @@ interface OnboardingFormProps {
 }
 
 const initialForm = {
-  companyName: 'Svasam Veda Life Sciences',
-  websiteUrl: 'https://svasamveda.com',
-  industry: 'Life Sciences / Healthcare',
-  companySize: '51-200',
-  businessModel: 'B2B and B2C healthcare products and services',
-  targetMarket: 'Healthcare providers, wellness clinics, pharmacies, distributors, researchers, and health-conscious consumers.',
-  businessGoals:
-    'Improve operational efficiency\nIncrease customer engagement\nStrengthen research and knowledge management\nGenerate faster business insights using AI',
-  primaryChallenges:
-    'Manual document handling\nScattered company knowledge\nSlow report generation\nRepetitive customer and support queries',
-  competitors: 'Healthcare AI platforms\nWellness technology providers\nLife sciences analytics tools',
+  companyName: '',
+  websiteUrl: '',
+  industry: '',
+  companySize: '',
+  businessModel: '',
+  targetMarket: '',
+  businessGoals: '',
+  primaryChallenges: '',
+  competitors: '',
 };
 
 function toList(value: string): string[] {
@@ -36,10 +34,48 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
   const router = useRouter();
   const { session } = useAuth();
   const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const projectQuery = useProject(projectId, context);
+  const projectProfileQuery = useProjectProfile(projectId, context);
   const upsertProfile = useUpsertProjectProfile(projectId, context);
   const completeOnboarding = useCompleteOnboarding(projectId, context);
   const [form, setForm] = useState(initialForm);
+  const [hasHydratedForm, setHasHydratedForm] = useState(false);
   const [message, setMessage] = useState('Ready to save company basics and continue.');
+
+  useEffect(() => {
+    if (hasHydratedForm) {
+      return;
+    }
+
+    const profile = projectProfileQuery.data;
+    const project = projectQuery.data;
+
+    if (profile) {
+      setForm({
+        companyName: profile.companyName ?? project?.name ?? '',
+        websiteUrl: profile.websiteUrl ?? '',
+        industry: profile.industry ?? '',
+        companySize: profile.companySize ?? '',
+        businessModel: profile.businessModel ?? '',
+        targetMarket: profile.targetMarket ?? '',
+        businessGoals: profile.businessGoals?.join('\n') ?? '',
+        primaryChallenges: profile.primaryChallenges?.join('\n') ?? '',
+        competitors: profile.competitors?.join('\n') ?? '',
+      });
+      setHasHydratedForm(true);
+      return;
+    }
+
+    if (project && !form.companyName) {
+      setForm((current) => ({
+        ...current,
+        companyName: project.name,
+        businessGoals: current.businessGoals || 'Clarify positioning\nUnderstand customers\nPrioritize growth opportunities',
+        primaryChallenges: current.primaryChallenges || 'Scattered business context\nManual research\nUnclear next priorities',
+      }));
+      setHasHydratedForm(true);
+    }
+  }, [form.companyName, hasHydratedForm, projectProfileQuery.data, projectQuery.data]);
 
   const payload = useMemo<UpsertProjectProfilePayload>(
     () => ({
@@ -89,7 +125,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
 
     try {
       await completeOnboarding.mutateAsync();
-      router.push(`/projects/${projectId}/company-profile`);
+      router.push(`/projects/${projectId}/discovery`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to complete onboarding. Please retry.');
     }
@@ -99,7 +135,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
     <form onSubmit={complete}>
       <div className="pill-row">
         <Pill tone="green">API-backed</Pill>
-        <Pill>Tenant scoped</Pill>
+        <Pill>Project specific</Pill>
         <Pill tone="slate">Complete basics</Pill>
       </div>
 
@@ -170,7 +206,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
           type="submit"
           disabled={!canSubmit || upsertProfile.isPending || completeOnboarding.isPending}
         >
-          Complete onboarding -&gt;
+          Start discovery
         </button>
         <p>{message}</p>
       </div>
