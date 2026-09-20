@@ -8,7 +8,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService, { strict: false });
-  const corsOrigin = configService?.get<string>('CORS_ORIGIN') ?? true;
+  const configuredCorsOrigin = configService?.get<string>('CORS_ORIGIN');
+  const corsOrigin = configuredCorsOrigin
+    ? configuredCorsOrigin.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : true;
 
   app.use(helmet());
   app.enableCors({ origin: corsOrigin, credentials: true });
@@ -22,7 +25,7 @@ async function bootstrap() {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Enterprise AI Consulting Platform API')
+    .setTitle('Magnafic AI API')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -34,4 +37,3 @@ async function bootstrap() {
 }
 
 void bootstrap();
-

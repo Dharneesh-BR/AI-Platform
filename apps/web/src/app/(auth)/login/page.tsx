@@ -3,39 +3,17 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { getRoleLabel, useAuth, type UserRole } from '../../../lib/auth/session';
-import { createDevSession, createFirebaseSession } from '../../../lib/api/auth';
+import { useAuth } from '../../../lib/auth/session';
+import { createFirebaseSession } from '../../../lib/api/auth';
 import {
   signInWithEmailPassword,
   signInWithGoogleProvider,
 } from '../../../lib/firebase/client';
 
-const loginRoles: Array<{
-  role: UserRole;
-  description: string;
-}> = [
-  {
-    role: 'SUPER_ADMIN',
-    description: 'Platform owner: manages all clients, users, billing, prompts, and models.',
-  },
-  {
-    role: 'ADMIN',
-    description: 'Client workspace owner: creates projects, invites users, and approves outputs.',
-  },
-  {
-    role: 'CONSULTANT',
-    description: 'Delivery user: runs onboarding, discovery review, research, chat, and reports.',
-  },
-  {
-    role: 'VIEWER',
-    description: 'Stakeholder user: reads dashboards, profiles, research, and reports only.',
-  },
-];
-
 export default function LoginPage() {
   const router = useRouter();
-  const { session, setApiSession, setLocalRole } = useAuth();
-  const [message, setMessage] = useState('Choose a role after enabling development auth or Firebase auth.');
+  const { session, setApiSession } = useAuth();
+  const [message, setMessage] = useState('Sign in with your authorized Firebase account.');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -74,22 +52,6 @@ export default function LoginPage() {
     }
   }
 
-  async function continueAs(role: UserRole) {
-    if (process.env.NEXT_PUBLIC_ENABLE_DEV_AUTH === 'true') {
-      try {
-        setApiSession(await createDevSession(role));
-        router.push('/dashboard');
-        return;
-      } catch {
-        setMessage('Development auth endpoint is unavailable. Start the API with ENABLE_DEV_AUTH=true.');
-        return;
-      }
-    }
-
-    setLocalRole(role);
-    setMessage('Local role selected. Start API auth to load live data.');
-  }
-
   return (
     <main className="workspace" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
       <section className="card hero-card" style={{ maxWidth: 920 }}>
@@ -106,12 +68,12 @@ export default function LoginPage() {
           </button>
           <div className="form-grid">
             <div className="field">
-              <label>Email</label>
-              <input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" type="email" />
+              <label htmlFor="login-email">Email</label>
+              <input id="login-email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" type="email" />
             </div>
             <div className="field">
-              <label>Password</label>
-              <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" type="password" />
+              <label htmlFor="login-password">Password</label>
+              <input id="login-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" type="password" />
             </div>
           </div>
           <button className="button button-muted" onClick={() => void continueWithEmail()} disabled={isSigningIn} type="button">
@@ -119,24 +81,10 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <div className="role-grid section-gap">
-          {loginRoles.map((loginRole) => (
-            <button
-              className="role-card"
-              key={loginRole.role}
-              onClick={() => void continueAs(loginRole.role)}
-              type="button"
-            >
-              <strong>{getRoleLabel(loginRole.role)}</strong>
-              <span>{loginRole.description}</span>
-            </button>
-          ))}
-        </div>
-
         <div className="section-gap topbar-actions">
-          <button className="button button-primary" onClick={() => void continueAs(session.user.role)} type="button">
-            Continue as {getRoleLabel(session.user.role)}
-          </button>
+          <span className="metric-label">
+            {session.accessToken ? `Signed in as ${session.user.email}` : 'Not signed in'}
+          </span>
           <Link className="button button-ghost" href="/dashboard">View current workspace</Link>
         </div>
         <p className="section-gap">{message}</p>

@@ -28,9 +28,8 @@
 - Discovery execution is queued through BullMQ.
 - Tenant context is required for project onboarding and discovery endpoints.
 
-## MVP Backend Coverage
+## Live Backend Coverage
 
 - Project delivery APIs now cover onboarding, discovery, approved profile, knowledge, research plans, chat conversations, agent runs, and reports.
 - Platform visibility APIs now cover model providers, prompt templates, billing account, users, audit logs, notifications, and AI execution records.
-- Development role-login is available through `POST /auth/dev-session` only when `ENABLE_DEV_AUTH=true`.
-- The deterministic chat response is intentionally an MVP placeholder until LiteLLM and LangGraph orchestration are connected.
+- LiteLLM-compatible AI generation is wired for chat, research plans, reports, and generic AI executions. AI endpoints fail clearly if `LITELLM_BASE_URL` and `LITELLM_API_KEY` are not configured.

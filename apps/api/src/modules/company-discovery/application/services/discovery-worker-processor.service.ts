@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import type { DiscoveryJobPayload } from '../../../discovery-jobs/application/ports/discovery-job.payload';
 import {
   DISCOVERY_EXECUTION_REPOSITORY,
   type DiscoveryExecutionRepository,
@@ -10,19 +11,6 @@ import {
   type DiscoveryOutputRepository,
   type PersistDiscoveryOutputInput,
 } from '../ports/discovery-output.repository';
-
-export interface CompanyDiscoveryJobPayload {
-  discoveryJobId: string;
-  organizationId: string;
-  projectId: string;
-  actorUserId?: string | null;
-  companyName?: string;
-  websiteUrl?: string | null;
-  industry?: string | null;
-  businessGoals?: string[];
-  primaryChallenges?: string[];
-  competitors?: string[];
-}
 
 @Injectable()
 export class DiscoveryWorkerProcessorService {
@@ -45,7 +33,7 @@ export class DiscoveryWorkerProcessorService {
     private readonly discoveryOutputRepository: DiscoveryOutputRepository,
   ) {}
 
-  async process(job: Job<CompanyDiscoveryJobPayload>): Promise<void> {
+  async process(job: Job<DiscoveryJobPayload>): Promise<void> {
     const payload = job.data;
     const state = this.steps.map((step) => ({ ...step }));
 
@@ -84,7 +72,7 @@ export class DiscoveryWorkerProcessorService {
     await this.discoveryExecutionRepository.updateProgress(discoveryJobId, progress, stepKey, steps);
   }
 
-  private buildDiscoveryOutput(payload: CompanyDiscoveryJobPayload): PersistDiscoveryOutputInput {
+  private buildDiscoveryOutput(payload: DiscoveryJobPayload): PersistDiscoveryOutputInput {
     const companyName = payload.companyName ?? 'Discovered Company';
     const primaryChallenges = payload.primaryChallenges?.length
       ? payload.primaryChallenges

@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <main className="workspace">
       <section className="card hero-card">
-        <span className="eyebrow">Enterprise AI Consulting Platform</span>
+        <span className="eyebrow">Magnafic AI Platform</span>
         <h1>Company-aware consulting workflows from onboarding to boardroom-ready reports.</h1>
         <p>
           Magnafic AI turns project setup, company discovery, research, knowledge retrieval,

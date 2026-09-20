@@ -6,5 +6,5 @@ export interface AuthenticatedUser {
   email: string;
   displayName?: string;
   roles: PlatformRole[];
+  isAuthBypass?: boolean;
 }
-

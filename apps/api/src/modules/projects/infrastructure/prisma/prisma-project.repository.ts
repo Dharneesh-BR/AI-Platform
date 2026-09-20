@@ -1,5 +1,5 @@
-﻿import { ForbiddenException, Injectable } from '@nestjs/common';
-import { MembershipStatus, PlatformRole as PrismaPlatformRole, ProjectLifecycleState as PrismaProjectLifecycleState, type Project } from '@prisma/client';
+import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import { MembershipStatus, PlatformRole as PrismaPlatformRole, Prisma, ProjectLifecycleState as PrismaProjectLifecycleState, type Project } from '@prisma/client';
 import { getProjectRouteForLifecycle, ProjectLifecycleState } from '@platform/domain';
 import { PlatformRole, type AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -12,17 +12,27 @@ export class PrismaProjectRepository implements ProjectRepository {
 
   async create(input: CreateProjectInput): Promise<ProjectEntity> {
     await this.ensureProjectAccess(input.organizationId, input.actor, true);
-    const project = await this.prisma.project.create({
-      data: {
-        organizationId: input.organizationId,
-        name: input.name,
-        slug: input.slug,
-        description: input.description,
-        lifecycleState: PrismaProjectLifecycleState.CREATED,
-        createdBy: input.actor.id,
-        updatedBy: input.actor.id,
-      },
-    });
+    let project: Project;
+
+    try {
+      project = await this.prisma.project.create({
+        data: {
+          organizationId: input.organizationId,
+          name: input.name,
+          slug: input.slug,
+          description: input.description,
+          lifecycleState: PrismaProjectLifecycleState.CREATED,
+          createdBy: input.actor.id,
+          updatedBy: input.actor.id,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException('A project with this slug already exists in this organization.');
+      }
+
+      throw error;
+    }
 
     return this.mapProject(project);
   }

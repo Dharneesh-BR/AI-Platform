@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useCreateProject } from '../../../lib/api/query-hooks';
 import { Card, Pill } from '../../../components/platform/app-shell';
-import { canCreateProject, useAuth } from '../../../lib/auth/session';
+import { useAuth } from '../../../lib/auth/session';
 
 export function CreateProjectCard() {
   const router = useRouter();
@@ -17,18 +17,17 @@ export function CreateProjectCard() {
   const [message, setMessage] = useState('New projects redirect to onboarding.');
 
   async function submit() {
-    if (!canCreateProject(session.user.role)) {
-      setMessage('Viewer login is read-only. Switch to Org Admin or Consultant to create projects.');
-      return;
-    }
-
     if (!context.accessToken) {
       setMessage('API session required. Log in with live auth before creating a project.');
       return;
     }
 
-    const project = await createProject.mutateAsync({ name, slug, description });
-    router.push(project.nextRoute);
+    try {
+      const project = await createProject.mutateAsync({ name, slug, description });
+      router.push(project.nextRoute);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Project creation failed. Try a unique slug.');
+    }
   }
 
   return (
@@ -36,7 +35,9 @@ export function CreateProjectCard() {
       <div className="pill-row">
         <Pill>Project creation</Pill>
         <Pill tone="green">Redirects to onboarding</Pill>
-        <Pill tone={canCreateProject(session.user.role) ? 'green' : 'slate'}>{session.user.displayName}</Pill>
+        <Pill tone={context.accessToken ? 'green' : 'slate'}>
+          {context.accessToken ? 'Signed in' : 'Sign in required'}
+        </Pill>
       </div>
       <h2 className="section-gap">Create project</h2>
       <div className="form-grid">

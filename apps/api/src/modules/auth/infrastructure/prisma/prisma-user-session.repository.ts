@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PlatformRole as PrismaPlatformRole } from '@prisma/client';
 import { PlatformRole, type AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -25,8 +25,13 @@ export class PrismaUserSessionRepository implements UserSessionRepository {
         email: identity.email,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
+        lastLoginAt: new Date(),
       },
     });
+
+    if (user.deletedAt) {
+      throw new UnauthorizedException('This user account is disabled.');
+    }
 
     return {
       id: user.id,

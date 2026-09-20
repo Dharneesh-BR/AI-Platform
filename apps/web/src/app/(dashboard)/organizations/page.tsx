@@ -15,7 +15,7 @@ export default function OrganizationsPage() {
       </header>
       <section className="grid-3">
         <MetricCard label="Organizations" value="4" detail="Active tenant workspaces." />
-        <MetricCard label="Members" value="28" detail="Admins, consultants, clients, viewers." />
+        <MetricCard label="Members" value="Live" detail="People connected to the workspace." />
         <MetricCard label="Isolation" value="Strict" detail="All project records are organization scoped." />
       </section>
       <section className="section-gap">

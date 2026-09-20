@@ -38,7 +38,7 @@ export function LiveProjectsSection() {
       {projectsQuery.isLoading ? (
         <section className="card section-gap">
           <h2>Loading live projects</h2>
-          <p>Fetching projects from the API using the selected role session.</p>
+          <p>Fetching projects from the API using the signed-in session.</p>
         </section>
       ) : null}
 

@@ -8,74 +8,61 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-
-export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'CONSULTANT' | 'VIEWER';
+import { createFirebaseSession } from '../api/auth';
+import { getLocalAuthToken } from './api-access';
+import { onFirebaseAuthChanged, signOutFirebase } from '../firebase/client';
 
 export interface SessionUser {
   id: string;
   email: string;
   displayName: string;
-  role: UserRole;
 }
 
 export interface SessionState {
   accessToken?: string;
   organizationId?: string;
+  permissions?: string[];
   user: SessionUser;
-  mode: 'local' | 'api';
+  mode: 'anonymous' | 'api';
 }
 
 interface AuthContextValue {
   session: SessionState;
-  setLocalRole: (role: UserRole) => void;
   setApiSession: (session: SessionState) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
+  isAuthLoading: boolean;
 }
 
-const roleLabels: Record<UserRole, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Organization Admin',
-  CONSULTANT: 'Consultant',
-  VIEWER: 'Viewer',
-};
+function createAnonymousSession(): SessionState {
+  if (getLocalAuthToken()) {
+    return {
+      organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
+      permissions: [
+        'platform.admin',
+        'organization.manage',
+        'project.manage',
+        'knowledge.manage',
+        'agent.use',
+        'billing.view',
+      ],
+      mode: 'api',
+      user: {
+        id: '00000000-0000-0000-0000-000000000001',
+        email: 'local-tester@magnafic.ai',
+        displayName: 'Local Tester',
+      },
+    };
+  }
 
-const roleEmails: Record<UserRole, string> = {
-  SUPER_ADMIN: 'super.admin@magnafic.ai',
-  ADMIN: 'org.admin@client.com',
-  CONSULTANT: 'consultant@magnafic.ai',
-  VIEWER: 'viewer@client.com',
-};
-
-const sessionStorageKey = 'magnafic-ai-session';
-
-function createLocalSession(role: UserRole = 'SUPER_ADMIN'): SessionState {
   return {
     organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
-    mode: 'local',
+    mode: 'anonymous',
     user: {
-      id: `local-${role.toLowerCase().replace('_', '-')}`,
-      email: roleEmails[role],
-      displayName: roleLabels[role],
-      role,
+      id: '',
+      email: 'Not signed in',
+      displayName: 'Not signed in',
     },
   };
-}
-
-function readInitialSession(): SessionState {
-  if (typeof window === 'undefined') {
-    return createLocalSession();
-  }
-
-  const savedSession = window.localStorage.getItem(sessionStorageKey);
-  if (!savedSession) {
-    return createLocalSession();
-  }
-
-  try {
-    return JSON.parse(savedSession) as SessionState;
-  } catch {
-    return createLocalSession();
-  }
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -85,27 +72,70 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [session, setSession] = useState<SessionState>(() => createLocalSession());
+  const [session, setSession] = useState<SessionState>(() => createAnonymousSession());
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    setSession(readInitialSession());
+    if (getLocalAuthToken()) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      unsubscribe = onFirebaseAuthChanged((firebaseUser) => {
+        void (async () => {
+          try {
+            if (!firebaseUser) {
+              if (active) {
+                setSession(createAnonymousSession());
+              }
+              return;
+            }
+            const firebaseIdToken = await firebaseUser.getIdToken();
+            const apiSession = await createFirebaseSession(firebaseIdToken);
+            if (active) {
+              setSession(apiSession);
+            }
+          } catch {
+            if (active) {
+              setSession(createAnonymousSession());
+            }
+          } finally {
+            if (active) {
+              setIsAuthLoading(false);
+            }
+          }
+        })();
+      });
+    } catch {
+      setSession(createAnonymousSession());
+      setIsAuthLoading(false);
+    }
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
   }, []);
 
   function persistSession(nextSession: SessionState) {
     setSession(nextSession);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(sessionStorageKey, JSON.stringify(nextSession));
-    }
   }
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
-      setLocalRole: (role) => persistSession(createLocalSession(role)),
       setApiSession: persistSession,
-      signOut: () => persistSession(createLocalSession('VIEWER')),
+      signOut: async () => {
+        await signOutFirebase();
+        setSession(createAnonymousSession());
+      },
+      isAuthLoading,
     }),
-    [session],
+    [isAuthLoading, session],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -119,16 +149,4 @@ export function useAuth() {
   }
 
   return context;
-}
-
-export function getRoleLabel(role: UserRole): string {
-  return roleLabels[role];
-}
-
-export function canCreateOrganization(role: UserRole): boolean {
-  return role === 'SUPER_ADMIN';
-}
-
-export function canCreateProject(role: UserRole): boolean {
-  return role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'CONSULTANT';
 }

@@ -29,6 +29,7 @@ export class ConversationsController {
       projectId,
       actorUserId: user.id,
       title: dto.title,
+      agentSlug: dto.agentSlug,
     });
   }
 
@@ -42,8 +43,10 @@ export class ConversationsController {
     return this.conversationsService.addMessage({
       organizationId: tenant.organizationId,
       conversationId,
-      actorUserId: user.id,
+      actor: user,
+      actorRole: tenant.role,
       content: dto.content,
+      agentSlug: dto.agentSlug,
     });
   }
 }

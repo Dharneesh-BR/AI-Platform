@@ -41,6 +41,10 @@ export class PrismaProjectLifecycleRepository implements ProjectLifecycleReposit
     actor: AuthenticatedUser,
   ): Promise<ProjectLifecycleState> {
     const currentState = await this.getLifecycleState(organizationId, projectId, actor);
+    if (currentState === nextState) {
+      return currentState;
+    }
+
     assertProjectLifecycleTransition(currentState, nextState);
 
     const project = await this.prisma.project.update({
@@ -59,4 +63,3 @@ export class PrismaProjectLifecycleRepository implements ProjectLifecycleReposit
     return project.lifecycleState as ProjectLifecycleState;
   }
 }
-

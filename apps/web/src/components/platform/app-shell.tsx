@@ -1,15 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { getRoleLabel, useAuth } from '../../lib/auth/session';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, type ReactNode } from 'react';
+import { useAuth } from '../../lib/auth/session';
 
 const navigationItems = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/projects', label: 'Projects' },
+  { href: '/workforce', label: 'AI Workforce' },
   { href: '/prompt-library', label: 'Prompt Library' },
   { href: '/model-management', label: 'Models' },
   { href: '/billing', label: 'Billing' },
+  { href: '/settings', label: 'Settings' },
 ];
 
 interface AppShellProps {
@@ -20,7 +23,27 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, eyebrow, title, description }: AppShellProps) {
-  const { session } = useAuth();
+  const { isAuthLoading, session } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthLoading && session.mode !== 'api') {
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [isAuthLoading, pathname, router, session.mode]);
+
+  if (isAuthLoading || session.mode !== 'api') {
+    return (
+      <main className="workspace" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <section className="card" aria-live="polite">
+          <span className="eyebrow">Secure Workspace</span>
+          <h1>Checking your Magnafic AI session...</h1>
+          <p>Protected pages require Firebase sign-in and a valid organization membership.</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -34,7 +57,11 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
         </Link>
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {navigationItems.map((item) => (
-            <Link key={item.href} href={item.href}>
+            <Link
+              className={pathname === item.href || pathname.startsWith(`${item.href}/`) ? 'active' : ''}
+              key={item.href}
+              href={item.href}
+            >
               {item.label}
             </Link>
           ))}
@@ -42,7 +69,7 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
         <div className="sidebar-card">
           <span className="status-dot" />
           <div>
-            <strong>{getRoleLabel(session.user.role)}</strong>
+            <strong>{session.mode === 'api' ? session.user.displayName : 'Guest user'}</strong>
             <p>{session.user.email}</p>
           </div>
         </div>
@@ -55,7 +82,9 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
             {description ? <p>{description}</p> : null}
           </div>
           <div className="topbar-actions">
-            <Link className="button button-muted" href="/login">Switch login</Link>
+            <Link className="button button-muted" href="/login">
+              {session.mode === 'api' ? 'Account' : 'Sign in'}
+            </Link>
             <Link className="button button-primary" href="/projects">Open projects</Link>
           </div>
         </header>

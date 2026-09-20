@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
+import { MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useBillingAccount } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
 

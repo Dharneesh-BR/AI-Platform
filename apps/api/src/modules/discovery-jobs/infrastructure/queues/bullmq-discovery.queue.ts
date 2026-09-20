@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Queue } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
+import type { Queue } from 'bullmq';
+import { QUEUE_NAMES } from '../../../../common/queue/queue.constants';
+import { QueueInfrastructureService } from '../../../../common/queue/queue-infrastructure.service';
+import type { DiscoveryJobPayload } from '../../application/ports/discovery-job.payload';
 import type {
   DiscoveryQueue,
   DiscoveryQueueContext,
@@ -9,20 +11,16 @@ import type { DiscoveryJobEntity } from '../../domain/entities/discovery-job.ent
 
 @Injectable()
 export class BullMqDiscoveryQueue implements DiscoveryQueue {
-  private readonly queue: Queue;
+  private readonly logger = new Logger(BullMqDiscoveryQueue.name);
+  private readonly queue: Queue<DiscoveryJobPayload>;
 
-  constructor(configService: ConfigService) {
-    const redisUrl = new URL(configService.get<string>('REDIS_URL') ?? 'redis://localhost:6379');
-    this.queue = new Queue('discovery', {
-      connection: {
-        host: redisUrl.hostname,
-        port: Number(redisUrl.port || 6379),
-        password: redisUrl.password || undefined,
-      },
-    });
+  constructor(private readonly queueInfrastructureService: QueueInfrastructureService) {
+    this.queue = this.queueInfrastructureService.getQueue<DiscoveryJobPayload>(QUEUE_NAMES.discovery);
   }
 
   async enqueue(job: DiscoveryJobEntity, context?: DiscoveryQueueContext): Promise<void> {
+    this.logger.log(`Enqueue discovery job queue=${QUEUE_NAMES.discovery} jobId=${job.id} projectId=${job.projectId}`);
+
     await this.queue.add(
       'company-discovery',
       {
@@ -37,16 +35,8 @@ export class BullMqDiscoveryQueue implements DiscoveryQueue {
         primaryChallenges: context?.primaryChallenges,
         competitors: context?.competitors,
       },
-      {
-        jobId: job.id,
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 30_000,
-        },
-        removeOnComplete: 1000,
-        removeOnFail: 5000,
-      },
+      this.queueInfrastructureService.getJobOptions(job.id),
     );
   }
+
 }

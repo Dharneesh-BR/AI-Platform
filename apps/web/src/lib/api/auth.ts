@@ -1,16 +1,5 @@
-import type { SessionState, UserRole } from '../auth/session';
+import type { SessionState } from '../auth/session';
 import { createApiClient } from './http-client';
-
-interface CreateDevSessionResponse {
-  accessToken: string;
-  tokenType: 'Bearer';
-  user: {
-    id: string;
-    email: string;
-    displayName?: string;
-    roles: UserRole[];
-  };
-}
 
 interface CreateFirebaseSessionResponse {
   accessToken: string;
@@ -19,28 +8,22 @@ interface CreateFirebaseSessionResponse {
     id: string;
     email: string;
     displayName?: string;
-    roles: UserRole[];
+    roles: string[];
   };
 }
 
-export async function createDevSession(role: UserRole): Promise<SessionState> {
-  const apiClient = createApiClient();
-  const response = await apiClient.post<CreateDevSessionResponse, { role: UserRole }>(
-    '/auth/dev-session',
-    { role },
-  );
-
-  return {
-    accessToken: response.accessToken,
-    organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
-    mode: 'api',
-    user: {
-      id: response.user.id,
-      email: response.user.email,
-      displayName: response.user.displayName ?? response.user.email,
-      role: response.user.roles[0] ?? role,
-    },
-  };
+interface AuthMeResponse {
+  organizations: Array<{
+    id: string;
+    name: string;
+    role: string;
+  }>;
+  activeOrganization: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
+  permissions: string[];
 }
 
 export async function createFirebaseSession(firebaseIdToken: string): Promise<SessionState> {
@@ -50,15 +33,18 @@ export async function createFirebaseSession(firebaseIdToken: string): Promise<Se
     { firebaseIdToken },
   );
 
+  const authenticatedClient = createApiClient({ accessToken: response.accessToken });
+  const authContext = await authenticatedClient.get<AuthMeResponse>('/auth/me');
+
   return {
     accessToken: response.accessToken,
-    organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
+    organizationId: authContext.activeOrganization?.id ?? process.env.NEXT_PUBLIC_ORGANIZATION_ID,
+    permissions: authContext.permissions,
     mode: 'api',
     user: {
       id: response.user.id,
       email: response.user.email,
       displayName: response.user.displayName ?? response.user.email,
-      role: response.user.roles[0] ?? 'VIEWER',
     },
   };
 }

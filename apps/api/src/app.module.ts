@@ -28,6 +28,7 @@ import { UsersModule } from './modules/users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
+      envFilePath: ['.env', '../../.env'],
       isGlobal: true,
     }),
     PrismaModule,

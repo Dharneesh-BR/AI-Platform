@@ -5,4 +5,9 @@ export class CreateConversationDto {
   @MinLength(3)
   @IsOptional()
   title?: string;
+
+  @IsString()
+  @MinLength(2)
+  @IsOptional()
+  agentSlug?: string;
 }

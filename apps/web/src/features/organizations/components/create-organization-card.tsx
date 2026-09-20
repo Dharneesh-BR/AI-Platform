@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useCreateOrganization } from '../../../lib/api/query-hooks';
 import { Card, Pill } from '../../../components/platform/app-shell';
-import { canCreateOrganization, useAuth } from '../../../lib/auth/session';
+import { useAuth } from '../../../lib/auth/session';
 
 export function CreateOrganizationCard() {
   const { session } = useAuth();
@@ -14,13 +14,8 @@ export function CreateOrganizationCard() {
   const [message, setMessage] = useState('API session required before submitting to the backend.');
 
   async function submit() {
-    if (!canCreateOrganization(session.user.role)) {
-      setMessage('Only Super Admin can create organizations. Switch login to Super Admin for this action.');
-      return;
-    }
-
     if (!context.accessToken) {
-      setMessage('Ready for API: login/JWT wiring is required before live submission.');
+      setMessage('API session required. Sign in before creating an organization.');
       return;
     }
 
@@ -33,7 +28,9 @@ export function CreateOrganizationCard() {
       <div className="pill-row">
         <Pill>Live-ready form</Pill>
         <Pill tone={context.accessToken ? 'green' : 'amber'}>{context.accessToken ? 'API connected' : 'API required'}</Pill>
-        <Pill tone={canCreateOrganization(session.user.role) ? 'green' : 'slate'}>{session.user.displayName}</Pill>
+        <Pill tone={context.accessToken ? 'green' : 'slate'}>
+          {context.accessToken ? 'Signed in' : 'Sign in required'}
+        </Pill>
       </div>
       <h2 className="section-gap">Create organization</h2>
       <div className="form-grid">

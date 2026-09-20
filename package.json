@@ -4,27 +4,42 @@
   "packageManager": "pnpm@11.15.1",
   "scripts": {
     "build": "pnpm -r build",
+    "build:apps": "pnpm --filter @platform/api build && pnpm --filter @platform/web build",
+    "build:api": "pnpm --filter @platform/api build",
+    "build:web": "pnpm --filter @platform/web build",
+    "build:studio": "pnpm --filter magnafic-ai build",
+    "deploy:check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build:apps",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "node scripts/generate-prisma-clients.mjs",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "prisma db seed",
-    "prisma:studio": "prisma studio"
+    "prisma:seed": "node prisma/seed-live.mjs",
+    "prisma:seed:live": "node prisma/seed-live.mjs",
+    "prisma:studio": "prisma studio",
+    "sanity:dev": "pnpm --filter magnafic-ai dev",
+    "sanity:seed:workforce": "pnpm --filter magnafic-ai seed:workforce",
+    "sanity:seed:workforce:dry": "pnpm --filter magnafic-ai seed:workforce:dry"
   },
   "prisma": {
-    "seed": "node prisma/seed.mjs"
+    "seed": "node prisma/seed-live.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
     "@commitlint/config-conventional": "21.2.0",
+    "@eslint/js": "^10.0.1",
     "@prisma/client": "7.9.1",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.0",
     "dotenv": "17.2.3",
     "eslint": "10.7.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
     "husky": "9.1.7",
     "prettier": "3.9.6",
     "prisma": "7.9.1",
-    "typescript": "7.0.2"
+    "typescript": "^6.0.0"
   }
 }

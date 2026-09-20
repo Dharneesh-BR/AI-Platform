@@ -6,7 +6,9 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
   type Auth,
+  type User,
 } from 'firebase/auth';
 
 function getFirebaseConfig() {
@@ -47,4 +49,12 @@ export async function signInWithGoogleProvider(): Promise<string> {
 export async function signInWithEmailPassword(email: string, password: string): Promise<string> {
   const result = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
   return result.user.getIdToken();
+}
+
+export function onFirebaseAuthChanged(callback: (user: User | null) => void) {
+  return getFirebaseAuth().onAuthStateChanged(callback);
+}
+
+export function signOutFirebase(): Promise<void> {
+  return signOut(getFirebaseAuth());
 }

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AiExecutionStatus } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { LiteLlmGatewayService } from './services/litellm-gateway.service';
 
 export interface CreateAiExecutionInput {
   input: unknown;
@@ -10,7 +11,10 @@ export interface CreateAiExecutionInput {
 
 @Injectable()
 export class AiService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly liteLlmGateway: LiteLlmGatewayService,
+  ) {}
 
   listExecutions() {
     return this.prisma.aiExecution.findMany({
@@ -33,15 +37,71 @@ export class AiService {
       }
     }
 
-    return this.prisma.aiExecution.create({
+    const execution = await this.prisma.aiExecution.create({
       data: {
         modelConfigId: input.modelConfigId,
-        status: AiExecutionStatus.QUEUED,
+        status: AiExecutionStatus.RUNNING,
         input: input.input as object,
+        startedAt: new Date(),
         createdBy: input.actorUserId,
         updatedBy: input.actorUserId,
       },
       include: { modelConfig: true, agentRuns: true },
     });
+
+    const prompt = this.extractPrompt(input.input);
+    const aiResult = await this.liteLlmGateway.generateText({
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are Magnafic AI backend execution service. Produce clear, useful output for the requested AI task.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.3,
+      maxTokens: 1000,
+      metadata: {
+        feature: 'ai-execution',
+        executionId: execution.id,
+      },
+    });
+
+    return this.prisma.aiExecution.update({
+      where: { id: execution.id },
+      data: {
+        status: AiExecutionStatus.SUCCEEDED,
+        output: {
+          content: aiResult.content,
+          provider: aiResult.provider,
+          model: aiResult.model,
+          finishReason: aiResult.finishReason,
+          errorMessage: aiResult.errorMessage,
+        },
+        promptTokens: aiResult.promptTokens ?? 0,
+        completionTokens: aiResult.completionTokens ?? 0,
+        completedAt: new Date(),
+        errorMessage: aiResult.errorMessage,
+        updatedBy: input.actorUserId,
+      },
+      include: { modelConfig: true, agentRuns: true },
+    });
+  }
+
+  private extractPrompt(input: unknown): string {
+    if (typeof input === 'string') {
+      return input;
+    }
+
+    if (input && typeof input === 'object') {
+      const record = input as Record<string, unknown>;
+      const prompt = record.prompt ?? record.question ?? record.message ?? record.content;
+
+      if (typeof prompt === 'string' && prompt.trim()) {
+        return prompt;
+      }
+    }
+
+    return JSON.stringify(input);
   }
 }

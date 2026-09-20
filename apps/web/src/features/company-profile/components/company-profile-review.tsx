@@ -1,9 +1,9 @@
 'use client';
 
-import { Card, Pill } from '../../../components/platform/app-shell';
+import { MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useCompanyProfile } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
-import { CompanyProfileActions } from './company-profile-actions';
+import { ChatWorkspace } from '../../conversations/components/chat-workspace';
 
 interface CompanyProfileReviewProps {
   projectId: string;
@@ -28,17 +28,18 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
     organizationId: session.organizationId,
   });
   const profile = profileQuery.data;
+  const opportunityCount = (profile?.products?.length ?? 0) + (profile?.services?.length ?? 0);
+  const riskCount = profile?.painPoints?.length ?? 0;
 
   const profileBlocks = profile
     ? [
-        ['Mission', profile.mission],
-        ['Vision', profile.vision],
+        ['Business Summary', profile.mission],
+        ['Future Direction', profile.vision],
         ['Industry', profile.industry],
-        ['Products', profile.products],
-        ['Services', profile.services],
-        ['Target Customers', profile.targetCustomers],
-        ['Pain Points', profile.painPoints],
-        ['Unique Selling Proposition', profile.uniqueSellingProposition],
+        ['AI Opportunity Areas', [...profile.products, ...profile.services]],
+        ['Target Users / Customers', profile.targetCustomers],
+        ['Operational Gaps', profile.painPoints],
+        ['Recommended Positioning', profile.uniqueSellingProposition],
       ]
     : [];
 
@@ -46,37 +47,43 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
     <div>
       <header className="topbar">
         <div>
-          <span className="eyebrow">Company Profile Review</span>
-          <h1>Approve the company context before AI starts answering.</h1>
-          <p>Discovery output stays editable. Approval locks the current version and creates trusted context for research and AI workflows.</p>
+          <span className="eyebrow">AI Readiness Report</span>
+          <h1>Your company report card is ready. Now ask Magnafic AI what to do next.</h1>
+          <p>After onboarding, Magnafic AI generates a company-aware report card and opens an AI chat grounded in that context.</p>
         </div>
-        <CompanyProfileActions projectId={projectId} profileId={profile?.id} />
+        <div className="topbar-actions">
+          <a className="button button-primary" href="#ai-chat">Open AI chat</a>
+        </div>
       </header>
 
       <section className="grid-3">
-        <Card><span className="metric-label">Version</span><strong className="metric-value">{profile ? `v${profile.version}` : '—'}</strong><Pill tone={profile?.isApproved ? 'green' : 'amber'}>{profile?.isApproved ? 'Approved' : 'Pending'}</Pill></Card>
-        <Card><span className="metric-label">Source</span><strong className="metric-value">API</strong><p>Loaded from project company profile endpoint.</p></Card>
-        <Card><span className="metric-label">Research readiness</span><strong className="metric-value">{profile?.isApproved ? 'Ready' : 'Blocked'}</strong><p>Research unlocks after approval.</p></Card>
+        <MetricCard label="AI readiness" value={profile ? 'Ready' : '—'} detail="Generated from onboarding and discovery context." />
+        <MetricCard label="Opportunity areas" value={String(opportunityCount)} detail="Products, services, and workflows AI can improve." />
+        <MetricCard label="Priority gaps" value={String(riskCount)} detail="Challenges the AI copilot should help solve first." />
       </section>
 
-      <section className="card section-gap">
-        <div className="pill-row">
-          <Pill tone="green">Live API</Pill>
-          <Pill tone={profileQuery.isError ? 'amber' : 'green'}>{profileQuery.isError ? 'API unavailable' : 'Ready'}</Pill>
-        </div>
-        <h2 className="section-gap">Editable company context</h2>
-        {profileBlocks.length ? (
-          <div className="profile-list section-gap">
-            {profileBlocks.map(([title, value]) => (
-              <div key={String(title)} className="profile-block">
-                <h3>{title}</h3>
-                <p>{formatValue(value)}</p>
-              </div>
-            ))}
+      <section id="ai-chat" className="grid-2 section-gap">
+        <div className="card hero-card">
+          <div className="pill-row">
+            <Pill tone="green">Generated after onboarding</Pill>
+            <Pill tone={profileQuery.isError ? 'amber' : 'green'}>{profileQuery.isError ? 'API unavailable' : 'Report ready'}</Pill>
+            <Pill tone="blue">Chat unlocked</Pill>
           </div>
-        ) : (
-          <p className="section-gap">No company profile is available yet. Complete onboarding and discovery first.</p>
-        )}
+          <h2 className="section-gap">Executive report card</h2>
+          {profileBlocks.length ? (
+            <div className="profile-list section-gap">
+              {profileBlocks.map(([title, value]) => (
+                <div key={String(title)} className="profile-block">
+                  <h3>{title}</h3>
+                  <p>{formatValue(value)}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="section-gap">No report is available yet. Complete onboarding to generate the company report card.</p>
+          )}
+        </div>
+        <ChatWorkspace projectId={projectId} embedded />
       </section>
     </div>
   );

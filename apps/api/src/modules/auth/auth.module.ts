@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { CreateSessionUseCase } from './application/use-cases/create-session.use-case';
-import { CreateDevSessionUseCase } from './application/use-cases/create-dev-session.use-case';
 import { IDENTITY_PROVIDER } from './application/ports/identity-provider.port';
 import { PLATFORM_TOKEN_SERVICE } from './application/ports/platform-token.port';
 import { USER_SESSION_REPOSITORY } from './application/ports/user-session.repository';
@@ -27,7 +26,6 @@ import { AuthController } from './presentation/controllers/auth.controller';
   controllers: [AuthController],
   providers: [
     CreateSessionUseCase,
-    CreateDevSessionUseCase,
     {
       provide: IDENTITY_PROVIDER,
       useClass: FirebaseIdentityProvider,

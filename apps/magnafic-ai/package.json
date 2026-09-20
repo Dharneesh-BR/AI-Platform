@@ -1,0 +1,41 @@
+{
+  "name": "magnafic-ai",
+  "private": true,
+  "version": "1.0.0",
+  "main": "package.json",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "deploy-graphql": "sanity graphql deploy",
+    "dev": "sanity dev",
+    "seed:workforce": "sanity exec scripts/seed-workforce-agents.cli.mjs --with-user-token",
+    "seed:workforce:dry": "sanity exec scripts/seed-workforce-agents.cli.mjs --with-user-token -- --dry-run",
+    "seed:workforce:token": "node scripts/seed-workforce-agents.mjs",
+    "seed:workforce:token:dry": "node scripts/seed-workforce-agents.mjs --dry-run",
+    "start": "sanity start"
+  },
+  "keywords": [
+    "sanity"
+  ],
+  "dependencies": {
+    "@sanity/vision": "^6.15.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sanity": "^6.15.0",
+    "styled-components": "^6.1.18"
+  },
+  "devDependencies": {
+    "@sanity/eslint-config-studio": "^7",
+    "@types/react": "^19.2.14",
+    "eslint": "^10.8.1",
+    "prettier": "^3.5",
+    "typescript": "^5.8"
+  },
+  "prettier": {
+    "bracketSpacing": false,
+    "printWidth": 100,
+    "semi": false,
+    "singleQuote": true
+  }
+}

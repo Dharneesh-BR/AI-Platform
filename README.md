@@ -17,10 +17,12 @@ Production-ready modular monolith for AI-assisted consulting, market research, s
 - Milestone 1: Folder structure approved
 - Milestone 2: System architecture approved
 - Milestone 3: Database schema implemented
-- Milestone 4: Role-based demo session implemented
-- Milestone 5: Demo seed data implemented
+- Milestone 4: Firebase authentication implemented
+- Milestone 5: Supabase live database connected
+- Milestone 6: LiteLLM-backed chat, research, reports, and AI executions implemented
+- Milestone 7: Live project knowledge ingestion implemented
 
-## Local Demo Commands
+## Local Live Commands
 
 Use the bundled pnpm path if `pnpm` is not globally installed:
 
@@ -28,25 +30,17 @@ Use the bundled pnpm path if `pnpm` is not globally installed:
 $pnpm = "C:\Users\Admin\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\fallback\pnpm.cmd"
 ```
 
-Start infrastructure:
-
-```powershell
-docker compose up -d postgres redis
-```
-
-Generate Prisma client, run migrations, and seed demo data:
+Generate Prisma client and sync the live database schema:
 
 ```powershell
 & $pnpm prisma:generate
-& $pnpm prisma:migrate
-& $pnpm prisma:seed
+& $pnpm exec prisma db push
 ```
 
-Enable development role-login JWTs:
+Seed the first live organization/admin after setting `ADMIN_EMAIL` and `ADMIN_FIREBASE_UID`:
 
 ```powershell
-$env:ENABLE_DEV_AUTH = "true"
-$env:NEXT_PUBLIC_ENABLE_DEV_AUTH = "true"
+& $pnpm prisma:seed
 ```
 
 Run backend and frontend in separate terminals:

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useCreateReport, useReports } from '../../../lib/api/query-hooks';
@@ -52,13 +53,13 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
         <h2 className="section-gap">Reports</h2>
         <div className="timeline">
           {reports.map((report) => (
-            <div className="timeline-item" key={report.id}>
+            <Link className="timeline-item" href={`/projects/${projectId}/reports/${report.id}`} key={report.id}>
               <div>
                 <strong>{report.title}</strong>
                 <p>{report.sections.length} sections</p>
               </div>
               <Pill tone={report.status === 'READY' ? 'green' : 'amber'}>{report.status}</Pill>
-            </div>
+            </Link>
           ))}
         </div>
         {!reportsQuery.isLoading && !reportsQuery.isError && reports.length === 0 ? (

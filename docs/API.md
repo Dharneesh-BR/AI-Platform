@@ -24,7 +24,6 @@
 
 ## Platform and Admin Endpoints
 
-- `POST /api/v1/auth/dev-session`
 - `GET /api/v1/model-management/providers`
 - `GET /api/v1/prompt-library`
 - `GET /api/v1/billing/account`
