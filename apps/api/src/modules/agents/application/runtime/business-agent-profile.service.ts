@@ -4,6 +4,12 @@ import { AgentCapabilitySchema, type BusinessAgentProfileView } from './agent-ru
 import { SanityAgentProfileClient } from './sanity-agent-profile.client';
 
 const DEFAULT_AGENT_SLUG = 'magnafic-ai';
+const DEFAULT_AGENT_ALLOWED_TOOLS = [
+  'vector_search',
+  'company_profile',
+  'readiness_report',
+  'document_lookup',
+];
 const DEFAULT_AGENT_PROFILE: BusinessAgentProfileView = {
   source: 'database',
   name: 'Magnafic AI',
@@ -14,7 +20,7 @@ const DEFAULT_AGENT_PROFILE: BusinessAgentProfileView = {
     'You are Magnafic AI, a practical consulting assistant. Use project context, knowledge sources, and company profile data to give concise next steps.',
   capabilities: ['rag', 'analysis', 'writing', 'planning'],
   allowedSpecialists: ['rag', 'analysis', 'writing', 'research'],
-  allowedTools: ['knowledge_search'],
+  allowedTools: DEFAULT_AGENT_ALLOWED_TOOLS,
   knowledgeScopes: ['GENERAL', 'COMPANY_PROFILE'],
   modelPolicy: {},
   verificationPolicy: {},
@@ -98,7 +104,7 @@ export class BusinessAgentProfileService {
       systemInstructions: profile.systemInstructions,
       capabilities: this.parseCapabilities(profile.capabilities),
       allowedSpecialists: this.parseStringArray(profile.allowedSpecialists),
-      allowedTools: this.parseStringArray(profile.allowedTools),
+      allowedTools: this.allowedToolsFor(profile.slug, profile.allowedTools),
       knowledgeScopes: this.parseStringArray(profile.knowledgeScopes),
       modelPolicy: this.parseRecord(profile.modelPolicy),
       verificationPolicy: this.parseRecord(profile.verificationPolicy),
@@ -127,6 +133,16 @@ export class BusinessAgentProfileService {
 
   private parseStringArray(value: unknown): string[] {
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  }
+
+  private allowedToolsFor(slug: string, value: unknown): string[] {
+    const configuredTools = this.parseStringArray(value);
+
+    if (slug !== DEFAULT_AGENT_SLUG) {
+      return configuredTools;
+    }
+
+    return [...new Set([...configuredTools, ...DEFAULT_AGENT_ALLOWED_TOOLS])];
   }
 
   private parseRecord(value: unknown): Record<string, unknown> {
