@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { QueueModule } from '../../common/queue/queue.module';
+import { AiModule } from '../ai/ai.module';
 import { DiscoveryJobsModule } from '../discovery-jobs/discovery-jobs.module';
 import { BullMqDiscoveryWorker } from '../discovery-jobs/infrastructure/queues/bullmq-discovery.worker';
 import { WebsiteAnalysisModule } from '../website-analysis/website-analysis.module';
@@ -16,7 +17,7 @@ import { WebsiteValidationService } from './application/services/website-validat
 import { PrismaDiscoveryOutputRepository } from './infrastructure/prisma/prisma-discovery-output.repository';
 
 @Module({
-  imports: [DiscoveryJobsModule, QueueModule, WebsiteAnalysisModule],
+  imports: [AiModule, DiscoveryJobsModule, QueueModule, WebsiteAnalysisModule],
   providers: [
     CompanyProfileGenerationService,
     ContentExtractionService,

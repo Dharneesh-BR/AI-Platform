@@ -46,6 +46,17 @@ describe('SupervisorService', () => {
     expect(result.requiredCapabilities).toEqual(expect.arrayContaining(['rag', 'calculation', 'analysis', 'writing']));
   });
 
+  it('routes readiness and growth report requests through analysis and writing', () => {
+    const result = service.classify({
+      userInput: 'Create an AI readiness and growth report for this company.',
+      businessAgent,
+    });
+
+    expect(result.complexity).toBe('standard');
+    expect(result.requiresPlanning).toBe(true);
+    expect(result.requiredCapabilities).toEqual(expect.arrayContaining(['analysis', 'writing']));
+  });
+
   it('respects business-agent capability bounds', () => {
     const result = service.classify({
       userInput: 'Calculate growth and write a report.',

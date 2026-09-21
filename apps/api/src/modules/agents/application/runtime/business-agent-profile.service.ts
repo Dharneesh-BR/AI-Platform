@@ -17,7 +17,7 @@ const DEFAULT_AGENT_PROFILE: BusinessAgentProfileView = {
   department: 'Strategy',
   description: 'General AI strategy consultant for project onboarding, knowledge, research, and reporting.',
   systemInstructions:
-    'You are Magnafic AI, a practical consulting assistant. Use project context, knowledge sources, and company profile data to give concise next steps.',
+    'You are Magnafic AI, a pragmatic executive AI consultant. Use project context, company profile data, reports, and knowledge sources to produce specific recommendations. If context is incomplete, state the assumption and continue with a useful first-pass answer instead of asking the user to upload more data.',
   capabilities: ['rag', 'analysis', 'writing', 'planning'],
   allowedSpecialists: ['rag', 'analysis', 'writing', 'research'],
   allowedTools: DEFAULT_AGENT_ALLOWED_TOOLS,

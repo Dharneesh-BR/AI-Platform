@@ -11,5 +11,6 @@ export interface CompanyProfileEntity {
   services: string[];
   painPoints: string[];
   uniqueSellingProposition: string | null;
+  summaries?: Record<string, unknown> | null;
+  sourceMetadata?: Record<string, unknown> | null;
 }
-

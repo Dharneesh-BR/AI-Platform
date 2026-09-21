@@ -21,6 +21,38 @@ function formatValue(value: unknown): string {
   return 'Not provided';
 }
 
+function summaryText(summaries: Record<string, unknown> | null | undefined, key: string): string | null {
+  const value = summaries?.[key];
+  return typeof value === 'string' && value.trim() ? value : null;
+}
+
+function summaryList(summaries: Record<string, unknown> | null | undefined, key: string): string[] {
+  const value = summaries?.[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : [];
+}
+
+function crawledPages(summaries: Record<string, unknown> | null | undefined): Array<{ url: string; title?: string | null }> {
+  const value = summaries?.crawledPages;
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const pages: Array<{ url: string; title?: string | null }> = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const record = item as Record<string, unknown>;
+    if (typeof record.url === 'string') {
+      pages.push({ url: record.url, title: typeof record.title === 'string' ? record.title : null });
+    }
+  }
+
+  return pages;
+}
+
 export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const { session } = useAuth();
   const profileQuery = useCompanyProfile(projectId, {
@@ -30,16 +62,22 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const profile = profileQuery.data;
   const opportunityCount = (profile?.products?.length ?? 0) + (profile?.services?.length ?? 0);
   const riskCount = profile?.painPoints?.length ?? 0;
+  const executiveSummary = summaryText(profile?.summaries, 'executiveSummary');
+  const aiReadiness = summaryText(profile?.summaries, 'aiReadiness');
+  const recommendedRoadmap = summaryList(profile?.summaries, 'recommendedRoadmap');
+  const pages = crawledPages(profile?.summaries);
 
   const profileBlocks = profile
     ? [
-        ['Business Summary', profile.mission],
+        ['Executive Summary', executiveSummary ?? profile.mission],
+        ['AI Readiness', aiReadiness],
         ['Future Direction', profile.vision],
         ['Industry', profile.industry],
         ['AI Opportunity Areas', [...profile.products, ...profile.services]],
         ['Target Users / Customers', profile.targetCustomers],
         ['Operational Gaps', profile.painPoints],
         ['Recommended Positioning', profile.uniqueSellingProposition],
+        ['Recommended Roadmap', recommendedRoadmap],
       ]
     : [];
 
@@ -82,6 +120,12 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
           ) : (
             <p className="section-gap">No report is available yet. Complete onboarding to generate the company report card.</p>
           )}
+          {pages.length ? (
+            <div className="profile-block section-gap">
+              <h3>Public pages reviewed</h3>
+              <p>{pages.slice(0, 5).map((page) => page.title || page.url).join(', ')}</p>
+            </div>
+          ) : null}
         </div>
         <ChatWorkspace projectId={projectId} embedded />
       </section>

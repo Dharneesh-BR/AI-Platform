@@ -144,6 +144,8 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
     services: unknown;
     painPoints: unknown;
     uniqueSellingProposition: string | null;
+    summaries?: unknown;
+    sourceMetadata?: unknown;
   }): CompanyProfileEntity {
     return {
       id: profile.id,
@@ -158,6 +160,8 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
       services: this.asStringArray(profile.services),
       painPoints: this.asStringArray(profile.painPoints),
       uniqueSellingProposition: profile.uniqueSellingProposition,
+      summaries: this.asRecord(profile.summaries),
+      sourceMetadata: this.asRecord(profile.sourceMetadata),
     };
   }
 
@@ -167,5 +171,11 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
 
   private toJsonArray(value: string[] | undefined): Prisma.InputJsonValue {
     return Array.isArray(value) ? value : [];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : null;
   }
 }

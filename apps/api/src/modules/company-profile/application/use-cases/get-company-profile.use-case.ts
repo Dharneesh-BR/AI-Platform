@@ -59,6 +59,13 @@ export class GetCompanyProfileUseCase {
       uniqueSellingProposition: projectProfile.businessGoals.length
         ? projectProfile.businessGoals.join(', ')
         : null,
+      summaries: {
+        executiveSummary: 'Discovery has not completed yet. This draft is based on onboarding basics.',
+        aiReadiness: 'Pending discovery.',
+      },
+      sourceMetadata: {
+        generatedBy: 'onboarding-draft',
+      },
     };
   }
 }

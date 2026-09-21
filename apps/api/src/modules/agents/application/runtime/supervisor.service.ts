@@ -10,13 +10,27 @@ export class SupervisorService {
     if (this.matches(text, ['document', 'uploaded', 'company profile', 'company information', 'available company', 'policy', 'based on our', 'using our'])) {
       requiredCapabilities.add('rag');
     }
-    if (this.matches(text, ['calculate', 'growth', 'percent', '%', 'scenario', 'forecast', 'roi', 'margin'])) {
+    if (this.matches(text, ['calculate', 'percent', '%', 'scenario', 'forecast', 'roi', 'margin'])) {
       requiredCapabilities.add('calculation');
     }
-    if (this.matches(text, ['plan', 'strategy', 'prioritize', 'compare', 'risk', 'opportunities', 'analyze', 'review'])) {
+    if (this.matches(text, [
+      'plan',
+      'strategy',
+      'prioritize',
+      'compare',
+      'risk',
+      'opportunities',
+      'analyze',
+      'review',
+      'readiness',
+      'growth',
+      'report',
+      'assessment',
+      'recommend',
+    ])) {
       requiredCapabilities.add('analysis');
     }
-    if (this.matches(text, ['summary', 'email', 'report', 'stakeholder', 'write', 'draft', 'recommend'])) {
+    if (this.matches(text, ['summary', 'email', 'report', 'stakeholder', 'write', 'draft', 'recommend', 'readiness', 'growth', 'assessment'])) {
       requiredCapabilities.add('writing');
     }
 
