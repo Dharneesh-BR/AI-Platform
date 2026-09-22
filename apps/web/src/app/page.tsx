@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Card, MetricCard, Pill } from '../components/platform/app-shell';
 
-const flow = ['Auth', 'Organizations', 'Projects', 'Onboarding', 'Discovery', 'Research', 'Knowledge', 'LangGraph', 'Reports'];
+const flow = ['Auth', 'Projects', 'Onboarding', 'Discovery', 'Research', 'Knowledge', 'LangGraph', 'Reports'];
 
 export default function HomePage() {
   return (
@@ -40,7 +40,7 @@ export default function HomePage() {
           <p>Connect to the API to view project lifecycle, discovery progress, knowledge, research, chat, and reports.</p>
           <div className="pill-row section-gap">
             <Pill tone="green">API-backed</Pill>
-            <Pill tone="green">Tenant scoped</Pill>
+            <Pill tone="green">User scoped</Pill>
             <Pill tone="amber">Requires database</Pill>
           </div>
         </Card>
@@ -48,7 +48,7 @@ export default function HomePage() {
           <h2>Architecture posture</h2>
           <div className="timeline">
             <div className="timeline-item"><strong>Clean modules</strong><span>Ports + adapters</span></div>
-            <div className="timeline-item"><strong>Tenant-aware</strong><span>Organization scoped</span></div>
+            <div className="timeline-item"><strong>User-owned</strong><span>Project scoped</span></div>
             <div className="timeline-item"><strong>Future-ready</strong><span>LiteLLM + LangGraph</span></div>
           </div>
         </Card>

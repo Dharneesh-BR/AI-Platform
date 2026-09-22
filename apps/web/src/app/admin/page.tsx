@@ -7,7 +7,7 @@ export default function AdminPage() {
         <div>
           <span className="eyebrow">Platform</span>
           <h1>Platform operations cockpit.</h1>
-          <p>Monitor tenants, users, model gateway configuration, audit events, and system health from live APIs.</p>
+          <p>Monitor users, projects, model gateway configuration, audit events, and system health from live APIs.</p>
         </div>
       </header>
       <AdminHealthPanel />

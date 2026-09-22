@@ -166,7 +166,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
         <Card>
           <h2>Documents</h2>
           {knowledgeDocuments.isLoading ? <p>Loading documents...</p> : null}
-          {knowledgeDocuments.isError ? <p>Unable to load documents. Check API session and organization context.</p> : null}
+          {knowledgeDocuments.isError ? <p>Unable to load documents. Check the API session and project access.</p> : null}
           {!knowledgeDocuments.isLoading && documents.length === 0 ? (
             <p>No documents yet. Upload TXT or Markdown to activate vector retrieval.</p>
           ) : null}

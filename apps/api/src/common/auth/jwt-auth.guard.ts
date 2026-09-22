@@ -7,7 +7,6 @@ import {
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_PUBLIC_ROUTE } from './auth.metadata';
-import { PlatformRole } from './platform-role.enum';
 import type { AuthenticatedUser } from './authenticated-user.interface';
 import type { RequestWithAuth } from './request-with-auth.interface';
 
@@ -42,7 +41,6 @@ export class JwtAuthGuard implements CanActivate {
           firebaseUid: 'local-auth-bypass',
           email: 'local-tester@magnafic.ai',
           displayName: 'Local Tester',
-          roles: [PlatformRole.SuperAdmin],
           isAuthBypass: true,
         };
         return true;

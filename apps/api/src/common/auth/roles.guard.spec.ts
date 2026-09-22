@@ -1,7 +1,5 @@
-import { ForbiddenException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { PlatformRole } from './platform-role.enum';
 import { RolesGuard } from './roles.guard';
 
 function contextWithRequest(request: unknown): ExecutionContext {
@@ -13,48 +11,33 @@ function contextWithRequest(request: unknown): ExecutionContext {
 }
 
 describe('RolesGuard', () => {
-  it('allows a required role from the authenticated user', () => {
-    const reflector = {
-      getAllAndOverride: vi.fn().mockReturnValue([PlatformRole.Admin]),
-    };
-    const guard = new RolesGuard(reflector as never);
+  it('allows authenticated users', () => {
+    const guard = new RolesGuard();
 
     expect(
       guard.canActivate(
         contextWithRequest({
-          user: { roles: [PlatformRole.Admin] },
+          user: { id: 'user-1' },
         }),
       ),
     ).toBe(true);
   });
 
-  it('keeps platform super admin authoritative', () => {
-    const reflector = {
-      getAllAndOverride: vi.fn().mockReturnValue([PlatformRole.Admin]),
-    };
-    const guard = new RolesGuard(reflector as never);
+  it('allows auth bypass users', () => {
+    const guard = new RolesGuard();
 
     expect(
       guard.canActivate(
         contextWithRequest({
-          user: { roles: [PlatformRole.SuperAdmin] },
+          user: { id: '00000000-0000-0000-0000-000000000001', isAuthBypass: true },
         }),
       ),
     ).toBe(true);
   });
 
-  it('denies when user roles do not match', () => {
-    const reflector = {
-      getAllAndOverride: vi.fn().mockReturnValue([PlatformRole.Admin]),
-    };
-    const guard = new RolesGuard(reflector as never);
+  it('denies missing authenticated user context', () => {
+    const guard = new RolesGuard();
 
-    expect(() =>
-      guard.canActivate(
-        contextWithRequest({
-          user: { roles: [PlatformRole.Viewer] },
-        }),
-      ),
-    ).toThrow(ForbiddenException);
+    expect(guard.canActivate(contextWithRequest({}))).toBe(false);
   });
 });

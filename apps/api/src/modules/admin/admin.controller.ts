@@ -1,6 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { PlatformRole, Roles } from '../../common/auth';
 import { AdminHealthService } from './admin-health.service';
 import { AdminObservabilityService } from './admin-observability.service';
 
@@ -14,19 +13,16 @@ export class AdminController {
   ) {}
 
   @Get('health')
-  @Roles(PlatformRole.SuperAdmin)
   getHealth() {
     return this.adminHealthService.getHealth();
   }
 
   @Get('agent-runs')
-  @Roles(PlatformRole.SuperAdmin)
   listAgentRuns() {
     return this.observabilityService.listAgentRuns();
   }
 
   @Get('tool-executions')
-  @Roles(PlatformRole.SuperAdmin)
   listToolExecutions() {
     return this.observabilityService.listToolExecutions();
   }

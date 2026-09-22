@@ -8,14 +8,6 @@ datasource db {
   extensions = [pgcrypto, pgvector(map: "vector")]
 }
 
-enum PlatformRole {
-  SUPER_ADMIN
-  ADMIN
-  CONSULTANT
-  CLIENT
-  VIEWER
-}
-
 enum ProjectStatus {
   DRAFT
   ACTIVE
@@ -143,7 +135,6 @@ model User {
   email       String   @unique
   displayName String?
   avatarUrl   String?
-  role        PlatformRole @default(VIEWER)
   lastLoginAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

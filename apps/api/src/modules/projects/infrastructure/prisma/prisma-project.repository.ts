@@ -180,9 +180,12 @@ export class PrismaProjectRepository implements ProjectRepository {
       const documentIds = documents.map((document) => document.id);
       const agentRuns = await tx.agentRun.findMany({
         where: { projectId },
-        select: { id: true },
+        select: { id: true, aiExecutionId: true },
       });
       const agentRunIds = agentRuns.map((run) => run.id);
+      const aiExecutionIds = agentRuns
+        .map((run) => run.aiExecutionId)
+        .filter((id): id is string => Boolean(id));
 
       if (researchPlanIds.length) {
         await tx.validationResult.deleteMany({ where: { researchPlanId: { in: researchPlanIds } } });
@@ -207,9 +210,13 @@ export class PrismaProjectRepository implements ProjectRepository {
         await tx.agentStep.deleteMany({ where: { agentRunId: { in: agentRunIds } } });
       }
 
+      await tx.toolExecution.deleteMany({ where: { projectId } });
       await tx.researchPlan.deleteMany({ where: { projectId } });
       await tx.report.deleteMany({ where: { projectId } });
       await tx.agentRun.deleteMany({ where: { projectId } });
+      if (aiExecutionIds.length) {
+        await tx.aiExecution.deleteMany({ where: { id: { in: aiExecutionIds } } });
+      }
       await tx.conversation.deleteMany({ where: { projectId } });
       await tx.knowledgeDocument.deleteMany({ where: { projectId } });
       await tx.researchSource.deleteMany({ where: { projectId } });

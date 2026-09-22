@@ -86,7 +86,7 @@ export function DashboardWorkspace() {
       <section className="grid-2 section-gap">
         <Card>
           <h2>AI Workforce</h2>
-          <p>{agents.length} live agent profiles are available to this organization.</p>
+          <p>{agents.length} live agent profiles are available to this workspace.</p>
           <div className="pill-row section-gap">
             {agents.slice(0, 6).map((agent) => <Pill key={agent.slug}>{agent.name}</Pill>)}
           </div>

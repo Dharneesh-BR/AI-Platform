@@ -13,8 +13,6 @@ export class JwtPlatformTokenService implements PlatformTokenService {
       firebaseUid: user.firebaseUid,
       email: user.email,
       displayName: user.displayName,
-      roles: user.roles,
     });
   }
 }
-

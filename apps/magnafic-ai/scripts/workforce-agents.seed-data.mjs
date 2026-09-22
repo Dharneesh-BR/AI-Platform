@@ -17,7 +17,7 @@ export const workforceAgents = [
       'calculator',
       'document_lookup',
     ],
-    knowledgeScopes: ['project', 'organization'],
+    knowledgeScopes: ['project', 'workspace'],
     responseFormatInstructions:
       'Write an executive-ready consulting response. Use clear section headings, specific recommendations, caveats for missing information, and next steps that a stakeholder can act on.',
     outputSections: [

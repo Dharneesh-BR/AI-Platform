@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { EmbeddingService } from './embedding.service';
@@ -16,6 +16,9 @@ export interface KnowledgeSearchResult {
 
 @Injectable()
 export class VectorSearchService {
+  private readonly logger = new Logger(VectorSearchService.name);
+  private knowledgeDocumentHasStatusColumn: boolean | undefined;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly embeddingService: EmbeddingService,
@@ -58,6 +61,7 @@ export class VectorSearchService {
     const knowledgeScopeFilter = Prisma.sql`
       AND COALESCE(d.metadata->>'knowledgeScope', 'GENERAL') IN (${Prisma.join(allowedKnowledgeScopes)})
     `;
+    const readyDocumentFilter = await this.getReadyDocumentFilter();
 
     const rows = await this.prisma.$queryRaw<
       Array<{
@@ -87,7 +91,7 @@ export class VectorSearchService {
         AND d."deletedAt" IS NULL
         AND c."deletedAt" IS NULL
         AND c.embedding IS NOT NULL
-        AND d.status = 'READY'
+        ${readyDocumentFilter}
         ${knowledgeScopeFilter}
         ${documentFilter}
       ORDER BY c.embedding <=> ${vector}::vector
@@ -105,5 +109,27 @@ export class VectorSearchService {
         similarity: Number(row.similarity),
         metadata: row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata) ? row.metadata as Record<string, unknown> : {},
       }));
+  }
+
+  private async getReadyDocumentFilter(): Promise<Prisma.Sql> {
+    if (this.knowledgeDocumentHasStatusColumn === undefined) {
+      const rows = await this.prisma.$queryRaw<Array<{ exists: boolean }>>`
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'KnowledgeDocument'
+            AND column_name = 'status'
+        ) AS "exists"
+      `;
+      this.knowledgeDocumentHasStatusColumn = Boolean(rows[0]?.exists);
+      if (!this.knowledgeDocumentHasStatusColumn) {
+        this.logger.warn('KnowledgeDocument.status column is missing; vector search will use embedded chunks without document status filtering.');
+      }
+    }
+
+    return this.knowledgeDocumentHasStatusColumn
+      ? Prisma.sql`AND d.status = 'READY'`
+      : Prisma.empty;
   }
 }

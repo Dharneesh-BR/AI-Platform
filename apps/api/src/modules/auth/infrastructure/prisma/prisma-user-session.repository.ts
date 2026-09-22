@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PlatformRole as PrismaPlatformRole } from '@prisma/client';
-import { PlatformRole, type AuthenticatedUser } from '../../../../common/auth';
+import type { AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { UserSessionRepository } from '../../application/ports/user-session.repository';
 import type { VerifiedIdentity } from '../../application/ports/verified-identity';
@@ -19,13 +18,11 @@ export class PrismaUserSessionRepository implements UserSessionRepository {
         email: identity.email,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
-        role: PrismaPlatformRole.SUPER_ADMIN,
       },
       update: {
         email: identity.email,
         displayName: identity.displayName,
         avatarUrl: identity.avatarUrl,
-        role: PrismaPlatformRole.SUPER_ADMIN,
         lastLoginAt: new Date(),
       },
     });
@@ -39,19 +36,6 @@ export class PrismaUserSessionRepository implements UserSessionRepository {
       firebaseUid: user.firebaseUid,
       email: user.email,
       displayName: user.displayName ?? undefined,
-      roles: [this.mapRole(user.role)],
     };
-  }
-
-  private mapRole(role: PrismaPlatformRole): PlatformRole {
-    const roleMap: Record<PrismaPlatformRole, PlatformRole> = {
-      SUPER_ADMIN: PlatformRole.SuperAdmin,
-      ADMIN: PlatformRole.Admin,
-      CONSULTANT: PlatformRole.Consultant,
-      CLIENT: PlatformRole.Client,
-      VIEWER: PlatformRole.Viewer,
-    };
-
-    return roleMap[role];
   }
 }

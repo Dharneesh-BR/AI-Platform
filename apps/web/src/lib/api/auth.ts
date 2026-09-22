@@ -8,7 +8,6 @@ interface CreateFirebaseSessionResponse {
     id: string;
     email: string;
     displayName?: string;
-    roles: string[];
   };
 }
 

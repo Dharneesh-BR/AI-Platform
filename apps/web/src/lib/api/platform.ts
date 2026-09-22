@@ -116,7 +116,6 @@ export interface UserSummary {
   id: string;
   email: string;
   displayName: string | null;
-  role: string;
 }
 
 export interface AuditLog {
