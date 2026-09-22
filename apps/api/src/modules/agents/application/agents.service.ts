@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { AgentType, AiExecutionStatus, type Prisma } from '@prisma/client';
 import { QueueInfrastructureService } from '../../../common/queue/queue-infrastructure.service';
 import { QUEUE_NAMES } from '../../../common/queue/queue.constants';
@@ -109,11 +109,27 @@ export class AgentsService {
       },
     });
 
-    await this.queueInfrastructure.getQueue<AgentExecutionJobPayload>(QUEUE_NAMES.aiExecution).add(
-      'execute-agent-run',
-      { agentRunId: run.id },
-      this.queueInfrastructure.getJobOptions(run.id),
-    );
+    try {
+      await this.queueInfrastructure.getQueue<AgentExecutionJobPayload>(QUEUE_NAMES.aiExecution).add(
+        'execute-agent-run',
+        { agentRunId: run.id },
+        this.queueInfrastructure.getJobOptions(run.id),
+      );
+    } catch (error) {
+      await this.prisma.agentRun.update({
+        where: { id: run.id },
+        data: {
+          status: AiExecutionStatus.FAILED,
+          errorMessage: 'AI execution queue is unavailable.',
+          completedAt: new Date(),
+          updatedBy: input.actor.id,
+        },
+      });
+
+      throw new ServiceUnavailableException(
+        error instanceof Error ? `AI execution queue is unavailable: ${error.message}` : 'AI execution queue is unavailable.',
+      );
+    }
 
     return this.toRunStatus(run);
   }
