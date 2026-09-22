@@ -36,20 +36,17 @@ export class CompleteOnboardingUseCase {
   ) {}
 
   async execute(
-    organizationId: string,
     projectId: string,
     actor: AuthenticatedUser,
     idempotencyKey?: string,
   ): Promise<{ state: ProjectLifecycleState; discoveryJobId: string }> {
-    const profile = await this.projectProfileRepository.complete(organizationId, projectId, actor);
+    const profile = await this.projectProfileRepository.complete(projectId, actor);
     const state = await this.projectLifecycleRepository.transition(
-      organizationId,
       projectId,
       ProjectLifecycleState.DiscoveryPending,
       actor,
     );
     const job = await this.discoveryJobRepository.createPending(
-      organizationId,
       projectId,
       actor,
       idempotencyKey,
@@ -79,7 +76,6 @@ export class CompleteOnboardingUseCase {
     if (process.env.DISCOVERY_INLINE_DISABLED !== 'true') {
       await this.discoveryWorkerProcessorService.processPayload({
         discoveryJobId: job.id,
-        organizationId,
         projectId,
         actorUserId: actor.id,
         ...discoveryPayload,

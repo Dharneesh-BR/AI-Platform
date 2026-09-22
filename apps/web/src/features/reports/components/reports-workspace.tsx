@@ -12,7 +12,7 @@ interface ReportsWorkspaceProps {
 
 export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const reportsQuery = useReports(projectId, context);
   const createReport = useCreateReport(projectId, context);
   const reports = reportsQuery.data ?? [];

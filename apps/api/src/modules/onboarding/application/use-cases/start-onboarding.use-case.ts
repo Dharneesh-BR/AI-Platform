@@ -13,13 +13,8 @@ export class StartOnboardingUseCase {
     private readonly projectLifecycleRepository: ProjectLifecycleRepository,
   ) {}
 
-  async execute(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<{ state: ProjectLifecycleState }> {
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<{ state: ProjectLifecycleState }> {
     const state = await this.projectLifecycleRepository.transition(
-      organizationId,
       projectId,
       ProjectLifecycleState.Onboarding,
       actor,
@@ -28,4 +23,3 @@ export class StartOnboardingUseCase {
     return { state };
   }
 }
-

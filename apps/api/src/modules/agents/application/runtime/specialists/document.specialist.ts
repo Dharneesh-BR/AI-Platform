@@ -19,9 +19,9 @@ export class DocumentSpecialist implements AgentSpecialist {
     const execution = await this.toolRegistry.execute('document_lookup', this.toolContext(input), {}, async () => {
       const documents = await this.prisma.knowledgeDocument.findMany({
         where: {
-          organizationId: input.organizationId,
           projectId: input.projectId,
           deletedAt: null,
+          project: { createdBy: input.userId, deletedAt: null },
         },
         select: {
           id: true,
@@ -50,7 +50,6 @@ export class DocumentSpecialist implements AgentSpecialist {
   private toolContext(input: SpecialistExecutionInput) {
     return {
       userId: input.userId,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       agentRunId: input.runId,
       agentStepId: input.agentStepId,

@@ -1,6 +1,5 @@
 export interface DiscoveryJobPayload {
   discoveryJobId: string;
-  organizationId: string;
   projectId: string;
   actorUserId?: string | null;
   companyName?: string;

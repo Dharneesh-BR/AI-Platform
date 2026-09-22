@@ -4,7 +4,6 @@ import type { ProjectProfileEntity } from '../../domain/entities/project-profile
 export const PROJECT_PROFILE_REPOSITORY = Symbol('PROJECT_PROFILE_REPOSITORY');
 
 export interface UpsertProjectProfileInput {
-  organizationId: string;
   projectId: string;
   actor: AuthenticatedUser;
   companyName: string;
@@ -23,20 +22,8 @@ export interface UpsertProjectProfileInput {
 }
 
 export interface ProjectProfileRepository {
-  findByProjectId(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity | null>;
-  findOrCreateDefault(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity>;
+  findByProjectId(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity | null>;
+  findOrCreateDefault(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity>;
   upsert(input: UpsertProjectProfileInput): Promise<ProjectProfileEntity>;
-  complete(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity>;
+  complete(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity>;
 }

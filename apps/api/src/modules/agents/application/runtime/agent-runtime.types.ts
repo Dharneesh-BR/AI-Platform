@@ -45,7 +45,6 @@ export type VerificationResult = z.infer<typeof VerificationResultSchema>;
 
 export interface BusinessAgentProfileView {
   id?: string;
-  organizationId?: string | null;
   source?: 'database' | 'sanity';
   name: string;
   slug: string;
@@ -78,7 +77,6 @@ export interface AgentSourceReference {
 export interface SpecialistExecutionInput {
   runId: string;
   agentStepId?: string;
-  organizationId: string;
   projectId: string;
   userId: string;
   permissions: string[];
@@ -102,7 +100,6 @@ export interface SpecialistExecutionResult {
 }
 
 export interface AgentRuntimeInput {
-  organizationId: string;
   projectId: string;
   userId: string;
   conversationId?: string;
@@ -123,7 +120,6 @@ export interface AgentRuntimeResult {
 
 export interface AgentGraphState {
   runId: string;
-  organizationId: string;
   projectId: string;
   userId: string;
   permissions: string[];

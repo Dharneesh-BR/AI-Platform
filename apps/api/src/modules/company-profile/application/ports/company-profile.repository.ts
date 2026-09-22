@@ -4,7 +4,6 @@ import type { CompanyProfileEntity } from '../../domain/entities/company-profile
 export const COMPANY_PROFILE_REPOSITORY = Symbol('COMPANY_PROFILE_REPOSITORY');
 
 export interface UpdateCompanyProfileInput {
-  organizationId: string;
   projectId: string;
   profileId: string;
   actor: AuthenticatedUser;
@@ -19,16 +18,7 @@ export interface UpdateCompanyProfileInput {
 }
 
 export interface CompanyProfileRepository {
-  findLatestForProject(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity | null>;
+  findLatestForProject(projectId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity | null>;
   updateDraft(input: UpdateCompanyProfileInput): Promise<CompanyProfileEntity>;
-  approve(
-    organizationId: string,
-    projectId: string,
-    profileId: string,
-    actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity>;
+  approve(projectId: string, profileId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity>;
 }

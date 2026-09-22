@@ -5,7 +5,7 @@ import { useAuth } from '../../../lib/auth/session';
 
 export function AdminUsersPanel() {
   const { session } = useAuth();
-  const usersQuery = useUsers({ accessToken: session.accessToken, organizationId: session.organizationId });
+  const usersQuery = useUsers({ accessToken: session.accessToken });
   const users = usersQuery.data ?? [];
 
   return (

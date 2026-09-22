@@ -74,7 +74,7 @@ export class ToolRegistryService {
     output?: unknown,
     errorCode?: string,
   ) {
-    if (!context.agentRunId || !context.organizationId || !context.projectId || !context.userId) {
+    if (!context.agentRunId || !context.projectId || !context.userId) {
       return null;
     }
 
@@ -82,7 +82,6 @@ export class ToolRegistryService {
       data: {
         agentRunId: context.agentRunId,
         agentStepId: context.agentStepId,
-        organizationId: context.organizationId,
         projectId: context.projectId,
         userId: context.userId,
         agentProfileId: context.agentProfileId,

@@ -1,14 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import {
-  CurrentTenant,
-  CurrentUser,
-  PlatformRole,
-  RequireTenant,
-  type AuthenticatedUser,
-  type RequestTenantContext,
-} from '../../../../common/auth';
+import { CurrentUser, type AuthenticatedUser } from '../../../../common/auth';
 import { GetProjectKnowledgeUseCase } from '../../application/use-cases/get-project-knowledge.use-case';
 import { CreateProjectKnowledgeSourceUseCase } from '../../application/use-cases/create-project-knowledge-source.use-case';
 import { CreateProjectKnowledgeSourceDto } from '../dto/create-project-knowledge-source.dto';
@@ -25,7 +18,6 @@ interface UploadedKnowledgeFile {
 
 @ApiBearerAuth()
 @ApiTags('Knowledge Base')
-@RequireTenant()
 @Controller('projects/:projectId/knowledge')
 export class ProjectKnowledgeController {
   constructor(
@@ -38,21 +30,18 @@ export class ProjectKnowledgeController {
   @Get()
   getProjectKnowledge(
     @Param('projectId') projectId: string,
-    @CurrentTenant() tenant: RequestTenantContext,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.getProjectKnowledgeUseCase.execute(tenant.organizationId, projectId, user);
+    return this.getProjectKnowledgeUseCase.execute(projectId, user);
   }
 
   @Post()
   createProjectKnowledgeSource(
     @Param('projectId') projectId: string,
     @Body() dto: CreateProjectKnowledgeSourceDto,
-    @CurrentTenant() tenant: RequestTenantContext,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.createProjectKnowledgeSourceUseCase.execute({
-      organizationId: tenant.organizationId,
       projectId,
       actor: user,
       title: dto.title,
@@ -66,9 +55,9 @@ export class ProjectKnowledgeController {
   @Get('documents')
   listDocuments(
     @Param('projectId') projectId: string,
-    @CurrentTenant() tenant: RequestTenantContext,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.knowledgeDocumentService.list(tenant.organizationId, projectId);
+    return this.knowledgeDocumentService.list(projectId, user);
   }
 
   @Post('documents')
@@ -76,11 +65,9 @@ export class ProjectKnowledgeController {
   uploadDocument(
     @Param('projectId') projectId: string,
     @UploadedFile() file: UploadedKnowledgeFile,
-    @CurrentTenant() tenant: RequestTenantContext,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.knowledgeDocumentService.upload({
-      organizationId: tenant.organizationId,
       projectId,
       actor: user,
       originalFilename: file.originalname,
@@ -94,52 +81,42 @@ export class ProjectKnowledgeController {
   getDocument(
     @Param('projectId') projectId: string,
     @Param('documentId') documentId: string,
-    @CurrentTenant() tenant: RequestTenantContext,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.knowledgeDocumentService.get(tenant.organizationId, projectId, documentId);
+    return this.knowledgeDocumentService.get(projectId, documentId, user);
   }
 
   @Post('documents/:documentId/retry')
   retryDocument(
     @Param('projectId') projectId: string,
     @Param('documentId') documentId: string,
-    @CurrentTenant() tenant: RequestTenantContext,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.knowledgeDocumentService.retry(tenant.organizationId, projectId, documentId, user);
+    return this.knowledgeDocumentService.retry(projectId, documentId, user);
   }
 
   @Delete('documents/:documentId')
   archiveDocument(
     @Param('projectId') projectId: string,
     @Param('documentId') documentId: string,
-    @CurrentTenant() tenant: RequestTenantContext,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    return this.knowledgeDocumentService.archive(tenant.organizationId, projectId, documentId, user);
+    return this.knowledgeDocumentService.archive(projectId, documentId, user);
   }
 
   @Post('search')
   searchKnowledge(
     @Param('projectId') projectId: string,
     @Body() dto: SearchKnowledgeDto,
-    @CurrentTenant() tenant: RequestTenantContext,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.vectorSearchService.search({
-      organizationId: tenant.organizationId,
       projectId,
+      userId: user.id,
       query: dto.query,
       limit: dto.limit,
       documentId: dto.documentId,
-      allowedKnowledgeScopes: this.allowedKnowledgeScopesForRole(tenant.role),
+      allowedKnowledgeScopes: ['GENERAL', 'SALES', 'MARKETING', 'FINANCE', 'LEGAL', 'HR', 'PRODUCTION', 'EXECUTIVE'],
     });
-  }
-
-  private allowedKnowledgeScopesForRole(role?: PlatformRole): string[] {
-    if (role === PlatformRole.SuperAdmin || role === PlatformRole.Admin || role === PlatformRole.Consultant) {
-      return ['GENERAL', 'SALES', 'MARKETING', 'FINANCE', 'LEGAL', 'HR', 'PRODUCTION', 'EXECUTIVE'];
-    }
-
-    return ['GENERAL'];
   }
 }

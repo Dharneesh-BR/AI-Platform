@@ -12,16 +12,15 @@ import type { CompanyProfileEntity } from '../../domain/entities/company-profile
 export class PrismaCompanyProfileRepository implements CompanyProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findLatestForProject(
-    organizationId: string,
-    projectId: string,
-    _actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity | null> {
+  async findLatestForProject(projectId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity | null> {
     const profile = await this.prisma.companyProfile.findFirst({
       where: {
-        organizationId,
         projectId,
         deletedAt: null,
+        project: {
+          createdBy: actor.id,
+          deletedAt: null,
+        },
       },
       orderBy: {
         version: 'desc',
@@ -35,9 +34,12 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
     const existing = await this.prisma.companyProfile.findFirst({
       where: {
         id: input.profileId,
-        organizationId: input.organizationId,
         projectId: input.projectId,
         deletedAt: null,
+        project: {
+          createdBy: input.actor.id,
+          deletedAt: null,
+        },
       },
     });
 
@@ -55,14 +57,26 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
     return this.mapProfile(draftProfile);
   }
 
-  async approve(
-    organizationId: string,
-    projectId: string,
-    profileId: string,
-    actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity> {
+  async approve(projectId: string, profileId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity> {
+    const existing = await this.prisma.companyProfile.findFirst({
+      where: {
+        id: profileId,
+        projectId,
+        deletedAt: null,
+        project: {
+          createdBy: actor.id,
+          deletedAt: null,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Company profile not found.');
+    }
+
     const profile = await this.prisma.companyProfile.update({
-      where: { id: profileId },
+      where: { id: existing.id },
       data: {
         isApproved: true,
         approvedAt: new Date(),
@@ -70,14 +84,10 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
       },
     });
 
-    if (profile.organizationId !== organizationId || profile.projectId !== projectId) {
-      throw new NotFoundException('Company profile not found.');
-    }
-
     await this.prisma.project.updateMany({
       where: {
         id: projectId,
-        organizationId,
+        createdBy: actor.id,
         deletedAt: null,
         lifecycleState: {
           in: [ProjectLifecycleState.DISCOVERY_COMPLETED, ProjectLifecycleState.KNOWLEDGE_READY],
@@ -98,8 +108,6 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
   ) {
     return this.prisma.companyProfile.create({
       data: {
-        tenantId: input.organizationId,
-        organizationId: input.organizationId,
         projectId: input.projectId,
         version: currentVersion + 1,
         isApproved: false,

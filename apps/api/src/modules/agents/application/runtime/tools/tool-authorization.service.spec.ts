@@ -25,7 +25,6 @@ const businessAgent: BusinessAgentProfileView = {
 function context(overrides: Partial<ToolExecutionContext> = {}): ToolExecutionContext {
   return {
     userId: 'user-1',
-    organizationId: 'org-1',
     projectId: 'project-1',
     agentRunId: 'run-1',
     agentSlug: businessAgent.slug,

@@ -11,7 +11,7 @@ interface ResearchWorkspaceProps {
 
 export function ResearchWorkspace({ projectId }: ResearchWorkspaceProps) {
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const plansQuery = useResearchPlans(projectId, context);
   const createPlan = useCreateResearchPlan(projectId, context);
   const [message, setMessage] = useState('Create a research plan after API auth is enabled.');

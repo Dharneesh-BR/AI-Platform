@@ -6,7 +6,7 @@ import { usePromptTemplates } from '../../../lib/api/query-hooks';
 
 export function PromptLibraryPanel() {
   const { session } = useAuth();
-  const promptsQuery = usePromptTemplates({ accessToken: session.accessToken, organizationId: session.organizationId });
+  const promptsQuery = usePromptTemplates({ accessToken: session.accessToken });
   const prompts = promptsQuery.data ?? [];
 
   return (

@@ -9,7 +9,7 @@ import { useAuth } from '../../../lib/auth/session';
 export function CreateProjectCard() {
   const router = useRouter();
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const createProject = useCreateProject(context);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');

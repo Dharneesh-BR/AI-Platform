@@ -10,7 +10,6 @@ export class AdminObservabilityService {
       where: { deletedAt: null },
       select: {
         id: true,
-        organizationId: true,
         projectId: true,
         agentSlug: true,
         status: true,
@@ -53,7 +52,6 @@ export class AdminObservabilityService {
         id: true,
         agentRunId: true,
         agentStepId: true,
-        organizationId: true,
         projectId: true,
         userId: true,
         agentProfileId: true,

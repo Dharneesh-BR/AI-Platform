@@ -11,7 +11,6 @@ export enum ProjectLifecycleStateDto {
 
 export interface ProjectSummary {
   id: string;
-  organizationId: string;
   name: string;
   slug: string;
   description: string | null;

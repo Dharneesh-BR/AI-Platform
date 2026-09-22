@@ -5,9 +5,13 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 export class AgentContextService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async buildCompanyContext(input: { organizationId: string; projectId: string }): Promise<string> {
+  async buildCompanyContext(input: { projectId: string; userId: string }): Promise<string> {
     const project = await this.prisma.project.findFirst({
-      where: { id: input.projectId, organizationId: input.organizationId, deletedAt: null },
+      where: {
+        id: input.projectId,
+        createdBy: input.userId,
+        deletedAt: null,
+      },
       include: {
         projectProfile: true,
         companyProfiles: { orderBy: { version: 'desc' }, take: 1 },

@@ -6,7 +6,7 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(organizationId: string, requesterRoles: PlatformRole[]) {
+  list(requesterRoles: PlatformRole[], requesterId: string) {
     if (requesterRoles.includes(PlatformRole.SuperAdmin)) {
       return this.prisma.user.findMany({
         where: { deletedAt: null },
@@ -17,13 +17,8 @@ export class UsersService {
 
     return this.prisma.user.findMany({
       where: {
+        id: requesterId,
         deletedAt: null,
-        memberships: {
-          some: {
-            organizationId,
-            deletedAt: null,
-          },
-        },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,

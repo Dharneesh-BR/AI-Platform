@@ -6,7 +6,7 @@ import { useAuth } from '../../../lib/auth/session';
 
 export function ModelManagementPanel() {
   const { session } = useAuth();
-  const providersQuery = useModelProviders({ accessToken: session.accessToken, organizationId: session.organizationId });
+  const providersQuery = useModelProviders({ accessToken: session.accessToken });
   const providers = providersQuery.data ?? [];
   const modelCount = providers.reduce((total, provider) => total + provider.models.length, 0);
 

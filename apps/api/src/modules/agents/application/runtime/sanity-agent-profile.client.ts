@@ -105,7 +105,6 @@ export class SanityAgentProfileClient {
 
     return {
       id: undefined,
-      organizationId: null,
       source: 'sanity',
       name: document.name,
       slug: document.slug,

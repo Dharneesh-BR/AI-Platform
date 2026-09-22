@@ -30,7 +30,6 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
   const { session } = useAuth();
   const authContext = {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   };
   const knowledgeSources = useKnowledgeSources(projectId, authContext);
   const knowledgeDocuments = useKnowledgeDocuments(projectId, authContext);

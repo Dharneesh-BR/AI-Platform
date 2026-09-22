@@ -2,7 +2,6 @@
 import type { ProjectLifecycleState } from '@platform/domain';
 
 export interface ProjectEntity extends AuditableEntity {
-  organizationId: string;
   name: string;
   slug: string;
   description: string | null;

@@ -14,7 +14,6 @@ export function ReportDetailWorkspace({ projectId, reportId }: ReportDetailWorks
   const { session } = useAuth();
   const reportQuery = useReport(reportId, {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const report = reportQuery.data;
 

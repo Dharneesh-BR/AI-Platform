@@ -10,7 +10,6 @@ import { LocalKnowledgeStorageService } from '../../infrastructure/storage/local
 import { DocumentProcessingService } from './document-processing.service';
 
 export interface UploadKnowledgeDocumentInput {
-  organizationId: string;
   projectId: string;
   actor: AuthenticatedUser;
   originalFilename: string;
@@ -31,19 +30,24 @@ export class KnowledgeDocumentService {
     private readonly documentProcessingService: DocumentProcessingService,
   ) {}
 
-  async list(organizationId: string, projectId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async list(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     return this.prisma.knowledgeDocument.findMany({
-      where: { organizationId, projectId, deletedAt: null },
+      where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       orderBy: { createdAt: 'desc' },
       include: { _count: { select: { chunks: true } } },
     });
   }
 
-  async get(organizationId: string, projectId: string, documentId: string) {
+  async get(projectId: string, documentId: string, actor: AuthenticatedUser) {
     const document = await this.prisma.knowledgeDocument.findFirst({
-      where: { id: documentId, organizationId, projectId, deletedAt: null },
+      where: {
+        id: documentId,
+        projectId,
+        deletedAt: null,
+        project: { createdBy: actor.id, deletedAt: null },
+      },
       include: { _count: { select: { chunks: true } } },
     });
 
@@ -55,12 +59,11 @@ export class KnowledgeDocumentService {
   }
 
   async upload(input: UploadKnowledgeDocumentInput) {
-    await this.ensureProject(input.organizationId, input.projectId);
+    await this.ensureProject(input.projectId, input.actor.id);
     this.validateUpload(input);
 
     const document = await this.prisma.knowledgeDocument.create({
       data: {
-        organizationId: input.organizationId,
         projectId: input.projectId,
         sourceType: this.sourceTypeForMime(input.mimeType),
         title: input.originalFilename,
@@ -76,7 +79,6 @@ export class KnowledgeDocumentService {
     });
 
     const storageResult = await this.storage.save({
-      organizationId: input.organizationId,
       projectId: input.projectId,
       documentId: document.id,
       originalFilename: input.originalFilename,
@@ -96,7 +98,6 @@ export class KnowledgeDocumentService {
 
     await this.enqueueProcessing({
       documentId: document.id,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       actorUserId: input.actor.id,
     });
@@ -104,8 +105,8 @@ export class KnowledgeDocumentService {
     return updatedDocument;
   }
 
-  async retry(organizationId: string, projectId: string, documentId: string, actor: AuthenticatedUser) {
-    const document = await this.get(organizationId, projectId, documentId);
+  async retry(projectId: string, documentId: string, actor: AuthenticatedUser) {
+    const document = await this.get(projectId, documentId, actor);
 
     if (!document.storageKey) {
       throw new BadRequestException('Document does not have a stored file to process.');
@@ -120,12 +121,12 @@ export class KnowledgeDocumentService {
       },
     });
 
-    await this.enqueueProcessing({ documentId, organizationId, projectId, actorUserId: actor.id });
-    return this.get(organizationId, projectId, documentId);
+    await this.enqueueProcessing({ documentId, projectId, actorUserId: actor.id });
+    return this.get(projectId, documentId, actor);
   }
 
-  async archive(organizationId: string, projectId: string, documentId: string, actor: AuthenticatedUser) {
-    await this.get(organizationId, projectId, documentId);
+  async archive(projectId: string, documentId: string, actor: AuthenticatedUser) {
+    await this.get(projectId, documentId, actor);
     const now = new Date();
 
     await this.prisma.$transaction([
@@ -151,7 +152,6 @@ export class KnowledgeDocumentService {
   }
 
   async createManualSource(input: {
-    organizationId: string;
     projectId: string;
     actor: AuthenticatedUser;
     title: string;
@@ -160,11 +160,10 @@ export class KnowledgeDocumentService {
     sourceId?: string;
     metadata?: Record<string, unknown>;
   }) {
-    await this.ensureProject(input.organizationId, input.projectId);
+    await this.ensureProject(input.projectId, input.actor.id);
 
     const document = await this.prisma.knowledgeDocument.create({
       data: {
-        organizationId: input.organizationId,
         projectId: input.projectId,
         sourceType: DocumentSourceType.TEXT,
         title: input.title,
@@ -183,7 +182,6 @@ export class KnowledgeDocumentService {
     });
 
     const storageResult = await this.storage.save({
-      organizationId: input.organizationId,
       projectId: input.projectId,
       documentId: document.id,
       originalFilename: `${input.title}.txt`,
@@ -201,8 +199,6 @@ export class KnowledgeDocumentService {
 
     const source = await this.prisma.researchSource.create({
       data: {
-        tenantId: input.organizationId,
-        organizationId: input.organizationId,
         projectId: input.projectId,
         type: input.type ?? ResearchSourceType.UPLOADED_DOCUMENT,
         sourceId: document.id,
@@ -223,7 +219,6 @@ export class KnowledgeDocumentService {
 
     await this.enqueueProcessing({
       documentId: document.id,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       actorUserId: input.actor.id,
     });
@@ -289,9 +284,9 @@ export class KnowledgeDocumentService {
     }
   }
 
-  private async ensureProject(organizationId: string, projectId: string): Promise<void> {
+  private async ensureProject(projectId: string, actorUserId: string): Promise<void> {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actorUserId, deletedAt: null },
       select: { id: true },
     });
 

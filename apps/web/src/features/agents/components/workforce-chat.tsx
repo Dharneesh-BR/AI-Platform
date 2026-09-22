@@ -96,7 +96,7 @@ function conversationAgentSlug(conversation: Conversation): string | undefined {
 
 export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceChatProps) {
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const agentsQuery = useBusinessAgents(context);
   const projectsQuery = useProjects(context);
   const agents = agentsQuery.data?.length ? agentsQuery.data : [defaultAgent];

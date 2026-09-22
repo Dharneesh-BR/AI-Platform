@@ -13,12 +13,7 @@ export class ApproveCompanyProfileUseCase {
     private readonly companyProfileRepository: CompanyProfileRepository,
   ) {}
 
-  execute(
-    organizationId: string,
-    projectId: string,
-    profileId: string,
-    actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity> {
-    return this.companyProfileRepository.approve(organizationId, projectId, profileId, actor);
+  execute(projectId: string, profileId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity> {
+    return this.companyProfileRepository.approve(projectId, profileId, actor);
   }
 }

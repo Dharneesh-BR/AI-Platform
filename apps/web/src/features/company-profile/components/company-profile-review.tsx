@@ -57,7 +57,6 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const { session } = useAuth();
   const profileQuery = useCompanyProfile(projectId, {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const profile = profileQuery.data;
   const opportunityCount = (profile?.products?.length ?? 0) + (profile?.services?.length ?? 0);

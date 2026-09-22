@@ -4,10 +4,5 @@ import type { ResearchSourceEntity } from '../../domain/entities/research-source
 export const RESEARCH_SOURCE_REPOSITORY = Symbol('RESEARCH_SOURCE_REPOSITORY');
 
 export interface ResearchSourceRepository {
-  listForProject(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ResearchSourceEntity[]>;
+  listForProject(projectId: string, actor: AuthenticatedUser): Promise<ResearchSourceEntity[]>;
 }
-

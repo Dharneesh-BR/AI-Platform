@@ -4,7 +4,6 @@ import { VerificationService } from './verification.service';
 
 const baseState: AgentGraphState = {
   runId: 'run-1',
-  organizationId: 'org-1',
   projectId: 'project-1',
   userId: 'user-1',
   permissions: ['knowledge:read', 'company:read', 'report:read', 'analysis:run', 'calculator:execute'],

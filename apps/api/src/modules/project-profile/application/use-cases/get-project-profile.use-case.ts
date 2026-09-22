@@ -13,15 +13,7 @@ export class GetProjectProfileUseCase {
     private readonly projectProfileRepository: ProjectProfileRepository,
   ) {}
 
-  async execute(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity> {
-    return this.projectProfileRepository.findOrCreateDefault(
-      organizationId,
-      projectId,
-      actor,
-    );
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity> {
+    return this.projectProfileRepository.findOrCreateDefault(projectId, actor);
   }
 }

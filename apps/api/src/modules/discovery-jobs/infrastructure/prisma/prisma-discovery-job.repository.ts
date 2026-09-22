@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { DiscoveryJobEntity } from '../../domain/entities/discovery-job.entity';
@@ -9,15 +9,14 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async createPending(
-    organizationId: string,
     projectId: string,
     actor: AuthenticatedUser,
     idempotencyKey?: string,
   ): Promise<DiscoveryJobEntity> {
+    await this.ensureOwnedProject(projectId, actor);
+
     const job = await this.prisma.discoveryJob.create({
       data: {
-        tenantId: organizationId,
-        organizationId,
         projectId,
         idempotencyKey,
         status: 'PENDING',
@@ -32,15 +31,17 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
   }
 
   async findLatest(
-    organizationId: string,
     projectId: string,
-    _actor: AuthenticatedUser,
+    actor: AuthenticatedUser,
   ): Promise<DiscoveryJobEntity | null> {
     const job = await this.prisma.discoveryJob.findFirst({
       where: {
-        organizationId,
         projectId,
         deletedAt: null,
+        project: {
+          createdBy: actor.id,
+          deletedAt: null,
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -48,6 +49,21 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
     });
 
     return job ? this.mapJob(job) : null;
+  }
+
+  private async ensureOwnedProject(projectId: string, actor: AuthenticatedUser): Promise<void> {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: projectId,
+        createdBy: actor.id,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
   }
 
   private defaultSteps(): Array<{ key: string; label: string; status: string }> {
@@ -64,8 +80,6 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
 
   private mapJob(job: {
     id: string;
-    tenantId: string;
-    organizationId: string;
     projectId: string;
     status: string;
     progress: number;
@@ -76,8 +90,6 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
   }): DiscoveryJobEntity {
     return {
       id: job.id,
-      tenantId: job.tenantId,
-      organizationId: job.organizationId,
       projectId: job.projectId,
       status: job.status,
       progress: job.progress,

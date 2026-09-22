@@ -12,7 +12,7 @@ interface OnboardingActionsProps {
 export function OnboardingActions({ projectId }: OnboardingActionsProps) {
   const router = useRouter();
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const upsertProfile = useUpsertProjectProfile(projectId, context);
   const completeOnboarding = useCompleteOnboarding(projectId, context);
   const [message, setMessage] = useState('Autosave-ready. Complete onboarding to enqueue discovery.');

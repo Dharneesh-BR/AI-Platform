@@ -19,13 +19,11 @@ export class RetryDiscoveryUseCase {
   ) {}
 
   async execute(
-    organizationId: string,
     projectId: string,
     actor: AuthenticatedUser,
     idempotencyKey?: string,
   ): Promise<{ discoveryJobId: string }> {
     const job = await this.discoveryJobRepository.createPending(
-      organizationId,
       projectId,
       actor,
       idempotencyKey,
@@ -34,4 +32,3 @@ export class RetryDiscoveryUseCase {
     return { discoveryJobId: job.id };
   }
 }
-

@@ -6,7 +6,7 @@ import { useAuth } from '../../../lib/auth/session';
 
 export function AuditLogsPanel() {
   const { session } = useAuth();
-  const auditQuery = useAuditLogs({ accessToken: session.accessToken, organizationId: session.organizationId });
+  const auditQuery = useAuditLogs({ accessToken: session.accessToken });
   const logs = auditQuery.data ?? [];
 
   return (

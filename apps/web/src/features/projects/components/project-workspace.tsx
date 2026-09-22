@@ -22,11 +22,9 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const normalizedProjectId = projectId;
   const context = {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   };
   const projectQuery = useProject(normalizedProjectId, {
     accessToken: context.accessToken,
-    organizationId: context.organizationId,
   });
   const deleteProject = useDeleteProject(normalizedProjectId, context);
   const [deleteMessage, setDeleteMessage] = useState('');

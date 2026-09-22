@@ -25,7 +25,6 @@ export class DocumentProcessingService {
     const document = await this.prisma.knowledgeDocument.findFirst({
       where: {
         id: payload.documentId,
-        organizationId: payload.organizationId,
         projectId: payload.projectId,
         deletedAt: null,
       },
@@ -139,8 +138,6 @@ export class DocumentProcessingService {
       } else {
         await this.prisma.researchSource.create({
           data: {
-            tenantId: payload.organizationId,
-            organizationId: payload.organizationId,
             projectId: payload.projectId,
             type: ResearchSourceType.UPLOADED_DOCUMENT,
             sourceId: document.id,

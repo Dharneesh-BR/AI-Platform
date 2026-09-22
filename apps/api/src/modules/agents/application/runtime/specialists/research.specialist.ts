@@ -26,7 +26,6 @@ export class ResearchSpecialist implements AgentSpecialist {
   private toolContext(input: SpecialistExecutionInput) {
     return {
       userId: input.userId,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       agentRunId: input.runId,
       agentStepId: input.agentStepId,

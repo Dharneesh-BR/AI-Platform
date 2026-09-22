@@ -6,7 +6,7 @@ import { useAuth } from '../../../lib/auth/session';
 
 export function BillingPanel() {
   const { session } = useAuth();
-  const billingQuery = useBillingAccount({ accessToken: session.accessToken, organizationId: session.organizationId });
+  const billingQuery = useBillingAccount({ accessToken: session.accessToken });
   const account = billingQuery.data;
   const plan = account?.planKey ?? '—';
   const status = account?.status ?? 'Unavailable';

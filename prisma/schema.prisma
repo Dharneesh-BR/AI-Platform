@@ -16,13 +16,6 @@ enum PlatformRole {
   VIEWER
 }
 
-enum MembershipStatus {
-  INVITED
-  ACTIVE
-  SUSPENDED
-  REMOVED
-}
-
 enum ProjectStatus {
   DRAFT
   ACTIVE
@@ -158,64 +151,13 @@ model User {
   createdBy   String?  @db.Uuid
   updatedBy   String?  @db.Uuid
 
-  memberships OrganizationMembership[]
-  messages    ConversationMessage[]
+  messages ConversationMessage[]
 
-  @@index([deletedAt])
-}
-
-model Organization {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String
-  slug        String    @unique
-  description String?
-  settings    Json      @default("{}")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  createdBy   String?   @db.Uuid
-  updatedBy   String?   @db.Uuid
-
-  memberships OrganizationMembership[]
-  projects    Project[]
-  documents   KnowledgeDocument[]
-  reports     Report[]
-  billing     BillingAccount?
-  projectProfiles ProjectProfile[]
-  discoveryJobs   DiscoveryJob[]
-  companyProfiles CompanyProfile[]
-  researchSources ResearchSource[]
-  businessAgentProfiles BusinessAgentProfile[]
-  agentRuns   AgentRun[]
-
-  @@index([deletedAt])
-}
-
-model OrganizationMembership {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String           @db.Uuid
-  userId         String           @db.Uuid
-  role           PlatformRole
-  status         MembershipStatus @default(INVITED)
-  invitedAt      DateTime?
-  joinedAt       DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  deletedAt      DateTime?
-  createdBy      String?          @db.Uuid
-  updatedBy      String?          @db.Uuid
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
-
-  @@unique([organizationId, userId])
-  @@index([organizationId, role])
   @@index([deletedAt])
 }
 
 model Project {
   id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String        @db.Uuid
   name           String
   slug           String
   description    String?
@@ -228,7 +170,6 @@ model Project {
   createdBy      String?       @db.Uuid
   updatedBy      String?       @db.Uuid
 
-  organization  Organization          @relation(fields: [organizationId], references: [id])
   researchPlans ResearchPlan[]
   conversations Conversation[]
   documents     KnowledgeDocument[]
@@ -242,16 +183,14 @@ model Project {
   companyGoals        CompanyGoal[]
   researchSources     ResearchSource[]
 
-  @@unique([organizationId, slug])
-  @@index([organizationId, status])
-  @@index([organizationId, lifecycleState])
+  @@unique([createdBy, slug])
+  @@index([createdBy, status])
+  @@index([createdBy, lifecycleState])
   @@index([deletedAt])
 }
 
 model ProjectProfile {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @db.Uuid
-  organizationId String    @db.Uuid
   projectId      String    @unique @db.Uuid
   companyName    String
   websiteUrl     String?
@@ -273,19 +212,14 @@ model ProjectProfile {
   createdBy      String?   @db.Uuid
   updatedBy      String?   @db.Uuid
 
-  organization Organization @relation(fields: [organizationId], references: [id])
   project      Project      @relation(fields: [projectId], references: [id])
 
-  @@index([tenantId])
-  @@index([organizationId])
   @@index([projectId])
   @@index([deletedAt])
 }
 
 model DiscoveryJob {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String          @db.Uuid
-  organizationId String          @db.Uuid
   projectId      String          @db.Uuid
   status         DiscoveryStatus @default(PENDING)
   idempotencyKey String?
@@ -304,20 +238,15 @@ model DiscoveryJob {
   createdBy      String?         @db.Uuid
   updatedBy      String?         @db.Uuid
 
-  organization Organization @relation(fields: [organizationId], references: [id])
   project      Project      @relation(fields: [projectId], references: [id])
 
   @@unique([projectId, idempotencyKey])
-  @@index([tenantId])
-  @@index([organizationId, status])
   @@index([projectId, status])
   @@index([deletedAt])
 }
 
 model CompanyProfile {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String    @db.Uuid
-  organizationId String    @db.Uuid
   projectId      String    @db.Uuid
   version        Int
   isApproved     Boolean   @default(false)
@@ -338,23 +267,18 @@ model CompanyProfile {
   createdBy      String?   @db.Uuid
   updatedBy      String?   @db.Uuid
 
-  organization Organization @relation(fields: [organizationId], references: [id])
   project      Project      @relation(fields: [projectId], references: [id])
   technologies CompanyTechnology[]
   competitors  CompanyCompetitor[]
   goals        CompanyGoal[]
 
   @@unique([projectId, version])
-  @@index([tenantId])
-  @@index([organizationId, isApproved])
   @@index([projectId, isApproved])
   @@index([deletedAt])
 }
 
 model CompanyTechnology {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @db.Uuid
-  organizationId   String    @db.Uuid
   projectId        String    @db.Uuid
   companyProfileId String?   @db.Uuid
   name             String
@@ -370,16 +294,12 @@ model CompanyTechnology {
   project        Project         @relation(fields: [projectId], references: [id])
   companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
 
-  @@index([tenantId])
-  @@index([organizationId])
   @@index([projectId, category])
   @@index([deletedAt])
 }
 
 model CompanyCompetitor {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @db.Uuid
-  organizationId   String    @db.Uuid
   projectId        String    @db.Uuid
   companyProfileId String?   @db.Uuid
   name             String
@@ -397,16 +317,12 @@ model CompanyCompetitor {
   project        Project         @relation(fields: [projectId], references: [id])
   companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
 
-  @@index([tenantId])
-  @@index([organizationId])
   @@index([projectId])
   @@index([deletedAt])
 }
 
 model CompanyGoal {
   id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId         String    @db.Uuid
-  organizationId   String    @db.Uuid
   projectId        String    @db.Uuid
   companyProfileId String?   @db.Uuid
   title            String
@@ -422,16 +338,12 @@ model CompanyGoal {
   project        Project         @relation(fields: [projectId], references: [id])
   companyProfile CompanyProfile? @relation(fields: [companyProfileId], references: [id])
 
-  @@index([tenantId])
-  @@index([organizationId])
   @@index([projectId, priority])
   @@index([deletedAt])
 }
 
 model ResearchSource {
   id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId       String             @db.Uuid
-  organizationId String             @db.Uuid
   projectId      String             @db.Uuid
   type           ResearchSourceType
   sourceId       String?
@@ -444,11 +356,8 @@ model ResearchSource {
   createdBy      String?            @db.Uuid
   updatedBy      String?            @db.Uuid
 
-  organization Organization @relation(fields: [organizationId], references: [id])
   project      Project      @relation(fields: [projectId], references: [id])
 
-  @@index([tenantId])
-  @@index([organizationId, type])
   @@index([projectId, type])
   @@index([deletedAt])
 }
@@ -575,7 +484,6 @@ model ConversationMessage {
 
 model KnowledgeDocument {
   id             String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String             @db.Uuid
   projectId      String?            @db.Uuid
   sourceType     DocumentSourceType
   title          String
@@ -595,12 +503,11 @@ model KnowledgeDocument {
   createdBy      String?            @db.Uuid
   updatedBy      String?            @db.Uuid
 
-  organization Organization    @relation(fields: [organizationId], references: [id])
   project      Project?        @relation(fields: [projectId], references: [id])
   chunks       DocumentChunk[]
 
-  @@index([organizationId, sourceType])
-  @@index([organizationId, status])
+  @@index([sourceType])
+  @@index([status])
   @@index([projectId])
   @@index([deletedAt])
 }
@@ -694,7 +601,6 @@ model AiExecution {
 
 model AgentRun {
   id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String?          @db.Uuid
   projectId     String?           @db.Uuid
   aiExecutionId String?           @db.Uuid
   businessAgentId String?         @db.Uuid
@@ -717,7 +623,6 @@ model AgentRun {
   createdBy     String?           @db.Uuid
   updatedBy     String?           @db.Uuid
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
   project      Project?     @relation(fields: [projectId], references: [id])
   aiExecution  AiExecution? @relation(fields: [aiExecutionId], references: [id])
   businessAgent BusinessAgentProfile? @relation(fields: [businessAgentId], references: [id])
@@ -725,7 +630,6 @@ model AgentRun {
   steps        AgentStep[]
   toolExecutions ToolExecution[]
 
-  @@index([organizationId, status])
   @@index([projectId, agentType])
   @@index([businessAgentId])
   @@index([conversationId])
@@ -735,7 +639,6 @@ model AgentRun {
 
 model BusinessAgentProfile {
   id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId     String?   @db.Uuid
   name               String
   slug               String
   department         String
@@ -755,12 +658,10 @@ model BusinessAgentProfile {
   createdBy          String?   @db.Uuid
   updatedBy          String?   @db.Uuid
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
   agentRuns    AgentRun[]
 
-  @@unique([organizationId, slug])
+  @@unique([slug])
   @@index([slug, enabled])
-  @@index([organizationId, enabled])
   @@index([deletedAt])
 }
 
@@ -795,7 +696,6 @@ model ToolExecution {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   agentRunId      String    @db.Uuid
   agentStepId     String?   @db.Uuid
-  organizationId  String    @db.Uuid
   projectId       String    @db.Uuid
   userId          String    @db.Uuid
   agentProfileId  String?
@@ -821,7 +721,7 @@ model ToolExecution {
   agentStep AgentStep? @relation(fields: [agentStepId], references: [id], onDelete: SetNull)
 
   @@index([agentRunId, toolName])
-  @@index([organizationId, projectId])
+  @@index([projectId])
   @@index([toolName, status])
   @@index([status])
   @@index([deletedAt])
@@ -867,7 +767,6 @@ model PromptVersion {
 
 model Report {
   id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String       @db.Uuid
   projectId      String       @db.Uuid
   title          String
   status         ReportStatus @default(DRAFT)
@@ -878,11 +777,9 @@ model Report {
   createdBy      String?      @db.Uuid
   updatedBy      String?      @db.Uuid
 
-  organization Organization    @relation(fields: [organizationId], references: [id])
   project      Project         @relation(fields: [projectId], references: [id])
   sections     ReportSection[]
 
-  @@index([organizationId, status])
   @@index([projectId])
   @@index([deletedAt])
 }
@@ -909,7 +806,7 @@ model ReportSection {
 
 model BillingAccount {
   id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String    @unique @db.Uuid
+  userId         String    @unique @db.Uuid
   externalId     String?
   planKey        String
   status         String
@@ -920,7 +817,6 @@ model BillingAccount {
   createdBy      String?   @db.Uuid
   updatedBy      String?   @db.Uuid
 
-  organization Organization  @relation(fields: [organizationId], references: [id])
   usageRecords UsageRecord[]
 
   @@index([status])
@@ -966,7 +862,6 @@ model Notification {
 
 model AuditLog {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String?  @db.Uuid
   actorUserId    String?  @db.Uuid
   action         String
   resourceType   String
@@ -980,7 +875,6 @@ model AuditLog {
   createdBy      String?  @db.Uuid
   updatedBy      String?  @db.Uuid
 
-  @@index([organizationId, createdAt])
   @@index([actorUserId, createdAt])
   @@index([resourceType, resourceId])
   @@index([deletedAt])

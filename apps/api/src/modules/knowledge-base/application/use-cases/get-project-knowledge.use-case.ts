@@ -13,12 +13,7 @@ export class GetProjectKnowledgeUseCase {
     private readonly researchSourceRepository: ResearchSourceRepository,
   ) {}
 
-  execute(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ResearchSourceEntity[]> {
-    return this.researchSourceRepository.listForProject(organizationId, projectId, actor);
+  execute(projectId: string, actor: AuthenticatedUser): Promise<ResearchSourceEntity[]> {
+    return this.researchSourceRepository.listForProject(projectId, actor);
   }
 }
-

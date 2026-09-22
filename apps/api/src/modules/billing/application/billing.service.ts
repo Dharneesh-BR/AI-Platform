@@ -5,9 +5,9 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 export class BillingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getBillingAccount(organizationId: string) {
+  async getBillingAccount(userId: string) {
     const account = await this.prisma.billingAccount.findFirst({
-      where: { organizationId, deletedAt: null },
+      where: { userId, deletedAt: null },
       include: { usageRecords: { where: { deletedAt: null }, orderBy: { occurredAt: 'desc' }, take: 25 } },
     });
 

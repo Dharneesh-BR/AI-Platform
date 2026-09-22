@@ -8,8 +8,8 @@ export class ToolAuthorizationService {
       throw new ForbiddenException(`Tool '${tool.name}' is disabled.`);
     }
 
-    if (!context.userId || !context.organizationId || !context.projectId || !context.agentRunId) {
-      throw new ForbiddenException('Tool execution requires trusted user, organization, project, and run context.');
+    if (!context.userId || !context.projectId || !context.agentRunId) {
+      throw new ForbiddenException('Tool execution requires trusted user, project, and run context.');
     }
 
     if (!context.businessAgent.enabled) {

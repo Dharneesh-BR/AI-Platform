@@ -1,7 +1,5 @@
 export interface ProjectProfileEntity {
   id: string;
-  tenantId: string;
-  organizationId: string;
   projectId: string;
   companyName: string;
   websiteUrl: string | null;
@@ -18,4 +16,3 @@ export interface ProjectProfileEntity {
   onboardingStep: string | null;
   completedAt: Date | null;
 }
-

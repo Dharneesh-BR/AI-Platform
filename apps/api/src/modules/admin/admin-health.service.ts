@@ -14,7 +14,6 @@ export interface AdminHealthResponse {
     detail: string;
   }>;
   counts: {
-    organizations: number;
     users: number;
     projects: number;
     auditEvents: number;
@@ -161,8 +160,7 @@ export class AdminHealthService {
       });
     }
 
-    const [organizations, users, projects, auditEvents] = await Promise.all([
-      this.prisma.organization.count({ where: { deletedAt: null } }),
+    const [users, projects, auditEvents] = await Promise.all([
       this.prisma.user.count({ where: { deletedAt: null } }),
       this.prisma.project.count({ where: { deletedAt: null } }),
       this.prisma.auditLog.count({ where: { deletedAt: null } }),
@@ -177,7 +175,6 @@ export class AdminHealthService {
       checkedAt: new Date().toISOString(),
       services,
       counts: {
-        organizations,
         users,
         projects,
         auditEvents,

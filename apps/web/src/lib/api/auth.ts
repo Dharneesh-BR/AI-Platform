@@ -13,16 +13,6 @@ interface CreateFirebaseSessionResponse {
 }
 
 interface AuthMeResponse {
-  organizations: Array<{
-    id: string;
-    name: string;
-    role: string;
-  }>;
-  activeOrganization: {
-    id: string;
-    name: string;
-    role: string;
-  } | null;
   permissions: string[];
 }
 
@@ -38,7 +28,6 @@ export async function createFirebaseSession(firebaseIdToken: string): Promise<Se
 
   return {
     accessToken: response.accessToken,
-    organizationId: authContext.activeOrganization?.id ?? process.env.NEXT_PUBLIC_ORGANIZATION_ID,
     permissions: authContext.permissions,
     mode: 'api',
     user: {

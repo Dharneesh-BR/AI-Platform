@@ -8,7 +8,6 @@ export function AdminHealthPanel() {
   const { session } = useAuth();
   const healthQuery = useAdminHealth({
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const health = healthQuery.data;
 
@@ -19,7 +18,7 @@ export function AdminHealthPanel() {
   return (
     <>
       <section className="grid-3">
-        <MetricCard label="Organizations" value={String(health?.counts.organizations ?? '—')} detail="Live tenant count." />
+        <MetricCard label="Projects" value={String(health?.counts.projects ?? '—')} detail="Live project count." />
         <MetricCard label="Users" value={String(health?.counts.users ?? '—')} detail="Live user count." />
         <MetricCard label="Audit events" value={String(health?.counts.auditEvents ?? '—')} detail="Recorded system activity." />
       </section>

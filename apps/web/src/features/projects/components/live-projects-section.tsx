@@ -14,12 +14,11 @@ function countByLifecycle(projects: ProjectSummary[], state: string): number {
 
 interface ProjectListCardProps {
   project: ProjectSummary;
-  organizationId?: string;
   accessToken?: string;
 }
 
-function ProjectListCard({ project, organizationId, accessToken }: ProjectListCardProps) {
-  const deleteProject = useDeleteProject(project.id, { accessToken, organizationId });
+function ProjectListCard({ project, accessToken }: ProjectListCardProps) {
+  const deleteProject = useDeleteProject(project.id, { accessToken });
 
   async function handleDelete() {
     const confirmed = window.confirm(`Delete "${project.name}"? This removes it from your active project list.`);
@@ -67,7 +66,6 @@ export function LiveProjectsSection() {
   const { session } = useAuth();
   const projectsQuery = useProjects({
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const projects = projectsQuery.data ?? [];
   const inDiscovery =
@@ -109,7 +107,7 @@ export function LiveProjectsSection() {
       {!projectsQuery.isLoading && !projectsQuery.isError && projects.length === 0 ? (
         <Card className="section-gap">
           <h2>No projects yet</h2>
-          <p>Create a project after the API session and organization context are available.</p>
+          <p>Create a project after the API session is available.</p>
         </Card>
       ) : null}
 
@@ -119,7 +117,6 @@ export function LiveProjectsSection() {
             key={project.id}
             project={project}
             accessToken={session.accessToken}
-            organizationId={session.organizationId}
           />
         ))}
       </section>

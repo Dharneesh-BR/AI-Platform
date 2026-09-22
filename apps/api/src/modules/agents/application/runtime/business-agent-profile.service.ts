@@ -34,22 +34,21 @@ export class BusinessAgentProfileService {
     private readonly sanityAgentProfileClient: SanityAgentProfileClient,
   ) {}
 
-  async list(organizationId?: string): Promise<BusinessAgentProfileView[]> {
+  async list(): Promise<BusinessAgentProfileView[]> {
     const sanityProfiles = await this.sanityAgentProfileClient.list();
     const profiles = await this.prisma.businessAgentProfile.findMany({
       where: {
         deletedAt: null,
         enabled: true,
-        OR: [{ organizationId: null }, ...(organizationId ? [{ organizationId }] : [])],
       },
-      orderBy: [{ organizationId: 'asc' }, { department: 'asc' }],
+      orderBy: [{ department: 'asc' }, { name: 'asc' }],
     }).catch(() => []);
 
     const mergedProfiles = this.mergeProfiles(sanityProfiles, profiles.map((profile) => this.toView(profile)));
     return mergedProfiles.length ? mergedProfiles : [DEFAULT_AGENT_PROFILE];
   }
 
-  async getBySlug(slug?: string, organizationId?: string): Promise<BusinessAgentProfileView> {
+  async getBySlug(slug?: string): Promise<BusinessAgentProfileView> {
     const normalizedSlug = slug?.trim() || DEFAULT_AGENT_SLUG;
     const sanityProfile = (await this.sanityAgentProfileClient.list()).find((profile) => profile.slug === normalizedSlug);
     if (sanityProfile) {
@@ -61,9 +60,7 @@ export class BusinessAgentProfileService {
         slug: normalizedSlug,
         deletedAt: null,
         enabled: true,
-        OR: [{ organizationId: organizationId ?? undefined }, { organizationId: null }],
       },
-      orderBy: { organizationId: 'desc' },
     }).catch(() => null);
 
     if (!profile) {
@@ -79,7 +76,6 @@ export class BusinessAgentProfileService {
 
   private toView(profile: {
     id: string;
-    organizationId: string | null;
     name: string;
     slug: string;
     department: string;
@@ -95,7 +91,6 @@ export class BusinessAgentProfileService {
   }): BusinessAgentProfileView {
     return {
       id: profile.id,
-      organizationId: profile.organizationId,
       source: 'database',
       name: profile.name,
       slug: profile.slug,

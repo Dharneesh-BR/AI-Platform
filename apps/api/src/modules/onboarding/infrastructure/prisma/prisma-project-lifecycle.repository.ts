@@ -11,15 +11,11 @@ import type { ProjectLifecycleRepository } from '../../application/ports/project
 export class PrismaProjectLifecycleRepository implements ProjectLifecycleRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLifecycleState(
-    organizationId: string,
-    projectId: string,
-    _actor: AuthenticatedUser,
-  ): Promise<ProjectLifecycleState> {
+  async getLifecycleState(projectId: string, actor: AuthenticatedUser): Promise<ProjectLifecycleState> {
     const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
-        organizationId,
+        createdBy: actor.id,
         deletedAt: null,
       },
       select: {
@@ -35,12 +31,11 @@ export class PrismaProjectLifecycleRepository implements ProjectLifecycleReposit
   }
 
   async transition(
-    organizationId: string,
     projectId: string,
     nextState: ProjectLifecycleState,
     actor: AuthenticatedUser,
   ): Promise<ProjectLifecycleState> {
-    const currentState = await this.getLifecycleState(organizationId, projectId, actor);
+    const currentState = await this.getLifecycleState(projectId, actor);
     if (currentState === nextState) {
       return currentState;
     }
@@ -50,6 +45,8 @@ export class PrismaProjectLifecycleRepository implements ProjectLifecycleReposit
     const project = await this.prisma.project.update({
       where: {
         id: projectId,
+        createdBy: actor.id,
+        deletedAt: null,
       },
       data: {
         lifecycleState: nextState,

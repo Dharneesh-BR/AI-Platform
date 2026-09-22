@@ -1,7 +1,6 @@
 export const DISCOVERY_OUTPUT_REPOSITORY = Symbol('DISCOVERY_OUTPUT_REPOSITORY');
 
 export interface PersistDiscoveryOutputInput {
-  organizationId: string;
   projectId: string;
   actorUserId: string | null;
   companyName: string;

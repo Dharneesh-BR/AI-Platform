@@ -13,7 +13,7 @@ function contextWithRequest(request: unknown): ExecutionContext {
 }
 
 describe('RolesGuard', () => {
-  it('allows a required role from the tenant membership context', () => {
+  it('allows a required role from the authenticated user', () => {
     const reflector = {
       getAllAndOverride: vi.fn().mockReturnValue([PlatformRole.Admin]),
     };
@@ -22,8 +22,7 @@ describe('RolesGuard', () => {
     expect(
       guard.canActivate(
         contextWithRequest({
-          user: { roles: [PlatformRole.Client] },
-          tenantContext: { role: PlatformRole.Admin },
+          user: { roles: [PlatformRole.Admin] },
         }),
       ),
     ).toBe(true);
@@ -44,7 +43,7 @@ describe('RolesGuard', () => {
     ).toBe(true);
   });
 
-  it('denies when neither platform nor tenant roles match', () => {
+  it('denies when user roles do not match', () => {
     const reflector = {
       getAllAndOverride: vi.fn().mockReturnValue([PlatformRole.Admin]),
     };
@@ -54,7 +53,6 @@ describe('RolesGuard', () => {
       guard.canActivate(
         contextWithRequest({
           user: { roles: [PlatformRole.Viewer] },
-          tenantContext: { role: PlatformRole.Viewer },
         }),
       ),
     ).toThrow(ForbiddenException);

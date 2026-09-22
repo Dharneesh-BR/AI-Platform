@@ -21,14 +21,14 @@ export class RagContextService {
   ) {}
 
   async buildContext(input: {
-    organizationId: string;
     projectId: string;
+    userId: string;
     question: string;
     allowedKnowledgeScopes?: string[];
   }): Promise<RagContext> {
     const results = await this.vectorSearchService.search({
-      organizationId: input.organizationId,
       projectId: input.projectId,
+      userId: input.userId,
       query: input.question,
       limit: this.ragConfig.maxRetrievedChunks,
       allowedKnowledgeScopes: input.allowedKnowledgeScopes,

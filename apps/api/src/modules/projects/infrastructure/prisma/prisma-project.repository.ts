@@ -1,7 +1,7 @@
 import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
-import { MembershipStatus, PlatformRole as PrismaPlatformRole, Prisma, ProjectLifecycleState as PrismaProjectLifecycleState, type Project } from '@prisma/client';
+import { Prisma, ProjectLifecycleState as PrismaProjectLifecycleState, type Project } from '@prisma/client';
 import { getProjectRouteForLifecycle, ProjectLifecycleState } from '@platform/domain';
-import { PlatformRole, type AuthenticatedUser } from '../../../../common/auth';
+import type { AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ProjectEntity } from '../../domain/entities/project.entity';
 import type { CreateProjectInput, ProjectRepository, UpdateProjectInput } from '../../domain/repositories/project.repository';
@@ -11,16 +11,15 @@ export class PrismaProjectRepository implements ProjectRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateProjectInput): Promise<ProjectEntity> {
-    await this.ensureProjectAccess(input.organizationId, input.actor, true);
     let project: Project;
 
     try {
+      const slug = await this.resolveUniqueSlug(input.slug, input.actor.id);
       project = await this.prisma.$transaction(async (tx) => {
         const createdProject = await tx.project.create({
           data: {
-            organizationId: input.organizationId,
             name: input.name,
-            slug: input.slug,
+            slug,
             description: input.description,
             lifecycleState: PrismaProjectLifecycleState.CREATED,
             createdBy: input.actor.id,
@@ -30,8 +29,6 @@ export class PrismaProjectRepository implements ProjectRepository {
 
         await tx.projectProfile.create({
           data: {
-            tenantId: input.organizationId,
-            organizationId: input.organizationId,
             projectId: createdProject.id,
             companyName: input.name,
             businessModel:
@@ -61,7 +58,7 @@ export class PrismaProjectRepository implements ProjectRepository {
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ConflictException('A project with this slug already exists in this organization.');
+        throw new ConflictException('A project with this slug already exists. Try another project name.');
       }
 
       throw error;
@@ -70,10 +67,43 @@ export class PrismaProjectRepository implements ProjectRepository {
     return this.mapProject(project);
   }
 
-  async list(organizationId: string, actor: AuthenticatedUser): Promise<ProjectEntity[]> {
-    await this.ensureProjectAccess(organizationId, actor, false);
+  private async resolveUniqueSlug(requestedSlug: string, userId: string): Promise<string> {
+    const normalizedBase = requestedSlug.trim().toLowerCase();
+    const base = normalizedBase || `project-${userId.slice(0, 8)}`;
+    const existing = await this.prisma.project.findMany({
+      where: {
+        createdBy: userId,
+        slug: {
+          startsWith: base,
+        },
+      },
+      select: { slug: true },
+      take: 100,
+    });
+    const existingSlugs = new Set(existing.map((project) => project.slug));
+
+    if (!existingSlugs.has(base)) {
+      return base;
+    }
+
+    const userScopedBase = `${base}-${userId.slice(0, 8)}`;
+    if (!existingSlugs.has(userScopedBase)) {
+      return userScopedBase;
+    }
+
+    for (let suffix = 2; suffix < 100; suffix += 1) {
+      const candidate = `${userScopedBase}-${suffix}`;
+      if (!existingSlugs.has(candidate)) {
+        return candidate;
+      }
+    }
+
+    return `${userScopedBase}-${Date.now()}`;
+  }
+
+  async list(actor: AuthenticatedUser): Promise<ProjectEntity[]> {
     const projects = await this.prisma.project.findMany({
-      where: { organizationId, deletedAt: null },
+      where: { createdBy: actor.id, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -81,22 +111,32 @@ export class PrismaProjectRepository implements ProjectRepository {
   }
 
   async findById(
-    organizationId: string,
     projectId: string,
     actor: AuthenticatedUser,
   ): Promise<ProjectEntity | null> {
-    await this.ensureProjectAccess(organizationId, actor, false);
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actor.id, deletedAt: null },
     });
 
     return project ? this.mapProject(project) : null;
   }
 
   async update(input: UpdateProjectInput): Promise<ProjectEntity> {
-    await this.ensureProjectAccess(input.organizationId, input.actor, true);
+    const existing = await this.prisma.project.findFirst({
+      where: {
+        id: input.projectId,
+        createdBy: input.actor.id,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new ForbiddenException('You do not own this project.');
+    }
+
     const project = await this.prisma.project.update({
-      where: { id: input.projectId },
+      where: { id: existing.id },
       data: {
         name: input.name,
         description: input.description,
@@ -107,51 +147,86 @@ export class PrismaProjectRepository implements ProjectRepository {
     return this.mapProject(project);
   }
 
-  async softDelete(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<void> {
-    await this.ensureProjectAccess(organizationId, actor, true);
-    await this.prisma.project.update({
-      where: { id: projectId },
-      data: { deletedAt: new Date(), updatedBy: actor.id },
-    });
-  }
-
-  private async ensureProjectAccess(
-    organizationId: string,
-    actor: AuthenticatedUser,
-    requireWrite: boolean,
-  ): Promise<void> {
-    if (actor.roles.includes(PlatformRole.SuperAdmin)) {
-      return;
-    }
-
-    const allowedRoles = requireWrite
-      ? [PrismaPlatformRole.ADMIN, PrismaPlatformRole.CONSULTANT]
-      : [PrismaPlatformRole.ADMIN, PrismaPlatformRole.CONSULTANT, PrismaPlatformRole.CLIENT, PrismaPlatformRole.VIEWER];
-
-    const membership = await this.prisma.organizationMembership.findFirst({
-      where: {
-        organizationId,
-        userId: actor.id,
-        role: { in: allowedRoles },
-        status: MembershipStatus.ACTIVE,
-        deletedAt: null,
-      },
+  async delete(projectId: string, actor: AuthenticatedUser): Promise<void> {
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, createdBy: actor.id, deletedAt: null },
+      select: { id: true },
     });
 
-    if (!membership) {
-      throw new ForbiddenException('You do not have project access in this organization.');
+    if (!project) {
+      throw new ForbiddenException('You do not own this project.');
     }
+
+    await this.prisma.$transaction(async (tx) => {
+      const researchPlans = await tx.researchPlan.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const researchPlanIds = researchPlans.map((plan) => plan.id);
+      const conversations = await tx.conversation.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const conversationIds = conversations.map((conversation) => conversation.id);
+      const reports = await tx.report.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const reportIds = reports.map((report) => report.id);
+      const documents = await tx.knowledgeDocument.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const documentIds = documents.map((document) => document.id);
+      const agentRuns = await tx.agentRun.findMany({
+        where: { projectId },
+        select: { id: true },
+      });
+      const agentRunIds = agentRuns.map((run) => run.id);
+
+      if (researchPlanIds.length) {
+        await tx.validationResult.deleteMany({ where: { researchPlanId: { in: researchPlanIds } } });
+        await tx.citation.deleteMany({ where: { researchPlanId: { in: researchPlanIds } } });
+        await tx.researchFinding.deleteMany({ where: { researchPlanId: { in: researchPlanIds } } });
+      }
+
+      if (reportIds.length) {
+        await tx.reportSection.deleteMany({ where: { reportId: { in: reportIds } } });
+      }
+
+      if (conversationIds.length) {
+        await tx.conversationMessage.deleteMany({ where: { conversationId: { in: conversationIds } } });
+      }
+
+      if (documentIds.length) {
+        await tx.documentChunk.deleteMany({ where: { documentId: { in: documentIds } } });
+      }
+
+      if (agentRunIds.length) {
+        await tx.toolExecution.deleteMany({ where: { agentRunId: { in: agentRunIds } } });
+        await tx.agentStep.deleteMany({ where: { agentRunId: { in: agentRunIds } } });
+      }
+
+      await tx.researchPlan.deleteMany({ where: { projectId } });
+      await tx.report.deleteMany({ where: { projectId } });
+      await tx.agentRun.deleteMany({ where: { projectId } });
+      await tx.conversation.deleteMany({ where: { projectId } });
+      await tx.knowledgeDocument.deleteMany({ where: { projectId } });
+      await tx.researchSource.deleteMany({ where: { projectId } });
+      await tx.companyGoal.deleteMany({ where: { projectId } });
+      await tx.companyCompetitor.deleteMany({ where: { projectId } });
+      await tx.companyTechnology.deleteMany({ where: { projectId } });
+      await tx.companyProfile.deleteMany({ where: { projectId } });
+      await tx.discoveryJob.deleteMany({ where: { projectId } });
+      await tx.projectProfile.deleteMany({ where: { projectId } });
+      await tx.project.delete({ where: { id: projectId } });
+    });
   }
 
   private mapProject(project: Project): ProjectEntity {
     const lifecycleState = project.lifecycleState as ProjectLifecycleState;
     return {
       id: project.id,
-      organizationId: project.organizationId,
       name: project.name,
       slug: project.slug,
       description: project.description,

@@ -218,7 +218,6 @@ export class DiscoveryWorkerProcessorService {
     const painPoints = aiProfile.painPoints.length ? aiProfile.painPoints : primaryChallenges;
 
     return {
-      organizationId: payload.organizationId,
       projectId: payload.projectId,
       actorUserId: payload.actorUserId ?? null,
       companyName,
@@ -320,7 +319,6 @@ export class DiscoveryWorkerProcessorService {
         maxTokens: 1200,
         metadata: {
           feature: 'company-discovery-profile',
-          organizationId: payload.organizationId,
           projectId: payload.projectId,
         },
         messages: [

@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ReportStatus } from '@prisma/client';
+import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { LiteLlmGatewayService } from '../../ai/application/services/litellm-gateway.service';
 
 export interface CreateReportInput {
-  organizationId: string;
   projectId: string;
-  actorUserId: string;
+  actor: AuthenticatedUser;
   title: string;
   sections?: Array<{ title: string; kind: string; content: unknown }>;
 }
@@ -18,39 +18,38 @@ export class ReportsService {
     private readonly liteLlmGateway: LiteLlmGatewayService,
   ) {}
 
-  async listProjectReports(organizationId: string, projectId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async listProjectReports(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     return this.prisma.report.findMany({
-      where: { organizationId, projectId, deletedAt: null },
+      where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { sections: { orderBy: { ordinal: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async createReport(input: CreateReportInput) {
-    const project = await this.ensureProject(input.organizationId, input.projectId);
+    const project = await this.ensureProject(input.projectId, input.actor.id);
     const sections = input.sections?.length
       ? input.sections
       : await this.generateReportSections(input, project);
 
     return this.prisma.report.create({
       data: {
-        organizationId: input.organizationId,
         projectId: input.projectId,
         title: input.title,
         status: ReportStatus.READY,
         metadata: { generatedBy: input.sections?.length ? 'manual-api' : 'ai-report-api' },
-        createdBy: input.actorUserId,
-        updatedBy: input.actorUserId,
+        createdBy: input.actor.id,
+        updatedBy: input.actor.id,
         sections: {
           create: sections.map((section, index) => ({
             title: section.title,
             kind: section.kind,
             ordinal: index + 1,
             content: section.content as object,
-            createdBy: input.actorUserId,
-            updatedBy: input.actorUserId,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
           })),
         },
       },
@@ -58,9 +57,9 @@ export class ReportsService {
     });
   }
 
-  async getReport(organizationId: string, reportId: string) {
+  async getReport(reportId: string, actor: AuthenticatedUser) {
     const report = await this.prisma.report.findFirst({
-      where: { id: reportId, organizationId, deletedAt: null },
+      where: { id: reportId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { sections: { orderBy: { ordinal: 'asc' } }, project: true },
     });
 
@@ -71,9 +70,9 @@ export class ReportsService {
     return report;
   }
 
-  private async ensureProject(organizationId: string, projectId: string) {
+  private async ensureProject(projectId: string, actorUserId: string) {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actorUserId, deletedAt: null },
       include: {
         projectProfile: true,
         companyProfiles: {
@@ -111,7 +110,6 @@ export class ReportsService {
         maxTokens: 1400,
         metadata: {
           feature: 'report-generation',
-          organizationId: input.organizationId,
           projectId: input.projectId,
         },
         messages: [

@@ -21,7 +21,7 @@ export function ChatWorkspace({
   showAgentPicker = true,
 }: ChatWorkspaceProps) {
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const conversationsQuery = useConversations(projectId, context);
   const agentsQuery = useBusinessAgents(context);
   const createConversation = useCreateConversation(projectId, context);

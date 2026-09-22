@@ -23,8 +23,8 @@ export class VectorSearchService {
   ) {}
 
   async search(input: {
-    organizationId: string;
     projectId: string;
+    userId: string;
     query: string;
     limit?: number;
     documentId?: string;
@@ -32,8 +32,8 @@ export class VectorSearchService {
   }): Promise<KnowledgeSearchResult[]> {
     const embedding = await this.embeddingService.embedQuery(input.query);
     return this.searchByEmbedding({
-      organizationId: input.organizationId,
       projectId: input.projectId,
+      userId: input.userId,
       embedding,
       limit: input.limit,
       documentId: input.documentId,
@@ -42,8 +42,8 @@ export class VectorSearchService {
   }
 
   async searchByEmbedding(input: {
-    organizationId: string;
     projectId: string;
+    userId: string;
     embedding: number[];
     limit?: number;
     documentId?: string;
@@ -80,8 +80,10 @@ export class VectorSearchService {
         c.metadata
       FROM "DocumentChunk" c
       INNER JOIN "KnowledgeDocument" d ON d.id = c."documentId"
-      WHERE d."organizationId" = ${input.organizationId}::uuid
-        AND d."projectId" = ${input.projectId}::uuid
+      INNER JOIN "Project" p ON p.id = d."projectId"
+      WHERE d."projectId" = ${input.projectId}::uuid
+        AND p."createdBy" = ${input.userId}::uuid
+        AND p."deletedAt" IS NULL
         AND d."deletedAt" IS NULL
         AND c."deletedAt" IS NULL
         AND c.embedding IS NOT NULL

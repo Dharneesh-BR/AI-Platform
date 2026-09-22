@@ -5,9 +5,9 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 export class AuditLogsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(organizationId?: string) {
+  list() {
     return this.prisma.auditLog.findMany({
-      where: { organizationId, deletedAt: null },
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });

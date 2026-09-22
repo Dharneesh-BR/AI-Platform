@@ -7,8 +7,8 @@ import { PROJECT_REPOSITORY, type ProjectRepository } from '../../domain/reposit
 export class GetProjectUseCase {
   constructor(@Inject(PROJECT_REPOSITORY) private readonly projectRepository: ProjectRepository) {}
 
-  async execute(organizationId: string, projectId: string, actor: AuthenticatedUser): Promise<ProjectEntity> {
-    const project = await this.projectRepository.findById(organizationId, projectId, actor);
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<ProjectEntity> {
+    const project = await this.projectRepository.findById(projectId, actor);
     if (!project) {
       throw new NotFoundException('Project not found.');
     }

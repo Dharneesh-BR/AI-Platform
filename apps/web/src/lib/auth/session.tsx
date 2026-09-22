@@ -20,7 +20,6 @@ export interface SessionUser {
 
 export interface SessionState {
   accessToken?: string;
-  organizationId?: string;
   permissions?: string[];
   user: SessionUser;
   mode: 'anonymous' | 'api';
@@ -36,10 +35,8 @@ interface AuthContextValue {
 function createAnonymousSession(): SessionState {
   if (getLocalAuthToken()) {
     return {
-      organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
       permissions: [
         'platform.admin',
-        'organization.manage',
         'project.manage',
         'knowledge.manage',
         'agent.use',
@@ -55,7 +52,6 @@ function createAnonymousSession(): SessionState {
   }
 
   return {
-    organizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID,
     mode: 'anonymous',
     user: {
       id: '',

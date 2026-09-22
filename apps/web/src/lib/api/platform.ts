@@ -129,7 +129,6 @@ export interface AuditLog {
 
 export interface KnowledgeSource {
   id: string;
-  organizationId: string;
   projectId: string;
   type: string;
   sourceId: string | null;
@@ -140,7 +139,6 @@ export interface KnowledgeSource {
 
 export interface KnowledgeDocument {
   id: string;
-  organizationId: string;
   projectId: string | null;
   title: string;
   originalFilename: string | null;
@@ -174,7 +172,6 @@ export interface AdminHealth {
     detail: string;
   }>;
   counts: {
-    organizations: number;
     users: number;
     projects: number;
     auditEvents: number;

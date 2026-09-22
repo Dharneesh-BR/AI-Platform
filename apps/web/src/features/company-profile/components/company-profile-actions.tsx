@@ -13,7 +13,7 @@ interface CompanyProfileActionsProps {
 export function CompanyProfileActions({ projectId, profileId }: CompanyProfileActionsProps) {
   const router = useRouter();
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const updateProfile = useUpdateCompanyProfile(projectId, profileId ?? '', context);
   const approveProfile = useApproveCompanyProfile(projectId, profileId ?? '', context);
   const [message, setMessage] = useState('Review generated context before approval.');

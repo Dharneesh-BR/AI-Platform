@@ -1,23 +1,20 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
-import type { AuthenticatedUser, PlatformRole } from '../../../common/auth';
+import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AgentsService } from '../../agents/application/agents.service';
 import { AgentRuntimeService } from '../../agents/application/runtime/agent-runtime.service';
 
 export interface CreateConversationInput {
-  organizationId: string;
   projectId: string;
-  actorUserId: string;
+  actor: AuthenticatedUser;
   title?: string;
   agentSlug?: string;
 }
 
 export interface AddMessageInput {
-  organizationId: string;
   conversationId: string;
   actor: AuthenticatedUser;
-  actorRole?: PlatformRole;
   content: string;
   agentSlug?: string;
 }
@@ -32,18 +29,18 @@ export class ConversationsService {
     private readonly agentRuntimeService: AgentRuntimeService,
   ) {}
 
-  async listProjectConversations(organizationId: string, projectId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async listProjectConversations(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     return this.prisma.conversation.findMany({
-      where: { projectId, deletedAt: null },
+      where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { messages: { orderBy: { createdAt: 'asc' }, take: 8 } },
       orderBy: { updatedAt: 'desc' },
     });
   }
 
   async createConversation(input: CreateConversationInput) {
-    await this.ensureProject(input.organizationId, input.projectId);
+    await this.ensureProject(input.projectId, input.actor.id);
 
     return this.prisma.conversation.create({
       data: {
@@ -53,8 +50,8 @@ export class ConversationsService {
           source: 'ai-chat-api',
           ...(input.agentSlug ? { agentSlug: input.agentSlug } : {}),
         },
-        createdBy: input.actorUserId,
-        updatedBy: input.actorUserId,
+        createdBy: input.actor.id,
+        updatedBy: input.actor.id,
       },
       include: { messages: true },
     });
@@ -65,7 +62,7 @@ export class ConversationsService {
       where: {
         id: input.conversationId,
         deletedAt: null,
-        project: { organizationId: input.organizationId, deletedAt: null },
+        project: { createdBy: input.actor.id, deletedAt: null },
       },
       include: {
         project: {
@@ -103,7 +100,6 @@ export class ConversationsService {
     });
 
     const runtimeInput = {
-      organizationId: input.organizationId,
       projectId: conversation.projectId,
       userId: input.actor.id,
       conversationId: input.conversationId,
@@ -114,10 +110,8 @@ export class ConversationsService {
 
     if (executionMode === 'async') {
       const runStatus = await this.agentsService.createQueuedRuntimeRun({
-        organizationId: input.organizationId,
         projectId: conversation.projectId,
         actor: input.actor,
-        actorRole: input.actorRole,
         conversationId: input.conversationId,
         message: input.content,
         agentSlug: input.agentSlug,
@@ -212,9 +206,9 @@ export class ConversationsService {
     };
   }
 
-  private async ensureProject(organizationId: string, projectId: string) {
+  private async ensureProject(projectId: string, actorUserId: string) {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actorUserId, deletedAt: null },
       select: { id: true },
     });
 

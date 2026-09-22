@@ -33,7 +33,6 @@ export interface AgentToolDefinition<TInput = unknown> {
 
 export interface ToolExecutionContext {
   userId: string;
-  organizationId: string;
   projectId: string;
   agentRunId: string;
   agentStepId?: string;

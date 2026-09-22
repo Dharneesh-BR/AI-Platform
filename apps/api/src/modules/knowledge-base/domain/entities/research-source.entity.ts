@@ -1,6 +1,5 @@
 export interface ResearchSourceEntity {
   id: string;
-  organizationId: string;
   projectId: string;
   type: string;
   sourceId: string | null;
@@ -8,4 +7,3 @@ export interface ResearchSourceEntity {
   content: unknown;
   metadata: Record<string, unknown>;
 }
-

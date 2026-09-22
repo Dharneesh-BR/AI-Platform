@@ -14,7 +14,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
     return this.prisma.$transaction(async (transaction) => {
       const latestProfile = await transaction.companyProfile.findFirst({
         where: {
-          organizationId: input.organizationId,
           projectId: input.projectId,
           deletedAt: null,
         },
@@ -25,8 +24,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
       const version = (latestProfile?.version ?? 0) + 1;
       const companyProfile = await transaction.companyProfile.create({
         data: {
-          tenantId: input.organizationId,
-          organizationId: input.organizationId,
           projectId: input.projectId,
           version,
           isApproved: false,
@@ -48,8 +45,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
       if (input.technologies.length > 0) {
         await transaction.companyTechnology.createMany({
           data: input.technologies.map((technology) => ({
-            tenantId: input.organizationId,
-            organizationId: input.organizationId,
             projectId: input.projectId,
             companyProfileId: companyProfile.id,
             name: technology.name,
@@ -64,8 +59,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
       if (input.competitors.length > 0) {
         await transaction.companyCompetitor.createMany({
           data: input.competitors.map((competitor) => ({
-            tenantId: input.organizationId,
-            organizationId: input.organizationId,
             projectId: input.projectId,
             companyProfileId: companyProfile.id,
             name: competitor.name,
@@ -80,8 +73,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
       if (input.goals.length > 0) {
         await transaction.companyGoal.createMany({
           data: input.goals.map((goal, index) => ({
-            tenantId: input.organizationId,
-            organizationId: input.organizationId,
             projectId: input.projectId,
             companyProfileId: companyProfile.id,
             title: goal.title,
@@ -95,8 +86,6 @@ export class PrismaDiscoveryOutputRepository implements DiscoveryOutputRepositor
 
       await transaction.researchSource.create({
         data: {
-          tenantId: input.organizationId,
-          organizationId: input.organizationId,
           projectId: input.projectId,
           type: ResearchSourceType.COMPANY_PROFILE,
           sourceId: companyProfile.id,

@@ -2,7 +2,6 @@ import { getLocalAuthToken } from '../auth/api-access';
 
 interface ApiClientOptions {
   accessToken?: string;
-  organizationId?: string;
 }
 
 function getLocalBypassHeader() {
@@ -59,10 +58,6 @@ export class ApiClient {
         headers.set(key, value);
       }
     }
-    if (this.options.organizationId) {
-      headers.set('X-Organization-Id', this.options.organizationId);
-    }
-
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
       headers,

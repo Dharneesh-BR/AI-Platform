@@ -6,8 +6,8 @@ import { PROJECT_REPOSITORY, type ProjectRepository } from '../../domain/reposit
 export class DeleteProjectUseCase {
   constructor(@Inject(PROJECT_REPOSITORY) private readonly projectRepository: ProjectRepository) {}
 
-  async execute(organizationId: string, projectId: string, actor: AuthenticatedUser): Promise<{ success: true }> {
-    await this.projectRepository.softDelete(organizationId, projectId, actor);
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<{ success: true }> {
+    await this.projectRepository.delete(projectId, actor);
     return { success: true };
   }
 }

@@ -4,7 +4,6 @@ import type { AuthenticatedUser } from '../../../../common/auth';
 import { KnowledgeDocumentService } from '../services/knowledge-document.service';
 
 export interface CreateProjectKnowledgeSourceInput {
-  organizationId: string;
   projectId: string;
   actor: AuthenticatedUser;
   title: string;

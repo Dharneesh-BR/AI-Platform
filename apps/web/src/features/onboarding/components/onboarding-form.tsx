@@ -38,7 +38,7 @@ function withFallbackList(value: string, fallback: string[]): string[] {
 export function OnboardingForm({ projectId }: OnboardingFormProps) {
   const router = useRouter();
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const projectQuery = useProject(projectId, context);
   const projectProfileQuery = useProjectProfile(projectId, context);
   const upsertProfile = useUpsertProjectProfile(projectId, context);
@@ -106,7 +106,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
     [form],
   );
 
-  const canSubmit = Boolean(context.accessToken && context.organizationId && payload.companyName.length >= 2);
+  const canSubmit = Boolean(context.accessToken && payload.companyName.length >= 2);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((current) => ({ ...current, [field]: value }));

@@ -13,28 +13,23 @@ import type { AuthenticatedUser } from '../../../../common/auth';
 export class PrismaProjectProfileRepository implements ProjectProfileRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByProjectId(
-    organizationId: string,
-    projectId: string,
-    _actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity | null> {
+  async findByProjectId(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity | null> {
     const profile = await this.prisma.projectProfile.findFirst({
       where: {
-        organizationId,
         projectId,
         deletedAt: null,
+        project: {
+          createdBy: actor.id,
+          deletedAt: null,
+        },
       },
     });
 
     return profile ? this.mapProfile(profile) : null;
   }
 
-  async findOrCreateDefault(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity> {
-    const existing = await this.findByProjectId(organizationId, projectId, actor);
+  async findOrCreateDefault(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity> {
+    const existing = await this.findByProjectId(projectId, actor);
 
     if (existing) {
       return existing;
@@ -43,7 +38,7 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     const project = await this.prisma.project.findFirst({
       where: {
         id: projectId,
-        organizationId,
+        createdBy: actor.id,
         deletedAt: null,
       },
       select: {
@@ -59,7 +54,6 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
 
     const profile = await this.prisma.projectProfile.create({
       data: this.defaultProfileData({
-        organizationId,
         projectId: project.id,
         actor,
         companyName: project.name,
@@ -71,13 +65,24 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
   }
 
   async upsert(input: UpsertProjectProfileInput): Promise<ProjectProfileEntity> {
+    const project = await this.prisma.project.findFirst({
+      where: {
+        id: input.projectId,
+        createdBy: input.actor.id,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
+
     const profile = await this.prisma.projectProfile.upsert({
       where: {
         projectId: input.projectId,
       },
       create: {
-        tenantId: input.organizationId,
-        organizationId: input.organizationId,
         projectId: input.projectId,
         companyName: input.companyName,
         websiteUrl: input.websiteUrl,
@@ -116,7 +121,7 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     await this.prisma.project.updateMany({
       where: {
         id: input.projectId,
-        organizationId: input.organizationId,
+        createdBy: input.actor.id,
         lifecycleState: ProjectLifecycleState.Created,
       },
       data: {
@@ -128,12 +133,8 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
     return this.mapProfile(profile);
   }
 
-  async complete(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<ProjectProfileEntity> {
-    const existing = await this.findOrCreateDefault(organizationId, projectId, actor);
+  async complete(projectId: string, actor: AuthenticatedUser): Promise<ProjectProfileEntity> {
+    const existing = await this.findOrCreateDefault(projectId, actor);
     const profile = await this.prisma.projectProfile.update({
       where: {
         id: existing.id,
@@ -148,15 +149,12 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
   }
 
   private defaultProfileData(input: {
-    organizationId: string;
     projectId: string;
     actor: AuthenticatedUser;
     companyName: string;
     businessModel?: string | null;
   }): Prisma.ProjectProfileUncheckedCreateInput {
     return {
-      tenantId: input.organizationId,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       companyName: input.companyName,
       businessModel:
@@ -184,8 +182,6 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
 
   private mapProfile(profile: {
     id: string;
-    tenantId: string;
-    organizationId: string;
     projectId: string;
     companyName: string;
     websiteUrl: string | null;
@@ -204,8 +200,6 @@ export class PrismaProjectProfileRepository implements ProjectProfileRepository 
   }): ProjectProfileEntity {
     return {
       id: profile.id,
-      tenantId: profile.tenantId,
-      organizationId: profile.organizationId,
       projectId: profile.projectId,
       companyName: profile.companyName,
       websiteUrl: profile.websiteUrl,

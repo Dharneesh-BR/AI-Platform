@@ -20,11 +20,9 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
   const { session } = useAuth();
   const discoveryQuery = useDiscoveryStatus(projectId, {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const completeOnboardingMutation = useCompleteOnboarding(projectId, {
     accessToken: session.accessToken,
-    organizationId: session.organizationId,
   });
   const status = discoveryQuery.data;
   const isFinished = status?.status === 'SUCCEEDED' || status?.status === 'COMPLETED';

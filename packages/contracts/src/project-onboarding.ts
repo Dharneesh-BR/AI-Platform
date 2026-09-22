@@ -1,6 +1,5 @@
 export interface ProjectProfileDto {
   id: string;
-  organizationId: string;
   projectId: string;
   companyName: string;
   websiteUrl: string | null;

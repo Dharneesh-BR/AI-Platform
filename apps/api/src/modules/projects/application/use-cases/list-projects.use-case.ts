@@ -7,7 +7,7 @@ import { PROJECT_REPOSITORY, type ProjectRepository } from '../../domain/reposit
 export class ListProjectsUseCase {
   constructor(@Inject(PROJECT_REPOSITORY) private readonly projectRepository: ProjectRepository) {}
 
-  execute(organizationId: string, actor: AuthenticatedUser): Promise<ProjectEntity[]> {
-    return this.projectRepository.list(organizationId, actor);
+  execute(actor: AuthenticatedUser): Promise<ProjectEntity[]> {
+    return this.projectRepository.list(actor);
   }
 }

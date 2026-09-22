@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard, RolesGuard, TenantContextGuard } from './common/auth';
+import { JwtAuthGuard, RolesGuard } from './common/auth';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AgentsModule } from './modules/agents/agents.module';
@@ -17,7 +17,6 @@ import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.mod
 import { ModelManagementModule } from './modules/model-management/model-management.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
-import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { ProjectProfileModule } from './modules/project-profile/project-profile.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { PromptLibraryModule } from './modules/prompt-library/prompt-library.module';
@@ -46,7 +45,6 @@ import { UsersModule } from './modules/users/users.module';
     ModelManagementModule,
     NotificationsModule,
     OnboardingModule,
-    OrganizationsModule,
     ProjectProfileModule,
     ProjectsModule,
     PromptLibraryModule,
@@ -62,10 +60,6 @@ import { UsersModule } from './modules/users/users.module';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: TenantContextGuard,
     },
   ],
 })

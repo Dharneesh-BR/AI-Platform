@@ -25,7 +25,6 @@ export class BullMqDiscoveryQueue implements DiscoveryQueue {
       'company-discovery',
       {
         discoveryJobId: job.id,
-        organizationId: job.organizationId,
         projectId: job.projectId,
         actorUserId: job.createdBy,
         companyName: context?.companyName,

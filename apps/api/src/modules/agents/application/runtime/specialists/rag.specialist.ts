@@ -20,8 +20,8 @@ export class RagSpecialist implements AgentSpecialist {
       query: input.userInput,
     }, async () => {
       const context = await this.ragContextService.buildContext({
-        organizationId: input.organizationId,
         projectId: input.projectId,
+        userId: input.userId,
         question: input.userInput,
         allowedKnowledgeScopes: input.businessAgent.knowledgeScopes.length ? input.businessAgent.knowledgeScopes : ['GENERAL'],
       });
@@ -44,7 +44,6 @@ export class RagSpecialist implements AgentSpecialist {
   private toolContext(input: SpecialistExecutionInput) {
     return {
       userId: input.userId,
-      organizationId: input.organizationId,
       projectId: input.projectId,
       agentRunId: input.runId,
       agentStepId: input.agentStepId,

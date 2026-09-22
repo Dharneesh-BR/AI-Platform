@@ -8,16 +8,15 @@ import type { ResearchSourceEntity } from '../../domain/entities/research-source
 export class PrismaResearchSourceRepository implements ResearchSourceRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listForProject(
-    organizationId: string,
-    projectId: string,
-    _actor: AuthenticatedUser,
-  ): Promise<ResearchSourceEntity[]> {
+  async listForProject(projectId: string, actor: AuthenticatedUser): Promise<ResearchSourceEntity[]> {
     const sources = await this.prisma.researchSource.findMany({
       where: {
-        organizationId,
         projectId,
         deletedAt: null,
+        project: {
+          createdBy: actor.id,
+          deletedAt: null,
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -26,7 +25,6 @@ export class PrismaResearchSourceRepository implements ResearchSourceRepository 
 
     return sources.map((source) => ({
       id: source.id,
-      organizationId: source.organizationId,
       projectId: source.projectId,
       type: source.type,
       sourceId: source.sourceId,
@@ -39,4 +37,3 @@ export class PrismaResearchSourceRepository implements ResearchSourceRepository 
     }));
   }
 }
-

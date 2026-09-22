@@ -6,4 +6,3 @@ export {
   ProjectLifecycleState,
 } from './project-lifecycle';
 export type { Repository } from './repository';
-export type { TenantContext } from './tenant-context';

@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
-import { AgentType, AiExecutionStatus, MembershipStatus, PlatformRole as PrismaPlatformRole, type Prisma } from '@prisma/client';
+import { AgentType, AiExecutionStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { LiteLlmGatewayService } from '../../../ai/application/services/litellm-gateway.service';
 import { AgentContextService } from './agent-context.service';
@@ -21,7 +21,6 @@ import { VerificationService } from './verification.service';
 
 const AgentState = Annotation.Root({
   runId: Annotation<string>,
-  organizationId: Annotation<string>,
   projectId: Annotation<string>,
   userId: Annotation<string>,
   permissions: Annotation<string[]>,
@@ -68,16 +67,15 @@ export class AgentRuntimeService {
   ) {}
 
   async classifyExecutionMode(input: AgentRuntimeInput): Promise<'sync' | 'async'> {
-    const businessAgent = await this.profileService.getBySlug(input.agentSlug, input.organizationId);
+    const businessAgent = await this.profileService.getBySlug(input.agentSlug);
     const supervisor = this.supervisorService.classify({ userInput: input.userInput, businessAgent });
     return supervisor.complexity === 'complex' || (supervisor.requiresPlanning && supervisor.requiredCapabilities.length >= 3) ? 'async' : 'sync';
   }
 
   async execute(input: AgentRuntimeInput): Promise<AgentRuntimeResult> {
-    const businessAgent = await this.profileService.getBySlug(input.agentSlug, input.organizationId);
+    const businessAgent = await this.profileService.getBySlug(input.agentSlug);
     const run = await this.prisma.agentRun.create({
       data: {
-        organizationId: input.organizationId,
         projectId: input.projectId,
         conversationId: input.conversationId,
         businessAgentId: businessAgent.id,
@@ -120,9 +118,8 @@ export class AgentRuntimeService {
     const inputRecord = run.input && typeof run.input === 'object' && !Array.isArray(run.input) ? run.input as Record<string, unknown> : {};
     const userInput = typeof inputRecord.userInput === 'string' ? inputRecord.userInput : '';
     const userId = run.createdBy ?? '00000000-0000-0000-0000-000000000000';
-    const businessAgent = await this.profileService.getBySlug(run.agentSlug ?? undefined, run.organizationId ?? undefined);
+    const businessAgent = await this.profileService.getBySlug(run.agentSlug ?? undefined);
     const authorization = await this.resolveRuntimeAuthorization({
-      organizationId: run.organizationId,
       projectId: run.projectId,
       userId,
       businessAgentId: businessAgent.id,
@@ -140,7 +137,6 @@ export class AgentRuntimeService {
     try {
       const initialState: AgentGraphState = {
         runId: run.id,
-        organizationId: run.organizationId ?? '',
         projectId: run.projectId ?? '',
         userId,
         permissions: authorization.permissions,
@@ -237,8 +233,8 @@ export class AgentRuntimeService {
     await this.recordStep(state, 'load_context', async () => undefined);
     return {
       companyContext: await this.contextService.buildCompanyContext({
-        organizationId: state.organizationId,
         projectId: state.projectId,
+        userId: state.userId,
       }),
     };
   }
@@ -293,7 +289,6 @@ export class AgentRuntimeService {
         specialist.execute({
           runId: state.runId,
           agentStepId,
-          organizationId: state.organizationId,
           projectId: state.projectId,
           userId: state.userId,
           permissions: state.permissions,
@@ -394,7 +389,6 @@ export class AgentRuntimeService {
           metadata: {
             feature: 'agent-runtime',
             runId: input.state.runId,
-            organizationId: input.state.organizationId,
             projectId: input.state.projectId,
           },
         });
@@ -507,26 +501,25 @@ export class AgentRuntimeService {
   }
 
   private async resolveRuntimeAuthorization(input: {
-    organizationId: string | null;
     projectId: string | null;
     userId: string;
     businessAgentId?: string;
   }) {
-    if (!input.organizationId || !input.projectId) {
-      throw new ForbiddenException('Agent run is missing trusted organization or project context.');
+    if (!input.projectId) {
+      throw new ForbiddenException('Agent run is missing trusted project context.');
     }
 
     const project = await this.prisma.project.findFirst({
       where: {
         id: input.projectId,
-        organizationId: input.organizationId,
+        createdBy: input.userId,
         deletedAt: null,
       },
       select: { id: true },
     });
 
     if (!project) {
-      throw new ForbiddenException('Agent run project is outside the trusted organization boundary.');
+      throw new ForbiddenException('Agent run project is outside the user ownership boundary.');
     }
 
     const user = await this.prisma.user.findFirst({
@@ -534,52 +527,28 @@ export class AgentRuntimeService {
         id: input.userId,
         deletedAt: null,
       },
-      select: { role: true },
+      select: { id: true },
     });
 
     if (!user) {
       throw new ForbiddenException('Agent run user is no longer active.');
     }
 
-    if (user.role === PrismaPlatformRole.SUPER_ADMIN) {
-      return { permissions: this.permissionsForRole(user.role) };
-    }
-
-    const membership = await this.prisma.organizationMembership.findFirst({
-      where: {
-        organizationId: input.organizationId,
-        userId: input.userId,
-        status: MembershipStatus.ACTIVE,
-        deletedAt: null,
-      },
-      select: { role: true },
-    });
-
-    if (!membership) {
-      throw new ForbiddenException('Agent run user no longer has active organization membership.');
-    }
-
-    return { permissions: this.permissionsForRole(membership.role) };
+    return { permissions: this.ownerPermissions() };
   }
 
-  private permissionsForRole(role: PrismaPlatformRole): string[] {
-    const permissions = new Set<string>(['project:read', 'company:read', 'report:read', 'knowledge:read']);
-
-    if (role === PrismaPlatformRole.SUPER_ADMIN || role === PrismaPlatformRole.ADMIN || role === PrismaPlatformRole.CONSULTANT) {
-      permissions.add('knowledge:write');
-      permissions.add('knowledge:delete');
-      permissions.add('analysis:run');
-      permissions.add('calculator:execute');
-      permissions.add('research:read');
-    }
-
-    if (role === PrismaPlatformRole.CLIENT) {
-      permissions.add('knowledge:write');
-      permissions.add('analysis:run');
-      permissions.add('calculator:execute');
-    }
-
-    return [...permissions];
+  private ownerPermissions(): string[] {
+    return [
+      'project:read',
+      'company:read',
+      'report:read',
+      'knowledge:read',
+      'knowledge:write',
+      'knowledge:delete',
+      'analysis:run',
+      'calculator:execute',
+      'research:read',
+    ];
   }
 
   private applyDeterministicSafetyCaveats(content: string, agentSlug: string): string {

@@ -19,13 +19,8 @@ export class GetCompanyProfileUseCase {
     private readonly projectProfileRepository: ProjectProfileRepository,
   ) {}
 
-  async execute(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<CompanyProfileEntity> {
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<CompanyProfileEntity> {
     const profile = await this.companyProfileRepository.findLatestForProject(
-      organizationId,
       projectId,
       actor,
     );
@@ -35,7 +30,6 @@ export class GetCompanyProfileUseCase {
     }
 
     const projectProfile = await this.projectProfileRepository.findByProjectId(
-      organizationId,
       projectId,
       actor,
     );

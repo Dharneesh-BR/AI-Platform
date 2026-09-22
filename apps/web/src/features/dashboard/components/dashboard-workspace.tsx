@@ -8,7 +8,7 @@ import { getLifecycleProgress, getLifecycleTone, getProjectRoute } from '../../p
 
 export function DashboardWorkspace() {
   const { session } = useAuth();
-  const context = { accessToken: session.accessToken, organizationId: session.organizationId };
+  const context = { accessToken: session.accessToken };
   const projectsQuery = useProjects(context);
   const agentsQuery = useBusinessAgents(context);
   const healthQuery = useAdminHealth(context);

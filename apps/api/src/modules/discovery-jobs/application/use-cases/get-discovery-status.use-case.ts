@@ -13,12 +13,8 @@ export class GetDiscoveryStatusUseCase {
     private readonly discoveryJobRepository: DiscoveryJobRepository,
   ) {}
 
-  async execute(
-    organizationId: string,
-    projectId: string,
-    actor: AuthenticatedUser,
-  ): Promise<DiscoveryJobEntity> {
-    const job = await this.discoveryJobRepository.findLatest(organizationId, projectId, actor);
+  async execute(projectId: string, actor: AuthenticatedUser): Promise<DiscoveryJobEntity> {
+    const job = await this.discoveryJobRepository.findLatest(projectId, actor);
 
     if (!job) {
       throw new NotFoundException('Discovery job not found.');
@@ -27,4 +23,3 @@ export class GetDiscoveryStatusUseCase {
     return job;
   }
 }
-

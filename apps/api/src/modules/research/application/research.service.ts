@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ResearchStatus } from '@prisma/client';
+import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { LiteLlmGatewayService } from '../../ai/application/services/litellm-gateway.service';
 
 export interface CreateResearchPlanInput {
-  organizationId: string;
   projectId: string;
-  actorUserId: string;
+  actor: AuthenticatedUser;
   title: string;
   question: string;
   objectives?: string[];
@@ -40,18 +40,18 @@ export class ResearchService {
     private readonly liteLlmGateway: LiteLlmGatewayService,
   ) {}
 
-  async listPlans(organizationId: string, projectId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async listPlans(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     return this.prisma.researchPlan.findMany({
-      where: { projectId, deletedAt: null },
+      where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { findings: true, citations: true, validations: true },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async createPlan(input: CreateResearchPlanInput) {
-    const project = await this.ensureProject(input.organizationId, input.projectId);
+    const project = await this.ensureProject(input.projectId, input.actor.id);
     const generated = await this.generateResearchPlan(input, project);
 
     return this.prisma.researchPlan.create({
@@ -65,16 +65,16 @@ export class ResearchService {
           steps: generated.steps,
           generatedBy: 'ai-research-api',
         },
-        createdBy: input.actorUserId,
-        updatedBy: input.actorUserId,
+        createdBy: input.actor.id,
+        updatedBy: input.actor.id,
         findings: {
           create: generated.findings.map((finding) => ({
             title: finding.title,
             summary: finding.summary,
             confidence: finding.confidence?.toFixed(4),
             evidence: finding.evidence ?? [],
-            createdBy: input.actorUserId,
-            updatedBy: input.actorUserId,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
           })),
         },
         citations: {
@@ -85,8 +85,8 @@ export class ResearchService {
             excerpt: citation.excerpt,
             retrievedAt: new Date(),
             metadata: { generatedBy: 'ai-research-api' },
-            createdBy: input.actorUserId,
-            updatedBy: input.actorUserId,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
           })),
         },
         validations: {
@@ -94,8 +94,8 @@ export class ResearchService {
             passed: generated.validation.passed,
             score: generated.validation.score?.toFixed(4),
             issues: generated.validation.issues,
-            createdBy: input.actorUserId,
-            updatedBy: input.actorUserId,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
           },
         },
       },
@@ -103,11 +103,11 @@ export class ResearchService {
     });
   }
 
-  async getPlan(organizationId: string, projectId: string, researchPlanId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async getPlan(projectId: string, researchPlanId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     const plan = await this.prisma.researchPlan.findFirst({
-      where: { id: researchPlanId, projectId, deletedAt: null },
+      where: { id: researchPlanId, projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { findings: true, citations: true, validations: true },
     });
 
@@ -118,9 +118,9 @@ export class ResearchService {
     return plan;
   }
 
-  private async ensureProject(organizationId: string, projectId: string) {
+  private async ensureProject(projectId: string, actorUserId: string) {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actorUserId, deletedAt: null },
       include: {
         projectProfile: true,
         companyProfiles: {
@@ -152,7 +152,6 @@ export class ResearchService {
       maxTokens: 1300,
       metadata: {
         feature: 'research-plan',
-        organizationId: input.organizationId,
         projectId: input.projectId,
       },
       messages: [

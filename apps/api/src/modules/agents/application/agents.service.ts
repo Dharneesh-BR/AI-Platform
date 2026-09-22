@@ -1,17 +1,16 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AgentType, AiExecutionStatus, type Prisma } from '@prisma/client';
 import { QueueInfrastructureService } from '../../../common/queue/queue-infrastructure.service';
 import { QUEUE_NAMES } from '../../../common/queue/queue.constants';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { PlatformRole, type AuthenticatedUser, type RequestTenantContext } from '../../../common/auth';
+import type { AuthenticatedUser } from '../../../common/auth';
 import type { AgentExecutionJobPayload } from './ports/agent-execution-job.payload';
 import { BusinessAgentProfileService } from './runtime/business-agent-profile.service';
 import { AgentRuntimeService } from './runtime/agent-runtime.service';
 
 export interface CreateAgentRunInput {
-  organizationId: string;
   projectId: string;
-  actorUserId: string;
+  actor: AuthenticatedUser;
   agentType: AgentType;
   state?: unknown;
 }
@@ -25,22 +24,19 @@ export class AgentsService {
     private readonly queueInfrastructure: QueueInfrastructureService,
   ) {}
 
-  async listProfiles(tenant: RequestTenantContext) {
-    const profiles = await this.profileService.list(tenant.organizationId);
-    return profiles.filter((profile) => this.canUseAgent(profile.modelPolicy, tenant.role));
+  async listProfiles() {
+    return this.profileService.list();
   }
 
-  async getProfile(tenant: RequestTenantContext, slug: string) {
-    const profile = await this.profileService.getBySlug(slug, tenant.organizationId);
-    this.ensureAgentAllowed(profile.modelPolicy, tenant.role);
-    return profile;
+  async getProfile(slug: string) {
+    return this.profileService.getBySlug(slug);
   }
 
-  async listProjectRuns(organizationId: string, projectId: string) {
-    await this.ensureProject(organizationId, projectId);
+  async listProjectRuns(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
 
     return this.prisma.agentRun.findMany({
-      where: { projectId, deletedAt: null },
+      where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
       include: { aiExecution: true },
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -48,7 +44,7 @@ export class AgentsService {
   }
 
   async createRun(input: CreateAgentRunInput) {
-    await this.ensureProject(input.organizationId, input.projectId);
+    await this.ensureProject(input.projectId, input.actor.id);
 
     return this.prisma.agentRun.create({
       data: {
@@ -56,27 +52,23 @@ export class AgentsService {
         agentType: input.agentType,
         status: AiExecutionStatus.QUEUED,
         state: (input.state ?? {}) as object,
-        createdBy: input.actorUserId,
-        updatedBy: input.actorUserId,
+        createdBy: input.actor.id,
+        updatedBy: input.actor.id,
       },
       include: { aiExecution: true },
     });
   }
 
   async chat(input: {
-    organizationId: string;
     projectId: string;
     actor: AuthenticatedUser;
-    actorRole?: PlatformRole;
     agentSlug?: string;
     message: string;
     conversationId?: string;
   }) {
-    await this.ensureProject(input.organizationId, input.projectId);
-    const businessAgent = await this.profileService.getBySlug(input.agentSlug, input.organizationId);
-    this.ensureAgentAllowed(businessAgent.modelPolicy, input.actorRole);
+    await this.ensureProject(input.projectId, input.actor.id);
+    const businessAgent = await this.profileService.getBySlug(input.agentSlug);
     return this.agentRuntimeService.execute({
-      organizationId: input.organizationId,
       projectId: input.projectId,
       userId: input.actor.id,
       conversationId: input.conversationId,
@@ -86,21 +78,17 @@ export class AgentsService {
   }
 
   async createQueuedRuntimeRun(input: {
-    organizationId: string;
     projectId: string;
     actor: AuthenticatedUser;
-    actorRole?: PlatformRole;
     agentSlug?: string;
     message: string;
     conversationId?: string;
   }) {
-    await this.ensureProject(input.organizationId, input.projectId);
-    const businessAgent = await this.profileService.getBySlug(input.agentSlug, input.organizationId);
-    this.ensureAgentAllowed(businessAgent.modelPolicy, input.actorRole);
+    await this.ensureProject(input.projectId, input.actor.id);
+    const businessAgent = await this.profileService.getBySlug(input.agentSlug);
 
     const run = await this.prisma.agentRun.create({
       data: {
-        organizationId: input.organizationId,
         projectId: input.projectId,
         conversationId: input.conversationId,
         businessAgentId: businessAgent.id,
@@ -130,9 +118,13 @@ export class AgentsService {
     return this.toRunStatus(run);
   }
 
-  async getRunStatus(organizationId: string, agentRunId: string) {
+  async getRunStatus(agentRunId: string, actor: AuthenticatedUser) {
     const run = await this.prisma.agentRun.findFirst({
-      where: { id: agentRunId, organizationId, deletedAt: null },
+      where: {
+        id: agentRunId,
+        deletedAt: null,
+        project: { createdBy: actor.id, deletedAt: null },
+      },
       include: {
         steps: {
           where: { deletedAt: null },
@@ -242,32 +234,14 @@ export class AgentsService {
     return Math.min(90, 15 + stepCount * 12);
   }
 
-  private async ensureProject(organizationId: string, projectId: string) {
+  private async ensureProject(projectId: string, actorUserId: string) {
     const project = await this.prisma.project.findFirst({
-      where: { id: projectId, organizationId, deletedAt: null },
+      where: { id: projectId, createdBy: actorUserId, deletedAt: null },
       select: { id: true },
     });
 
     if (!project) {
       throw new NotFoundException('Project not found.');
     }
-  }
-
-  private ensureAgentAllowed(modelPolicy: Record<string, unknown>, role?: PlatformRole) {
-    if (!this.canUseAgent(modelPolicy, role)) {
-      throw new ForbiddenException('You are not allowed to use this business agent.');
-    }
-  }
-
-  private canUseAgent(modelPolicy: Record<string, unknown>, role?: PlatformRole) {
-    if (role === PlatformRole.SuperAdmin) {
-      return true;
-    }
-
-    const allowedRoles = Array.isArray(modelPolicy.allowedRoles)
-      ? modelPolicy.allowedRoles.filter((candidate): candidate is string => typeof candidate === 'string')
-      : [];
-
-    return allowedRoles.length === 0 || (role ? allowedRoles.includes(role) : false);
   }
 }
