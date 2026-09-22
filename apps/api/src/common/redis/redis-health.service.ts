@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
 import { RedisConnectionService } from './redis-connection.service';
 
@@ -9,6 +9,8 @@ export interface RedisHealthResult {
 
 @Injectable()
 export class RedisHealthService {
+  private readonly logger = new Logger(RedisHealthService.name);
+
   constructor(private readonly redisConnectionService: RedisConnectionService) {}
 
   async check(): Promise<RedisHealthResult> {
@@ -17,6 +19,9 @@ export class RedisHealthService {
       maxRetriesPerRequest: 1,
       enableReadyCheck: true,
       connectTimeout: 2_000,
+    });
+    client.on('error', (error) => {
+      this.logger.warn(`Redis health check connection failed: ${error.message}`);
     });
 
     try {

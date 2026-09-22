@@ -19,6 +19,9 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     }
 
     const queue = new Queue<TPayload>(queueName, this.getQueueOptions());
+    queue.on('error', (error) => {
+      this.logger.warn(`BullMQ queue unavailable: queue=${queueName}, error=${error.message}`);
+    });
     this.queues.set(queueName, queue);
     return queue;
   }
@@ -34,6 +37,9 @@ export class QueueInfrastructureService implements OnModuleDestroy {
     });
 
     this.workers.add(worker);
+    worker.on('error', (error) => {
+      this.logger.warn(`BullMQ worker connection error: queue=${queueName}, error=${error.message}`);
+    });
     return worker;
   }
 

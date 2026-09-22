@@ -125,8 +125,8 @@ export class LiteLlmGatewayService {
         throw error;
       }
 
-      const reason = error instanceof Error && error.name === 'TimeoutError' ? 'request timeout' : 'network failure';
-      this.logger.error(`LiteLLM request failed: model=${model}, reason=${reason}`);
+      const reason = this.requestFailureReason(error);
+      this.logger.error(`LiteLLM request failed: model=${model}, reason=${reason}, timeoutMs=${this.timeoutMs}`);
       throw new ServiceUnavailableException(`LiteLLM ${reason}.`);
     }
   }
@@ -175,8 +175,8 @@ export class LiteLlmGatewayService {
         throw error;
       }
 
-      const reason = error instanceof Error && error.name === 'TimeoutError' ? 'request timeout' : 'network failure';
-      this.logger.error(`LiteLLM embedding request failed: model=${model}, reason=${reason}`);
+      const reason = this.requestFailureReason(error);
+      this.logger.error(`LiteLLM embedding request failed: model=${model}, reason=${reason}, timeoutMs=${this.timeoutMs}`);
       throw new ServiceUnavailableException(`LiteLLM embedding ${reason}.`);
     }
   }
@@ -190,8 +190,14 @@ export class LiteLlmGatewayService {
   }
 
   private get timeoutMs(): number {
-    const configured = Number(this.configService.get<string>('LITELLM_TIMEOUT_MS') ?? 30000);
-    return Number.isFinite(configured) && configured > 0 ? configured : 30000;
+    const configured = Number(this.configService.get<string>('LITELLM_TIMEOUT_MS') ?? 60000);
+    return Number.isFinite(configured) && configured > 0 ? configured : 60000;
+  }
+
+  private requestFailureReason(error: unknown): 'request timeout' | 'network failure' {
+    return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')
+      ? 'request timeout'
+      : 'network failure';
   }
 
   private chatCompletionsUrl(baseUrl: string): string {
