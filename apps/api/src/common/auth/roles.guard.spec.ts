@@ -1,4 +1,5 @@
 import type { ExecutionContext } from '@nestjs/common';
+import type { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import { RolesGuard } from './roles.guard';
 
@@ -11,8 +12,14 @@ function contextWithRequest(request: unknown): ExecutionContext {
 }
 
 describe('RolesGuard', () => {
+  function guardWithPublicRoute(isPublic = false): RolesGuard {
+    return new RolesGuard({
+      getAllAndOverride: vi.fn(() => isPublic),
+    } as unknown as Reflector);
+  }
+
   it('allows authenticated users', () => {
-    const guard = new RolesGuard();
+    const guard = guardWithPublicRoute();
 
     expect(
       guard.canActivate(
@@ -24,7 +31,7 @@ describe('RolesGuard', () => {
   });
 
   it('allows auth bypass users', () => {
-    const guard = new RolesGuard();
+    const guard = guardWithPublicRoute();
 
     expect(
       guard.canActivate(
@@ -36,8 +43,14 @@ describe('RolesGuard', () => {
   });
 
   it('denies missing authenticated user context', () => {
-    const guard = new RolesGuard();
+    const guard = guardWithPublicRoute();
 
     expect(guard.canActivate(contextWithRequest({}))).toBe(false);
+  });
+
+  it('allows public routes before a user session exists', () => {
+    const guard = guardWithPublicRoute(true);
+
+    expect(guard.canActivate(contextWithRequest({}))).toBe(true);
   });
 });
