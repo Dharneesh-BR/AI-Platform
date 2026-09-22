@@ -106,50 +106,50 @@ export class ConversationsService {
       userInput: input.content,
       agentSlug: input.agentSlug,
     };
-    const executionMode = await this.agentRuntimeService.classifyExecutionMode(runtimeInput);
-
-    if (executionMode === 'async') {
-      const runStatus = await this.agentsService.createQueuedRuntimeRun({
-        projectId: conversation.projectId,
-        actor: input.actor,
-        conversationId: input.conversationId,
-        message: input.content,
-        agentSlug: input.agentSlug,
-      });
-
-      await this.prisma.conversationMessage.create({
-        data: {
-          conversationId: input.conversationId,
-          role: 'assistant',
-          content: 'Magnafic AI is working on this multi-step request. Progress will update here shortly.',
-          metadata: {
-            generatedBy: 'agent-runtime',
-            mode: 'async',
-            agentRunId: runStatus.runId,
-            status: runStatus.status,
-            progressLabel: runStatus.progressLabel,
-          } as unknown as Prisma.InputJsonValue,
-          createdBy: input.actor.id,
-          updatedBy: input.actor.id,
-        },
-      });
-
-      const updatedConversation = await this.prisma.conversation.findUniqueOrThrow({
-        where: { id: input.conversationId },
-        include: { messages: { orderBy: { createdAt: 'asc' } } },
-      });
-
-      return {
-        ...updatedConversation,
-        mode: 'async',
-        runId: runStatus.runId,
-        status: runStatus.status,
-      };
-    }
-
     let runtimeResult;
 
     try {
+      const executionMode = await this.agentRuntimeService.classifyExecutionMode(runtimeInput);
+
+      if (executionMode === 'async') {
+        const runStatus = await this.agentsService.createQueuedRuntimeRun({
+          projectId: conversation.projectId,
+          actor: input.actor,
+          conversationId: input.conversationId,
+          message: input.content,
+          agentSlug: input.agentSlug,
+        });
+
+        await this.prisma.conversationMessage.create({
+          data: {
+            conversationId: input.conversationId,
+            role: 'assistant',
+            content: 'Magnafic AI is working on this multi-step request. Progress will update here shortly.',
+            metadata: {
+              generatedBy: 'agent-runtime',
+              mode: 'async',
+              agentRunId: runStatus.runId,
+              status: runStatus.status,
+              progressLabel: runStatus.progressLabel,
+            } as unknown as Prisma.InputJsonValue,
+            createdBy: input.actor.id,
+            updatedBy: input.actor.id,
+          },
+        });
+
+        const updatedConversation = await this.prisma.conversation.findUniqueOrThrow({
+          where: { id: input.conversationId },
+          include: { messages: { orderBy: { createdAt: 'asc' } } },
+        });
+
+        return {
+          ...updatedConversation,
+          mode: 'async',
+          runId: runStatus.runId,
+          status: runStatus.status,
+        };
+      }
+
       runtimeResult = await this.agentRuntimeService.execute(runtimeInput);
       if (!runtimeResult.answer?.trim()) {
         runtimeResult.answer = this.fallbackAnswer(conversation.project, input.content);

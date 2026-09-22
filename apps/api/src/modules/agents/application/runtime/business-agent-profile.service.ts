@@ -44,7 +44,10 @@ export class BusinessAgentProfileService {
       orderBy: [{ department: 'asc' }, { name: 'asc' }],
     }).catch(() => []);
 
-    const mergedProfiles = this.mergeProfiles(sanityProfiles, profiles.map((profile) => this.toView(profile)));
+    const mergedProfiles = this.mergeProfiles(
+      sanityProfiles.map((profile) => this.normalizeProfile(profile)),
+      profiles.map((profile) => this.toView(profile)),
+    );
     return mergedProfiles.length ? mergedProfiles : [DEFAULT_AGENT_PROFILE];
   }
 
@@ -52,7 +55,7 @@ export class BusinessAgentProfileService {
     const normalizedSlug = slug?.trim() || DEFAULT_AGENT_SLUG;
     const sanityProfile = (await this.sanityAgentProfileClient.list()).find((profile) => profile.slug === normalizedSlug);
     if (sanityProfile) {
-      return sanityProfile;
+      return this.normalizeProfile(sanityProfile);
     }
 
     const profile = await this.prisma.businessAgentProfile.findFirst({
@@ -100,7 +103,7 @@ export class BusinessAgentProfileService {
       capabilities: this.parseCapabilities(profile.capabilities),
       allowedSpecialists: this.parseStringArray(profile.allowedSpecialists),
       allowedTools: this.allowedToolsFor(profile.slug, profile.allowedTools),
-      knowledgeScopes: this.parseStringArray(profile.knowledgeScopes),
+      knowledgeScopes: this.knowledgeScopesFor(profile.slug, profile.knowledgeScopes),
       modelPolicy: this.parseRecord(profile.modelPolicy),
       verificationPolicy: this.parseRecord(profile.verificationPolicy),
       enabled: profile.enabled,
@@ -138,6 +141,30 @@ export class BusinessAgentProfileService {
     }
 
     return [...new Set([...configuredTools, ...DEFAULT_AGENT_ALLOWED_TOOLS])];
+  }
+
+  private knowledgeScopesFor(slug: string, value: unknown): string[] {
+    const configuredScopes = this.parseStringArray(value);
+
+    if (slug !== DEFAULT_AGENT_SLUG) {
+      return configuredScopes;
+    }
+
+    return [...new Set([...configuredScopes, ...DEFAULT_AGENT_PROFILE.knowledgeScopes])];
+  }
+
+  private normalizeProfile(profile: BusinessAgentProfileView): BusinessAgentProfileView {
+    if (profile.slug !== DEFAULT_AGENT_SLUG) {
+      return profile;
+    }
+
+    return {
+      ...profile,
+      capabilities: [...new Set([...profile.capabilities, ...DEFAULT_AGENT_PROFILE.capabilities])] as BusinessAgentProfileView['capabilities'],
+      allowedSpecialists: [...new Set([...profile.allowedSpecialists, ...DEFAULT_AGENT_PROFILE.allowedSpecialists])],
+      allowedTools: [...new Set([...profile.allowedTools, ...DEFAULT_AGENT_ALLOWED_TOOLS])],
+      knowledgeScopes: [...new Set([...profile.knowledgeScopes, ...DEFAULT_AGENT_PROFILE.knowledgeScopes])],
+    };
   }
 
   private parseRecord(value: unknown): Record<string, unknown> {

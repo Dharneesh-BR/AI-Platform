@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import type { AgentToolDefinition, ToolExecutionContext, ToolExecutionResult } from './agent-tool.types';
@@ -7,6 +7,7 @@ import { ToolAuthorizationService } from './tool-authorization.service';
 
 @Injectable()
 export class ToolRegistryService {
+  private readonly logger = new Logger(ToolRegistryService.name);
   private readonly tools = new Map(INTERNAL_TOOL_DEFINITIONS.map((tool) => [tool.name, tool]));
 
   constructor(
@@ -78,27 +79,32 @@ export class ToolRegistryService {
       return null;
     }
 
-    return this.prisma.toolExecution.create({
-      data: {
-        agentRunId: context.agentRunId,
-        agentStepId: context.agentStepId,
-        projectId: context.projectId,
-        userId: context.userId,
-        agentProfileId: context.agentProfileId,
-        agentSlug: context.agentSlug,
-        toolName: tool.name,
-        category: tool.category,
-        status,
-        riskLevel: tool.riskLevel,
-        mutating: tool.mutating,
-        inputSummary: this.safeSummary(input) as Prisma.InputJsonValue,
-        outputSummary: this.safeSummary(output ?? {}) as Prisma.InputJsonValue,
-        errorCode,
-        completedAt: status === 'RUNNING' ? undefined : new Date(),
-        createdBy: context.userId,
-        updatedBy: context.userId,
-      },
-    });
+    try {
+      return await this.prisma.toolExecution.create({
+        data: {
+          agentRunId: context.agentRunId,
+          agentStepId: context.agentStepId,
+          projectId: context.projectId,
+          userId: context.userId,
+          agentProfileId: context.agentProfileId,
+          agentSlug: context.agentSlug,
+          toolName: tool.name,
+          category: tool.category,
+          status,
+          riskLevel: tool.riskLevel,
+          mutating: tool.mutating,
+          inputSummary: this.safeSummary(input) as Prisma.InputJsonValue,
+          outputSummary: this.safeSummary(output ?? {}) as Prisma.InputJsonValue,
+          errorCode,
+          completedAt: status === 'RUNNING' ? undefined : new Date(),
+          createdBy: context.userId,
+          updatedBy: context.userId,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Tool audit unavailable; continuing without audit row. tool=${tool.name} reason=${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
   }
 
   private async completeAudit(id: string | undefined, status: string, startedAt: number, output: unknown, errorCode?: string) {
@@ -106,16 +112,20 @@ export class ToolRegistryService {
       return;
     }
 
-    await this.prisma.toolExecution.update({
-      where: { id },
-      data: {
-        status,
-        completedAt: new Date(),
-        durationMs: Math.max(0, Date.now() - startedAt),
-        outputSummary: this.safeSummary(output) as Prisma.InputJsonValue,
-        errorCode,
-      },
-    });
+    try {
+      await this.prisma.toolExecution.update({
+        where: { id },
+        data: {
+          status,
+          completedAt: new Date(),
+          durationMs: Math.max(0, Date.now() - startedAt),
+          outputSummary: this.safeSummary(output) as Prisma.InputJsonValue,
+          errorCode,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(`Tool audit update unavailable; continuing. executionId=${id} reason=${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private outputSummary(result: ToolExecutionResult) {

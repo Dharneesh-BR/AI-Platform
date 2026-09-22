@@ -12,9 +12,13 @@ export class ResearchSpecialist implements AgentSpecialist {
   constructor(private readonly toolRegistry: ToolRegistryService) {}
 
   async execute(input: SpecialistExecutionInput): Promise<SpecialistExecutionResult> {
-    await this.toolRegistry.execute('web_search', this.toolContext(input), {
-      query: input.userInput,
-    }, () => ({ ok: false, errorCode: 'INTEGRATION_NOT_CONFIGURED' }));
+    try {
+      await this.toolRegistry.execute('web_search', this.toolContext(input), {
+        query: input.userInput,
+      }, () => ({ ok: false, errorCode: 'INTEGRATION_NOT_CONFIGURED' }));
+    } catch {
+      // External search is intentionally optional at this stage; chat should continue with project context.
+    }
 
     return {
       capability: this.capability,
