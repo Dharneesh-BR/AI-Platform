@@ -9,6 +9,9 @@ export class VerificationService {
     if (!state.finalAnswer.trim()) {
       issues.push('No final answer was produced.');
     }
+    if (this.isTruncated(state)) {
+      issues.push('The final answer appears to be truncated before completion.');
+    }
     if (state.supervisor?.needsCompanyKnowledge && state.sources.length === 0) {
       issues.push('The request appears to need company knowledge, but no relevant document sources were retrieved.');
     }
@@ -43,5 +46,27 @@ export class VerificationService {
       issues,
       recommendedAction: passed ? 'accept' : 'revise',
     });
+  }
+
+  private isTruncated(state: AgentGraphState): boolean {
+    if (state.finalAnswerFinishReason === 'length') {
+      return true;
+    }
+
+    const answer = state.finalAnswer.trim();
+    if (!answer) {
+      return false;
+    }
+
+    const lastLine = answer.split(/\r?\n/).at(-1)?.trim() ?? '';
+    if (/[-:|–—]$/.test(lastLine)) {
+      return true;
+    }
+
+    if (/\|\s*$/.test(lastLine) && !/^\|?.+\|\s*$/.test(answer.split(/\r?\n/).at(-2)?.trim() ?? '')) {
+      return true;
+    }
+
+    return /\b(and|or|the|a|an|to|with|for|of|in|on|by|as)\s*$/i.test(answer);
   }
 }

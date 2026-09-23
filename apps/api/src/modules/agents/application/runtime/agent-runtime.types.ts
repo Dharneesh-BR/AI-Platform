@@ -139,6 +139,7 @@ export interface AgentGraphState {
   selectedModels: Record<string, string>;
   verification?: VerificationResult;
   finalAnswer: string;
+  finalAnswerFinishReason?: string;
   sources: AgentSourceReference[];
   errors: string[];
   usage: {

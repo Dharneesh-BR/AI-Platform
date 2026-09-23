@@ -77,4 +77,25 @@ describe('VerificationService', () => {
     expect(result.passed).toBe(false);
     expect(result.recommendedAction).toBe('revise');
   });
+
+  it('fails when the model stopped because of output length', () => {
+    const result = service.verify({
+      ...baseState,
+      finalAnswer: 'Here is a long answer that was cut off',
+      finalAnswerFinishReason: 'length',
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.join(' ')).toContain('truncated');
+  });
+
+  it('fails answers that visibly end mid-section', () => {
+    const result = service.verify({
+      ...baseState,
+      finalAnswer: 'Current context\n- USP –',
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.issues.join(' ')).toContain('truncated');
+  });
 });

@@ -40,6 +40,7 @@ const AgentState = Annotation.Root({
   selectedModels: Annotation<Record<string, string>>,
   verification: Annotation<AgentGraphState['verification'] | undefined>,
   finalAnswer: Annotation<string>,
+  finalAnswerFinishReason: Annotation<string | undefined>,
   sources: Annotation<AgentGraphState['sources']>,
   errors: Annotation<string[]>,
   usage: Annotation<AgentGraphState['usage']>,
@@ -153,6 +154,7 @@ export class AgentRuntimeService {
         specialistResults: [],
         selectedModels: {},
         finalAnswer: '',
+        finalAnswerFinishReason: undefined,
         sources: [],
         errors: [],
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
@@ -170,6 +172,7 @@ export class AgentRuntimeService {
             answer: finalState.finalAnswer,
             sources: finalState.sources,
             verification: finalState.verification,
+            finishReason: finalState.finalAnswerFinishReason,
           } as unknown as Prisma.InputJsonValue,
           state: this.safeState(finalState) as Prisma.InputJsonValue,
           totalTokens: finalState.usage.totalTokens,
@@ -345,6 +348,7 @@ export class AgentRuntimeService {
 
     return {
       finalAnswer,
+      finalAnswerFinishReason: draft.finishReason,
       selectedModels: { ...state.selectedModels, synthesis: draft.model },
       usage: this.addUsage(state.usage, draft),
     };
