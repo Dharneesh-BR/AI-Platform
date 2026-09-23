@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Queue, Worker, type JobsOptions, type Processor, type QueueOptions, type WorkerOptions } from 'bullmq';
 import { RedisConnectionService } from '../redis/redis-connection.service';
+import { RedisHealthService } from '../redis/redis-health.service';
 import { DEFAULT_QUEUE_JOB_OPTIONS, type QueueName } from './queue.constants';
 
 @Injectable()
@@ -9,7 +10,10 @@ export class QueueInfrastructureService implements OnModuleDestroy {
   private readonly queues = new Map<string, Queue>();
   private readonly workers = new Set<Worker>();
 
-  constructor(private readonly redisConnectionService: RedisConnectionService) {}
+  constructor(
+    private readonly redisConnectionService: RedisConnectionService,
+    private readonly redisHealthService: RedisHealthService,
+  ) {}
 
   getQueue<TPayload>(queueName: QueueName): Queue<TPayload> {
     const existingQueue = this.queues.get(queueName);
@@ -49,6 +53,19 @@ export class QueueInfrastructureService implements OnModuleDestroy {
       ...overrides,
       jobId,
     };
+  }
+
+  hasConfiguredConnection(): boolean {
+    return this.redisConnectionService.isConfigured;
+  }
+
+  async hasHealthyConnection(): Promise<boolean> {
+    if (!this.hasConfiguredConnection()) {
+      return false;
+    }
+
+    const result = await this.redisHealthService.check();
+    return result.status === 'healthy';
   }
 
   async checkQueue(queueName: QueueName): Promise<'healthy' | 'degraded' | 'unavailable'> {

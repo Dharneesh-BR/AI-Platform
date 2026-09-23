@@ -17,9 +17,19 @@ export class DocumentProcessingWorkerService implements OnModuleInit, OnModuleDe
     private readonly documentProcessingService: DocumentProcessingService,
   ) {}
 
-  onModuleInit(): void {
-    if (this.configService.get<string>('DOCUMENT_WORKER_ENABLED') === 'false') {
+  async onModuleInit(): Promise<void> {
+    if (this.configService.get<string>('DOCUMENT_WORKER_ENABLED') !== 'true') {
       this.logger.log('Document processing worker disabled in this process.');
+      return;
+    }
+
+    if (!this.queueInfrastructureService.hasConfiguredConnection()) {
+      this.logger.warn('Document processing worker enabled but Redis is not configured; skipping queue worker startup.');
+      return;
+    }
+
+    if (!(await this.queueInfrastructureService.hasHealthyConnection())) {
+      this.logger.warn('Document processing worker enabled but Redis is unavailable; skipping queue worker startup.');
       return;
     }
 

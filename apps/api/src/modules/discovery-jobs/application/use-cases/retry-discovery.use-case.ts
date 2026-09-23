@@ -1,5 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import type { AuthenticatedUser } from '../../../../common/auth';
+import { DiscoveryWorkerProcessorService } from '../../../company-discovery/application/services/discovery-worker-processor.service';
 import {
   PROJECT_PROFILE_REPOSITORY,
   type ProjectProfileRepository,
@@ -15,6 +17,8 @@ import {
 
 @Injectable()
 export class RetryDiscoveryUseCase {
+  private readonly logger = new Logger(RetryDiscoveryUseCase.name);
+
   constructor(
     @Inject(DISCOVERY_JOB_REPOSITORY)
     private readonly discoveryJobRepository: DiscoveryJobRepository,
@@ -22,6 +26,7 @@ export class RetryDiscoveryUseCase {
     private readonly discoveryQueue: DiscoveryQueue,
     @Inject(PROJECT_PROFILE_REPOSITORY)
     private readonly projectProfileRepository: ProjectProfileRepository,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async execute(
@@ -43,7 +48,29 @@ export class RetryDiscoveryUseCase {
       primaryChallenges: profile.primaryChallenges,
       competitors: profile.competitors,
     };
-    await this.discoveryQueue.enqueue(job, discoveryPayload);
+
+    try {
+      await this.discoveryQueue.enqueue(job, discoveryPayload);
+    } catch (error) {
+      if (process.env.DISCOVERY_INLINE_DISABLED === 'true') {
+        throw new ServiceUnavailableException('Discovery queue is unavailable. Please check Redis/BullMQ configuration.');
+      }
+
+      this.logger.warn(
+        `Discovery retry queue unavailable; processing inline. jobId=${job.id} reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+
+      const processor = this.moduleRef.get(DiscoveryWorkerProcessorService, { strict: false });
+      await processor.processPayload({
+        discoveryJobId: job.id,
+        projectId,
+        actorUserId: actor.id,
+        ...discoveryPayload,
+      });
+    }
+
     return { discoveryJobId: job.id };
   }
 }

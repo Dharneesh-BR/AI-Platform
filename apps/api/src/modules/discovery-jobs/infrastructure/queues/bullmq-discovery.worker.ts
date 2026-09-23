@@ -17,9 +17,19 @@ export class BullMqDiscoveryWorker implements OnModuleInit, OnModuleDestroy {
     private readonly discoveryWorkerProcessorService: DiscoveryWorkerProcessorService,
   ) {}
 
-  onModuleInit(): void {
+  async onModuleInit(): Promise<void> {
     if (this.configService.get<string>('DISCOVERY_WORKER_ENABLED') !== 'true') {
       this.logger.log('Discovery worker disabled in this process.');
+      return;
+    }
+
+    if (!this.queueInfrastructureService.hasConfiguredConnection()) {
+      this.logger.warn('Discovery worker enabled but Redis is not configured; skipping queue worker startup.');
+      return;
+    }
+
+    if (!(await this.queueInfrastructureService.hasHealthyConnection())) {
+      this.logger.warn('Discovery worker enabled but Redis is unavailable; skipping queue worker startup.');
       return;
     }
 

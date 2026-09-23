@@ -367,7 +367,8 @@ export class DiscoveryWorkerProcessorService {
               'You generate first-pass company report-card data from onboarding and public website text.',
               'Return strict JSON only. Do not wrap in Markdown.',
               'Use only supplied public/onboarding facts. If you infer, keep it conservative and business-useful.',
-              'Shape: {"businessSummary":"string","futureDirection":"string","executiveSummary":"string","aiReadiness":"string","products":["string"],"services":["string"],"targetCustomers":["string"],"painPoints":["string"],"positioning":"string","recommendedRoadmap":["string"]}',
+              'Return these keys: businessSummary, futureDirection, executiveSummary, aiReadiness, products, services, targetCustomers, painPoints, positioning, recommendedRoadmap.',
+              'Use useful company-specific text for string fields and real short labels for array fields. Never return schema placeholders such as "string" or ["string"].',
             ].join('\n'),
           },
           {
@@ -498,7 +499,8 @@ export class DiscoveryWorkerProcessorService {
   }
 
   private cleanLine(value: string): string {
-    return value.replace(/\s+/g, ' ').trim().slice(0, 140);
+    const cleaned = value.replace(/\s+/g, ' ').trim().slice(0, 140);
+    return this.isPlaceholderText(cleaned) ? '' : cleaned;
   }
 
   private asCleanList(value: unknown, limit: number): string[] {
@@ -509,7 +511,36 @@ export class DiscoveryWorkerProcessorService {
   }
 
   private asOptionalString(value: unknown): string | null {
-    return typeof value === 'string' && value.trim() ? value.trim().slice(0, 700) : null;
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const cleaned = value.replace(/\s+/g, ' ').trim();
+    return cleaned && !this.isPlaceholderText(cleaned) ? cleaned.slice(0, 700) : null;
+  }
+
+  private isPlaceholderText(value: string): boolean {
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[{}[\]"'`]/g, '')
+      .replace(/\s+/g, ' ');
+
+    return [
+      'string',
+      'strings',
+      'string, string',
+      'array of strings',
+      'example',
+      'sample',
+      'placeholder',
+      'n/a',
+      'na',
+      'none',
+      'null',
+      'undefined',
+      'not provided',
+    ].includes(normalized);
   }
 
   private parseJsonObject(content: string): Record<string, unknown> {

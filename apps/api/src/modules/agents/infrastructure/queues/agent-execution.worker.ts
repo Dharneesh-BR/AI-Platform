@@ -15,9 +15,19 @@ export class AgentExecutionWorker implements OnModuleInit, OnModuleDestroy {
     private readonly agentRuntimeService: AgentRuntimeService,
   ) {}
 
-  onModuleInit() {
-    if (process.env.AGENT_WORKER_ENABLED === 'false') {
-      this.logger.warn('AI execution worker disabled by AGENT_WORKER_ENABLED=false.');
+  async onModuleInit(): Promise<void> {
+    if (process.env.AGENT_WORKER_ENABLED !== 'true') {
+      this.logger.log('AI execution worker disabled in this process.');
+      return;
+    }
+
+    if (!this.queueInfrastructure.hasConfiguredConnection()) {
+      this.logger.warn('AI execution worker enabled but Redis is not configured; skipping queue worker startup.');
+      return;
+    }
+
+    if (!(await this.queueInfrastructure.hasHealthyConnection())) {
+      this.logger.warn('AI execution worker enabled but Redis is unavailable; skipping queue worker startup.');
       return;
     }
 

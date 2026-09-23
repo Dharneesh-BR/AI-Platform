@@ -6,6 +6,13 @@ import type { ConnectionOptions } from 'bullmq';
 export class RedisConnectionService {
   constructor(private readonly configService: ConfigService) {}
 
+  get isConfigured(): boolean {
+    return Boolean(
+      this.configService.get<string>('REDIS_URL')?.trim() ||
+      this.configService.get<string>('REDISHOST')?.trim(),
+    );
+  }
+
   get url(): string {
     const redisUrl = this.configService.get<string>('REDIS_URL')?.trim();
 

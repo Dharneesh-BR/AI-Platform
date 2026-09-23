@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ProjectLifecycleState } from '@prisma/client';
 import type { AuthenticatedUser } from '../../../../common/auth';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { DiscoveryJobEntity } from '../../domain/entities/discovery-job.entity';
@@ -15,16 +16,28 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
   ): Promise<DiscoveryJobEntity> {
     await this.ensureOwnedProject(projectId, actor);
 
-    const job = await this.prisma.discoveryJob.create({
-      data: {
-        projectId,
-        idempotencyKey,
-        status: 'PENDING',
-        currentStep: 'queued',
-        steps: this.defaultSteps(),
-        createdBy: actor.id,
-        updatedBy: actor.id,
-      },
+    const job = await this.prisma.$transaction(async (transaction) => {
+      const createdJob = await transaction.discoveryJob.create({
+        data: {
+          projectId,
+          idempotencyKey,
+          status: 'PENDING',
+          currentStep: 'queued',
+          steps: this.defaultSteps(),
+          createdBy: actor.id,
+          updatedBy: actor.id,
+        },
+      });
+
+      await transaction.project.update({
+        where: { id: projectId },
+        data: {
+          lifecycleState: ProjectLifecycleState.DISCOVERY_PENDING,
+          updatedBy: actor.id,
+        },
+      });
+
+      return createdJob;
     });
 
     return this.mapJob(job);

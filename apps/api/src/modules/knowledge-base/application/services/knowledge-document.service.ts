@@ -266,7 +266,7 @@ export class KnowledgeDocumentService {
   }
 
   private async enqueueProcessing(payload: DocumentProcessingJobPayload): Promise<void> {
-    if (process.env.DOCUMENT_WORKER_ENABLED === 'false') {
+    if (process.env.DOCUMENT_WORKER_ENABLED !== 'true') {
       await this.documentProcessingService.process(payload);
       return;
     }

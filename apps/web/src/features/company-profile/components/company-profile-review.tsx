@@ -11,12 +11,43 @@ interface CompanyProfileReviewProps {
   projectId: string;
 }
 
+function isPlaceholderValue(value: string): boolean {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[{}[\]"'`]/g, '')
+    .replace(/\s+/g, ' ');
+
+  return [
+    'string',
+    'strings',
+    'string, string',
+    'array of strings',
+    'example',
+    'sample',
+    'placeholder',
+    'n/a',
+    'na',
+    'none',
+    'null',
+    'undefined',
+    'not provided',
+  ].includes(normalized);
+}
+
+function displayList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim()) && !isPlaceholderValue(item))
+    : [];
+}
+
 function formatValue(value: unknown): string {
   if (Array.isArray(value)) {
-    return value.length ? value.join(', ') : 'Not provided';
+    const values = displayList(value);
+    return values.length ? values.join(', ') : 'Not provided';
   }
 
-  if (typeof value === 'string' && value.trim()) {
+  if (typeof value === 'string' && value.trim() && !isPlaceholderValue(value)) {
     return value;
   }
 
@@ -25,12 +56,11 @@ function formatValue(value: unknown): string {
 
 function summaryText(summaries: Record<string, unknown> | null | undefined, key: string): string | null {
   const value = summaries?.[key];
-  return typeof value === 'string' && value.trim() ? value : null;
+  return typeof value === 'string' && value.trim() && !isPlaceholderValue(value) ? value : null;
 }
 
 function summaryList(summaries: Record<string, unknown> | null | undefined, key: string): string[] {
-  const value = summaries?.[key];
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && Boolean(item.trim())) : [];
+  return displayList(summaries?.[key]);
 }
 
 function crawledPages(summaries: Record<string, unknown> | null | undefined): Array<{ url: string; title?: string | null }> {
@@ -65,8 +95,12 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   });
   const profile = profileQuery.data;
   const isAiReady = projectQuery.data?.lifecycleState === 'AI_READY';
-  const opportunityCount = (profile?.products?.length ?? 0) + (profile?.services?.length ?? 0);
-  const riskCount = profile?.painPoints?.length ?? 0;
+  const products = displayList(profile?.products);
+  const services = displayList(profile?.services);
+  const targetCustomers = displayList(profile?.targetCustomers);
+  const painPoints = displayList(profile?.painPoints);
+  const opportunityCount = products.length + services.length;
+  const riskCount = painPoints.length;
   const executiveSummary = summaryText(profile?.summaries, 'executiveSummary');
   const aiReadiness = summaryText(profile?.summaries, 'aiReadiness');
   const recommendedRoadmap = summaryList(profile?.summaries, 'recommendedRoadmap');
@@ -78,9 +112,9 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
         ['AI Readiness', aiReadiness],
         ['Future Direction', profile.vision],
         ['Industry', profile.industry],
-        ['AI Opportunity Areas', [...profile.products, ...profile.services]],
-        ['Target Users / Customers', profile.targetCustomers],
-        ['Operational Gaps', profile.painPoints],
+        ['AI Opportunity Areas', [...products, ...services]],
+        ['Target Users / Customers', targetCustomers],
+        ['Operational Gaps', painPoints],
         ['Recommended Positioning', profile.uniqueSellingProposition],
         ['Recommended Roadmap', recommendedRoadmap],
       ]
