@@ -35,6 +35,11 @@ function withFallbackList(value: string, fallback: string[]): string[] {
   return parsed.length ? parsed : fallback;
 }
 
+function nullableMax(value: string, maxLength: number): string | null {
+  const normalized = value.trim();
+  return normalized ? normalized.slice(0, maxLength) : null;
+}
+
 export function OnboardingForm({ projectId }: OnboardingFormProps) {
   const router = useRouter();
   const { session } = useAuth();
@@ -86,10 +91,13 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
     () => ({
       companyName: form.companyName.trim(),
       websiteUrl: form.websiteUrl.trim() || null,
-      industry: form.industry.trim() || null,
+      industry: nullableMax(form.industry, 120),
       companySize: form.companySize || null,
-      businessModel: form.businessModel.trim() || 'Business workspace for consulting, research, and growth planning',
-      targetMarket: form.targetMarket.trim() || null,
+      businessModel: nullableMax(
+        form.businessModel || 'Business workspace for consulting, research, and growth planning',
+        120,
+      ),
+      targetMarket: nullableMax(form.targetMarket, 160),
       businessGoals: withFallbackList(form.businessGoals, [
         'Clarify positioning',
         'Understand customers',

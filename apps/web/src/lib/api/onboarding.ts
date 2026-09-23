@@ -21,8 +21,14 @@ export interface UpsertProjectProfilePayload {
 export function getProjectProfile(
   apiClient: ApiClient,
   projectId: string,
-): Promise<ProjectProfileDto> {
-  return apiClient.get<ProjectProfileDto>(`/projects/${projectId}/profile`);
+): Promise<ProjectProfileDto | null> {
+  return apiClient.get<ProjectProfileDto>(`/projects/${projectId}/profile`).catch((error: unknown) => {
+    if (error instanceof Error && /404|not found/i.test(error.message)) {
+      return null;
+    }
+
+    throw error;
+  });
 }
 
 export function upsertProjectProfile(
