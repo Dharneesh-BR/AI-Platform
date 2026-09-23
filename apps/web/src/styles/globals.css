@@ -530,6 +530,76 @@ p { color: var(--muted); line-height: 1.65; margin: 0; }
   white-space: pre-wrap;
 }
 
+.assistant-markdown {
+  display: grid;
+  gap: 12px;
+  color: var(--ink);
+}
+
+.assistant-markdown h2,
+.assistant-markdown h3,
+.assistant-markdown h4 {
+  margin: 8px 0 0;
+  color: var(--ink);
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.assistant-markdown h2 { font-size: 20px; }
+.assistant-markdown h3 { font-size: 17px; }
+.assistant-markdown h4 { font-size: 15px; }
+
+.assistant-markdown p,
+.assistant-markdown li {
+  color: var(--ink);
+  line-height: 1.65;
+}
+
+.assistant-markdown ul,
+.assistant-markdown ol {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.assistant-markdown strong {
+  display: inline;
+  margin: 0;
+}
+
+.assistant-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.assistant-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+  background: white;
+}
+
+.assistant-markdown th,
+.assistant-markdown td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+.assistant-markdown th {
+  background: var(--surface-soft);
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.assistant-markdown tr:last-child td {
+  border-bottom: 0;
+}
+
 .chat-empty-state {
   width: min(820px, 100%);
   margin: auto;

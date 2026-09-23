@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ResearchStatus } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ProjectLifecycleState, ResearchStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { LiteLlmGatewayService } from '../../ai/application/services/litellm-gateway.service';
@@ -52,6 +52,10 @@ export class ResearchService {
 
   async createPlan(input: CreateResearchPlanInput) {
     const project = await this.ensureProject(input.projectId, input.actor.id);
+    if (project.lifecycleState !== ProjectLifecycleState.AI_READY) {
+      throw new ForbiddenException('Approve the company profile before creating AI research plans for this project.');
+    }
+
     const generated = await this.generateResearchPlan(input, project);
 
     return this.prisma.researchPlan.create({

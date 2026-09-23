@@ -94,7 +94,7 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
         },
       },
       data: {
-        lifecycleState: ProjectLifecycleState.KNOWLEDGE_READY,
+        lifecycleState: ProjectLifecycleState.AI_READY,
         updatedBy: actor.id,
       },
     });

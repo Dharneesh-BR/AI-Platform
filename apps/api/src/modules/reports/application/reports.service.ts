@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ReportStatus } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ProjectLifecycleState, ReportStatus } from '@prisma/client';
 import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { LiteLlmGatewayService } from '../../ai/application/services/litellm-gateway.service';
@@ -30,6 +30,10 @@ export class ReportsService {
 
   async createReport(input: CreateReportInput) {
     const project = await this.ensureProject(input.projectId, input.actor.id);
+    if (project.lifecycleState !== ProjectLifecycleState.AI_READY) {
+      throw new ForbiddenException('Approve the company profile before generating reports for this project.');
+    }
+
     const sections = input.sections?.length
       ? input.sections
       : await this.generateReportSections(input, project);

@@ -22,7 +22,7 @@ export class WritingSpecialist implements AgentSpecialist {
           content: [
             input.businessAgent.systemInstructions,
             'Create specific, executive-ready business writing grounded in the supplied company context. Do not use generic onboarding advice when company facts are available.',
-            'For readiness, growth, strategy, or report requests, produce a practical business report with concrete recommendations, assumptions, risks, and next actions.',
+            'Keep the draft concise unless the user explicitly asks for a detailed report. Prefer concrete recommendations, assumptions, risks, and next actions over broad market narration.',
             input.businessAgent.responseFormatInstructions ? `Final response format context: ${input.businessAgent.responseFormatInstructions}` : '',
           ].filter(Boolean).join('\n\n'),
         },

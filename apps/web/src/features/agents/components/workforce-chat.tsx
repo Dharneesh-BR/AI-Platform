@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronLeft, MessageSquarePlus, Plus } from 'lucide-react';
-import { AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
-import { Pill } from '../../../components/platform/app-shell';
+import { AssistantMarkdown, AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
+import { Pill, ProgressBar } from '../../../components/platform/app-shell';
 import {
   useAddConversationMessage,
   useAgentRunStatus,
@@ -17,6 +17,7 @@ import type { BusinessAgentProfile } from '../../../lib/api/platform';
 import type { Conversation } from '../../../lib/api/platform';
 import { hasApiAuth } from '../../../lib/auth/api-access';
 import { useAuth } from '../../../lib/auth/session';
+import { getLifecycleProgress, getLifecycleTone } from '../../projects/components/project-lifecycle';
 
 interface WorkforceChatProps {
   initialAgentSlug?: string;
@@ -104,6 +105,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const selectedProject = (projectsQuery.data ?? []).find((project) => project.id === selectedProjectId) ?? (projectsQuery.data ?? [])[0];
   const projectId = selectedProject?.id ?? '';
+  const projectIsAiReady = selectedProject?.lifecycleState === 'AI_READY';
   const conversationsQuery = useConversations(projectId, context);
   const createConversation = useCreateConversation(projectId, context);
   const addMessage = useAddConversationMessage(projectId, context);
@@ -192,6 +194,11 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
 
     if (!projectId) {
       setStatusMessage('Create a project first so the agent has company context.');
+      return;
+    }
+
+    if (!projectIsAiReady) {
+      setStatusMessage('Finish project setup and approve the company profile before using workforce agents.');
       return;
     }
 
@@ -308,7 +315,25 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
           </div>
         ) : null}
 
-        {projectId ? (
+        {projectId && selectedProject && !projectIsAiReady ? (
+          <div className="chat-empty-state">
+            <div className="pill-row">
+              <Pill tone={getLifecycleTone(selectedProject.lifecycleState)}>{selectedProject.lifecycleState}</Pill>
+              <Pill tone="slate">Workforce locked</Pill>
+            </div>
+            <h2>Finish setup for {selectedProject.name}</h2>
+            <p>Workforce agents need an approved company profile before they can answer with trusted company context.</p>
+            <div className="section-gap">
+              <ProgressBar value={getLifecycleProgress(selectedProject.lifecycleState)} />
+            </div>
+            <div className="topbar-actions section-gap">
+              <Link className="button button-primary" href={selectedProject.nextRoute}>Continue setup</Link>
+              <Link className="button button-muted" href={`/projects/${selectedProject.id}`}>Project workspace</Link>
+            </div>
+          </div>
+        ) : null}
+
+        {projectId && projectIsAiReady ? (
           <>
             <div className="workforce-message-scroll">
               {displayMessages.length === 0 ? (
@@ -333,7 +358,9 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                       </div>
                       <div className="chat-message-bubble">
                         <strong>{chatMessage.role === 'user' ? 'You' : selectedAgent?.name ?? 'Assistant'}</strong>
-                        <p>{chatMessage.content}</p>
+                        {chatMessage.role === 'assistant'
+                          ? <AssistantMarkdown content={chatMessage.content} />
+                          : <p>{chatMessage.content}</p>}
                         <SourceList sources={messageSources(chatMessage)} />
                       </div>
                     </article>
@@ -343,7 +370,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                       <div className="chat-message-avatar">{agentInitial(selectedAgent?.name ?? 'AI')}</div>
                       <div className="chat-message-bubble">
                         <AsyncRunProgress run={activeRun} />
-                        {activeRun.answer ? <p className="section-gap">{activeRun.answer}</p> : null}
+                        {activeRun.answer ? <AssistantMarkdown content={activeRun.answer} /> : null}
                         <SourceList sources={activeRun.sources} />
                       </div>
                     </article>

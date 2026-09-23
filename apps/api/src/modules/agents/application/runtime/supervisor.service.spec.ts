@@ -57,6 +57,17 @@ describe('SupervisorService', () => {
     expect(result.requiredCapabilities).toEqual(expect.arrayContaining(['analysis', 'writing']));
   });
 
+  it('keeps recommendation requests concise by avoiding writing when no report is requested', () => {
+    const result = service.classify({
+      userInput: 'Recommend the top priorities for this company.',
+      businessAgent,
+    });
+
+    expect(result.complexity).toBe('simple');
+    expect(result.requiresPlanning).toBe(false);
+    expect(result.requiredCapabilities).toEqual(['analysis']);
+  });
+
   it('respects business-agent capability bounds', () => {
     const result = service.classify({
       userInput: 'Calculate growth and write a report.',

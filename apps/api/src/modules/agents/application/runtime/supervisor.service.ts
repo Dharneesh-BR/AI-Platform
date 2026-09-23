@@ -30,7 +30,7 @@ export class SupervisorService {
     ])) {
       requiredCapabilities.add('analysis');
     }
-    if (this.matches(text, ['summary', 'email', 'report', 'stakeholder', 'write', 'draft', 'recommend', 'readiness', 'growth', 'assessment'])) {
+    if (this.matches(text, ['summary', 'email', 'report', 'stakeholder', 'write', 'draft', 'proposal', 'copy'])) {
       requiredCapabilities.add('writing');
     }
 
@@ -43,12 +43,17 @@ export class SupervisorService {
     const boundedCapabilities = [...requiredCapabilities].filter((capability) => allowed.size === 0 || allowed.has(capability));
     const wordCount = input.userInput.trim().split(/\s+/).filter(Boolean).length;
     const highRisk = input.businessAgent.slug === 'legal' || this.matches(text, ['legal', 'compliance', 'financial risk', 'contract']);
-    const complexity = wordCount > 35 || boundedCapabilities.length >= 3 ? 'complex' : boundedCapabilities.length >= 2 ? 'standard' : 'simple';
+    const explicitReport = this.matches(text, ['report', 'stakeholder', 'detailed', 'full analysis']);
+    const complexity = wordCount > 35 || boundedCapabilities.length >= 3
+      ? 'complex'
+      : explicitReport && boundedCapabilities.length >= 2
+        ? 'standard'
+        : 'simple';
 
     return SupervisorOutputSchema.parse({
       intent: this.inferIntent(text, input.businessAgent),
       complexity,
-      requiresPlanning: complexity !== 'simple',
+      requiresPlanning: complexity !== 'simple' || boundedCapabilities.includes('rag') || boundedCapabilities.includes('calculation'),
       requiredCapabilities: boundedCapabilities.length > 0 ? boundedCapabilities : ['analysis'],
       needsCompanyKnowledge: boundedCapabilities.includes('rag'),
       needsExternalResearch: this.matches(text, ['latest', 'market research', 'competitor news', 'web research']),

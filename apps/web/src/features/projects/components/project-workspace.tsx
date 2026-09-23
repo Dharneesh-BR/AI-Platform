@@ -16,6 +16,10 @@ function getModuleHref(projectId: string, module: string): string {
   return `/projects/${projectId}/${module}`;
 }
 
+function isModuleReady(lifecycleProgress: number, minimumProgress: number): boolean {
+  return lifecycleProgress >= minimumProgress;
+}
+
 export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const router = useRouter();
   const { session } = useAuth();
@@ -37,36 +41,42 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         title: 'Onboarding',
         detail: 'Edit company and project context',
         tone: lifecycleProgress >= 36 ? 'green' : 'amber',
+        minimumProgress: 0,
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'company-profile'),
         title: 'Company Profile',
         detail: 'Review and approve discovered context',
         tone: lifecycleProgress >= 82 ? 'green' : 'amber',
+        minimumProgress: 82,
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'knowledge'),
         title: 'Knowledge',
         detail: 'Search company and project sources',
-        tone: lifecycleProgress >= 92 ? 'green' : 'slate',
+        tone: lifecycleProgress >= 82 ? 'green' : 'slate',
+        minimumProgress: 82,
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'research'),
         title: 'Research',
         detail: 'Plan strategy analysis',
-        tone: lifecycleProgress >= 92 ? 'green' : 'slate',
+        tone: lifecycleProgress >= 100 ? 'green' : 'slate',
+        minimumProgress: 100,
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'chat'),
         title: 'AI Workforce',
         detail: 'Ask Magnafic AI and specialized agents',
         tone: lifecycleProgress >= 100 ? 'green' : 'slate',
+        minimumProgress: 100,
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'reports'),
         title: 'Reports',
         detail: 'Create consulting deliverables',
         tone: lifecycleProgress >= 100 ? 'green' : 'slate',
+        minimumProgress: 100,
       },
     ],
     [project?.id, normalizedProjectId, lifecycleProgress],
@@ -140,7 +150,11 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           </p>
           <div className="topbar-actions section-gap">
             <Link className="button button-primary" href={project.nextRoute}>Continue</Link>
-            <Link className="button button-muted" href={getModuleHref(project.id, 'knowledge')}>Add knowledge</Link>
+            {lifecycleProgress >= 82 ? (
+              <Link className="button button-muted" href={getModuleHref(project.id, 'knowledge')}>Add knowledge</Link>
+            ) : (
+              <Link className="button button-muted" href={project.nextRoute}>Unlock knowledge</Link>
+            )}
           </div>
         </Card>
         <Card>
@@ -159,14 +173,23 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         <Card>
           <h2>Workspace modules</h2>
           <div className="timeline">
-            {enabledModules.map((module) => (
-              <Link className="timeline-item" href={module.href} key={module.href}>
-                <strong>{module.title}</strong>
-                <span>
-                  {module.detail} <Pill tone={module.tone as 'green' | 'amber' | 'slate'}>{module.tone === 'green' ? 'Ready' : 'Next'}</Pill>
-                </span>
-              </Link>
-            ))}
+            {enabledModules.map((module) => {
+              const ready = isModuleReady(lifecycleProgress, module.minimumProgress);
+              const content = (
+                <>
+                  <strong>{module.title}</strong>
+                  <span>
+                    {module.detail} <Pill tone={module.tone as 'green' | 'amber' | 'slate'}>{ready ? 'Ready' : 'Locked'}</Pill>
+                  </span>
+                </>
+              );
+
+              return ready ? (
+                <Link className="timeline-item" href={module.href} key={module.href}>{content}</Link>
+              ) : (
+                <div className="timeline-item" key={module.href}>{content}</div>
+              );
+            })}
           </div>
         </Card>
       </section>

@@ -1,5 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ProjectLifecycleState, type Prisma } from '@prisma/client';
 import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AgentsService } from '../../agents/application/agents.service';
@@ -45,7 +45,7 @@ export class ConversationsService {
   }
 
   async createConversation(input: CreateConversationInput) {
-    await this.ensureProject(input.projectId, input.actor.id);
+    await this.ensureProject(input.projectId, input.actor.id, { requireAiReady: true });
 
     return this.prisma.conversation.create({
       data: {
@@ -90,6 +90,10 @@ export class ConversationsService {
 
     if (!conversation) {
       throw new NotFoundException('Conversation not found.');
+    }
+
+    if (conversation.project.lifecycleState !== ProjectLifecycleState.AI_READY) {
+      throw new ForbiddenException('Approve the company profile before using AI chat for this project.');
     }
 
     await this.prisma.conversationMessage.create({
@@ -221,14 +225,22 @@ export class ConversationsService {
     };
   }
 
-  private async ensureProject(projectId: string, actorUserId: string) {
+  private async ensureProject(
+    projectId: string,
+    actorUserId: string,
+    options: { requireAiReady?: boolean } = {},
+  ) {
     const project = await this.prisma.project.findFirst({
       where: { id: projectId, createdBy: actorUserId, deletedAt: null },
-      select: { id: true },
+      select: { id: true, lifecycleState: true },
     });
 
     if (!project) {
       throw new NotFoundException('Project not found.');
+    }
+
+    if (options.requireAiReady && project.lifecycleState !== ProjectLifecycleState.AI_READY) {
+      throw new ForbiddenException('Approve the company profile before using AI chat for this project.');
     }
   }
 

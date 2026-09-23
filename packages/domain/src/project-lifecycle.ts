@@ -29,6 +29,7 @@ const transitions: Record<ProjectLifecycleState, ProjectLifecycleState[]> = {
   ],
   [ProjectLifecycleState.DiscoveryCompleted]: [
     ProjectLifecycleState.KnowledgeReady,
+    ProjectLifecycleState.AiReady,
     ProjectLifecycleState.DiscoveryPending,
     ProjectLifecycleState.Failed,
   ],
@@ -77,4 +78,3 @@ export function getProjectRouteForLifecycle(state: ProjectLifecycleState, projec
 
   return routeMap[state];
 }
-

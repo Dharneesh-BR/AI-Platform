@@ -1,9 +1,11 @@
 'use client';
 
-import { MetricCard, Pill } from '../../../components/platform/app-shell';
-import { useCompanyProfile } from '../../../lib/api/query-hooks';
+import Link from 'next/link';
+import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
+import { useCompanyProfile, useProject } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
 import { ChatWorkspace } from '../../conversations/components/chat-workspace';
+import { CompanyProfileActions } from './company-profile-actions';
 
 interface CompanyProfileReviewProps {
   projectId: string;
@@ -58,7 +60,11 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const profileQuery = useCompanyProfile(projectId, {
     accessToken: session.accessToken,
   });
+  const projectQuery = useProject(projectId, {
+    accessToken: session.accessToken,
+  });
   const profile = profileQuery.data;
+  const isAiReady = projectQuery.data?.lifecycleState === 'AI_READY';
   const opportunityCount = (profile?.products?.length ?? 0) + (profile?.services?.length ?? 0);
   const riskCount = profile?.painPoints?.length ?? 0;
   const executiveSummary = summaryText(profile?.summaries, 'executiveSummary');
@@ -85,11 +91,12 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
       <header className="topbar">
         <div>
           <span className="eyebrow">AI Readiness Report</span>
-          <h1>Your company report card is ready. Now ask Magnafic AI what to do next.</h1>
-          <p>After onboarding, Magnafic AI generates a company-aware report card and opens an AI chat grounded in that context.</p>
+          <h1>Your company report card is ready for review.</h1>
+          <p>Approve this AI-generated draft before it becomes trusted context for chat, workforce agents, research, and reports.</p>
         </div>
         <div className="topbar-actions">
-          <a className="button button-primary" href="#ai-chat">Open AI chat</a>
+          {isAiReady ? <a className="button button-primary" href="#ai-chat">Open AI chat</a> : null}
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
         </div>
       </header>
 
@@ -104,7 +111,7 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
           <div className="pill-row">
             <Pill tone="green">Generated after onboarding</Pill>
             <Pill tone={profileQuery.isError ? 'amber' : 'green'}>{profileQuery.isError ? 'API unavailable' : 'Report ready'}</Pill>
-            <Pill tone="blue">Chat unlocked</Pill>
+            <Pill tone={isAiReady ? 'green' : 'amber'}>{isAiReady ? 'AI unlocked' : 'Approval required'}</Pill>
           </div>
           <h2 className="section-gap">Executive report card</h2>
           {profileBlocks.length ? (
@@ -125,8 +132,22 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
               <p>{pages.slice(0, 5).map((page) => page.title || page.url).join(', ')}</p>
             </div>
           ) : null}
+          <div className="section-gap">
+            <CompanyProfileActions projectId={projectId} profileId={profile?.id} />
+          </div>
         </div>
-        <ChatWorkspace projectId={projectId} embedded />
+        {isAiReady ? (
+          <ChatWorkspace projectId={projectId} embedded />
+        ) : (
+          <Card>
+            <Pill tone="amber">Locked until approval</Pill>
+            <h2 className="section-gap">Approve the company profile</h2>
+            <p>
+              Review the generated company report, save any edits, then approve it. Once approved,
+              Magnafic AI will use it as trusted project context.
+            </p>
+          </Card>
+        )}
       </section>
     </div>
   );

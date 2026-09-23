@@ -22,7 +22,7 @@ export class AgentRuntimeConfigService {
   }
 
   get maxOutputTokens(): number {
-    return this.positiveNumber('MAX_OUTPUT_TOKENS', 2400);
+    return this.positiveNumber('MAX_OUTPUT_TOKENS', 1200);
   }
 
   get maxSpecialistConcurrency(): number {

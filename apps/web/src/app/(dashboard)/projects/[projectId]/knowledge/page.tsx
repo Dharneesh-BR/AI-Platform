@@ -1,4 +1,5 @@
 import { KnowledgeWorkspace } from '../../../../../features/knowledge/components/knowledge-workspace';
+import { ProjectSetupGate } from '../../../../../features/projects/components/project-setup-gate';
 
 interface KnowledgePageProps {
   params: Promise<{ projectId: string }>;
@@ -7,5 +8,9 @@ interface KnowledgePageProps {
 export default async function KnowledgePage({ params }: KnowledgePageProps) {
   const { projectId } = await params;
 
-  return <KnowledgeWorkspace projectId={projectId} />;
+  return (
+    <ProjectSetupGate projectId={projectId} featureName="Knowledge Base" requiredState="DISCOVERY_COMPLETED">
+      <KnowledgeWorkspace projectId={projectId} />
+    </ProjectSetupGate>
+  );
 }
