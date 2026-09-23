@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DocumentSourceType, KnowledgeDocumentStatus, ResearchSourceType } from '@prisma/client';
+import { DocumentSourceType, KnowledgeDocumentStatus, ProjectLifecycleState, ResearchSourceType } from '@prisma/client';
 import { QUEUE_NAMES } from '../../../../common/queue/queue.constants';
 import { QueueInfrastructureService } from '../../../../common/queue/queue-infrastructure.service';
 import type { AuthenticatedUser } from '../../../../common/auth';
@@ -223,6 +223,8 @@ export class KnowledgeDocumentService {
       actorUserId: input.actor.id,
     });
 
+    await this.markKnowledgeReady(input.projectId, input.actor.id);
+
     return source;
   }
 
@@ -282,6 +284,21 @@ export class KnowledgeDocumentService {
       );
       await this.documentProcessingService.process(payload);
     }
+  }
+
+  private async markKnowledgeReady(projectId: string, actorUserId: string): Promise<void> {
+    await this.prisma.project.updateMany({
+      where: {
+        id: projectId,
+        createdBy: actorUserId,
+        deletedAt: null,
+        lifecycleState: ProjectLifecycleState.DISCOVERY_COMPLETED,
+      },
+      data: {
+        lifecycleState: ProjectLifecycleState.KNOWLEDGE_READY,
+        updatedBy: actorUserId,
+      },
+    });
   }
 
   private async ensureProject(projectId: string, actorUserId: string): Promise<void> {

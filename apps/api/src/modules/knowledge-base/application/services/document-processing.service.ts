@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { KnowledgeDocumentStatus, ResearchSourceType } from '@prisma/client';
+import { KnowledgeDocumentStatus, ProjectLifecycleState, ResearchSourceType } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { LocalKnowledgeStorageService } from '../../infrastructure/storage/local-knowledge-storage.service';
 import type { DocumentProcessingJobPayload } from '../ports/document-processing-job.payload';
@@ -146,6 +146,8 @@ export class DocumentProcessingService {
           },
         });
       }
+
+      await this.markKnowledgeReady(payload.projectId, payload.actorUserId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown document processing failure.';
       await this.prisma.knowledgeDocument.update({
@@ -167,5 +169,19 @@ export class DocumentProcessingService {
       SET embedding = ${vector}::vector
       WHERE id = ${chunkId}::uuid
     `;
+  }
+
+  private async markKnowledgeReady(projectId: string, actorUserId?: string | null): Promise<void> {
+    await this.prisma.project.updateMany({
+      where: {
+        id: projectId,
+        deletedAt: null,
+        lifecycleState: ProjectLifecycleState.DISCOVERY_COMPLETED,
+      },
+      data: {
+        lifecycleState: ProjectLifecycleState.KNOWLEDGE_READY,
+        updatedBy: actorUserId ?? undefined,
+      },
+    });
   }
 }

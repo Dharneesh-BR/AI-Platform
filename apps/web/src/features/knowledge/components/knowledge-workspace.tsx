@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
 import {
   useCreateKnowledgeSource,
@@ -55,15 +56,19 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
       return;
     }
 
-    await createKnowledgeSource.mutateAsync({
-      title: title.trim(),
-      content: content.trim(),
-      type: 'UPLOADED_DOCUMENT',
-      metadata: { source: 'manual-entry' },
-    });
-    setTitle('');
-    setContent('');
-    setMessage('Knowledge source added to the live project context.');
+    try {
+      await createKnowledgeSource.mutateAsync({
+        title: title.trim(),
+        content: content.trim(),
+        type: 'UPLOADED_DOCUMENT',
+        metadata: { source: 'manual-entry' },
+      });
+      setTitle('');
+      setContent('');
+      setMessage('Knowledge source added. The project can now use it for chat, research, and reports.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to add knowledge source.');
+    }
   }
 
   async function uploadDocument() {
@@ -72,9 +77,13 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
       return;
     }
 
-    await uploadKnowledgeDocument.mutateAsync(selectedFile);
-    setSelectedFile(null);
-    setMessage('Document uploaded and queued for RAG processing.');
+    try {
+      await uploadKnowledgeDocument.mutateAsync(selectedFile);
+      setSelectedFile(null);
+      setMessage('Document uploaded. Processing runs inline unless a Redis worker is enabled.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to upload document.');
+    }
   }
 
   async function runSearch() {
@@ -83,8 +92,12 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
       return;
     }
 
-    await searchKnowledge.mutateAsync({ query: searchQuery.trim(), limit: 5 });
-    setMessage('Knowledge search completed against project-scoped vectors.');
+    try {
+      const results = await searchKnowledge.mutateAsync({ query: searchQuery.trim(), limit: 5 });
+      setMessage(results.length ? 'Knowledge search completed against project-scoped vectors.' : 'No matching chunks found yet. Add or process a document, then search again.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to search project knowledge.');
+    }
   }
 
   const sources = knowledgeSources.data ?? [];
@@ -100,14 +113,17 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
         <div>
           <span className="eyebrow">Knowledge Base</span>
           <h1>Build the project memory used by research, chat, and reports.</h1>
-          <p>Every source added here is stored in Supabase and used as live context for AI workflows.</p>
+          <p>Add notes or upload documents to turn approved company context into searchable project memory.</p>
         </div>
-        <Pill tone="green">Live Supabase</Pill>
+        <div className="topbar-actions">
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-primary" href={`/projects/${projectId}/chat`}>Open AI chat</Link>
+        </div>
       </header>
 
       <section className="grid-3">
-        <MetricCard label="Sources" value={String(sources.length)} detail="Loaded from the live API." />
-        <MetricCard label="Documents" value={String(documents.length)} detail="Uploaded and processed through BullMQ." />
+        <MetricCard label="Sources" value={String(sources.length)} detail="Manual notes and processed document summaries." />
+        <MetricCard label="Documents" value={String(documents.length)} detail="Uploaded files tracked by processing status." />
         <MetricCard label="Characters" value={String(totalCharacters)} detail="Available context volume." />
       </section>
 
@@ -122,7 +138,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
               accept=".txt,.md,.markdown,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
             />
-            <p className="section-gap">Files are processed through the document queue, embedded, and made available to RAG search.</p>
+            <p className="section-gap">Files are extracted, chunked, embedded, and made available to project search.</p>
           </div>
           <button
             className="button button-primary section-gap"
@@ -168,7 +184,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
           {knowledgeDocuments.isLoading ? <p>Loading documents...</p> : null}
           {knowledgeDocuments.isError ? <p>Unable to load documents. Check the API session and project access.</p> : null}
           {!knowledgeDocuments.isLoading && documents.length === 0 ? (
-            <p>No documents yet. Upload TXT or Markdown to activate vector retrieval.</p>
+            <p>No documents yet. Upload a document or add pasted knowledge to build project memory.</p>
           ) : null}
           <div className="timeline section-gap">
             {documents.map((document) => (
@@ -181,9 +197,31 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
                 <div className="topbar-actions">
                   <Pill tone={document.status === 'READY' ? 'green' : document.status === 'FAILED' ? 'amber' : 'blue'}>{document.status}</Pill>
                   {document.status === 'FAILED' ? (
-                    <button className="button button-muted" onClick={() => void retryKnowledgeDocument.mutateAsync(document.id)}>Retry</button>
+                    <button
+                      className="button button-muted"
+                      onClick={() => {
+                        setMessage(`Retrying ${document.title}.`);
+                        void retryKnowledgeDocument.mutateAsync(document.id).catch((error: unknown) => {
+                          setMessage(error instanceof Error ? error.message : 'Unable to retry document.');
+                        });
+                      }}
+                    >
+                      Retry
+                    </button>
                   ) : null}
-                  <button className="button button-ghost" onClick={() => void deleteKnowledgeDocument.mutateAsync(document.id)}>Archive</button>
+                  <button
+                    className="button button-ghost"
+                    onClick={() => {
+                      setMessage(`Archiving ${document.title}.`);
+                      void deleteKnowledgeDocument.mutateAsync(document.id).then(() => {
+                        setMessage('Document archived.');
+                      }).catch((error: unknown) => {
+                        setMessage(error instanceof Error ? error.message : 'Unable to archive document.');
+                      });
+                    }}
+                  >
+                    Archive
+                  </button>
                 </div>
               </div>
             ))}
@@ -199,6 +237,9 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
           <button className="button button-primary section-gap" onClick={() => void runSearch()} disabled={searchKnowledge.isPending}>
             Search project knowledge
           </button>
+          {!searchKnowledge.isPending && searchKnowledge.data?.length === 0 ? (
+            <p className="section-gap">No matching knowledge chunks found.</p>
+          ) : null}
           <div className="timeline section-gap">
             {(searchKnowledge.data ?? []).map((result) => (
               <div className="timeline-item" key={result.chunkId}>

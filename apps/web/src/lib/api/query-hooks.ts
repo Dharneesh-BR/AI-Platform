@@ -393,10 +393,11 @@ export function useCreateKnowledgeSource(projectId: string, context?: QueryAuthC
   return useMutation({
     mutationFn: (payload: { title: string; content: string; type?: string; metadata?: Record<string, unknown> }) =>
       createKnowledgeSource(apiClient, projectId, payload),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['knowledge-sources', projectId],
-      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-sources', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-documents', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
   });
 }
 
@@ -406,10 +407,11 @@ export function useUploadKnowledgeDocument(projectId: string, context?: QueryAut
 
   return useMutation({
     mutationFn: (file: File) => uploadKnowledgeDocument(apiClient, projectId, file),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['knowledge-documents', projectId],
-      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-documents', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-sources', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
   });
 }
 
@@ -419,10 +421,11 @@ export function useRetryKnowledgeDocument(projectId: string, context?: QueryAuth
 
   return useMutation({
     mutationFn: (documentId: string) => retryKnowledgeDocument(apiClient, projectId, documentId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['knowledge-documents', projectId],
-      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-documents', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-sources', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
   });
 }
 
@@ -432,10 +435,10 @@ export function useDeleteKnowledgeDocument(projectId: string, context?: QueryAut
 
   return useMutation({
     mutationFn: (documentId: string) => deleteKnowledgeDocument(apiClient, projectId, documentId),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ['knowledge-documents', projectId],
-      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-documents', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge-sources', projectId] });
+    },
   });
 }
 

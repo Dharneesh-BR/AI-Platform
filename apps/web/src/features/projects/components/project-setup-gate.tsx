@@ -59,6 +59,9 @@ export function ProjectSetupGate({
   }
 
   const progress = getLifecycleProgress(project.lifecycleState);
+  const requirementCopy = requiredState === 'DISCOVERY_COMPLETED'
+    ? `${featureName} needs the discovery profile to be generated first so project context exists. Continue the setup flow, then this workspace will unlock automatically.`
+    : `${featureName} needs an approved company profile so the output is grounded in trusted project context. Continue the setup flow, then this workspace will unlock automatically.`;
 
   return (
     <Card>
@@ -67,10 +70,7 @@ export function ProjectSetupGate({
         <Pill tone="slate">{featureName} locked</Pill>
       </div>
       <h2 className="section-gap">Finish project setup first</h2>
-      <p>
-        {featureName} needs an approved company profile so the output is grounded in trusted project context.
-        Continue the setup flow, then this workspace will unlock automatically.
-      </p>
+      <p>{requirementCopy}</p>
       <div className="section-gap">
         <ProgressBar value={progress} />
       </div>
