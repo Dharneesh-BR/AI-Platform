@@ -40,6 +40,14 @@ function nullableMax(value: string, maxLength: number): string | null {
   return normalized ? normalized.slice(0, maxLength) : null;
 }
 
+function limitedList(value: string): string[] {
+  return toList(value).slice(0, 25).map((item) => item.slice(0, 160));
+}
+
+function remaining(value: string, maxLength: number): number {
+  return Math.max(maxLength - value.trim().length, 0);
+}
+
 export function OnboardingForm({ projectId }: OnboardingFormProps) {
   const router = useRouter();
   const { session } = useAuth();
@@ -102,13 +110,13 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
         'Clarify positioning',
         'Understand customers',
         'Prioritize growth opportunities',
-      ]),
+      ]).slice(0, 25).map((item) => item.slice(0, 160)),
       primaryChallenges: withFallbackList(form.primaryChallenges, [
         'Scattered business context',
         'Manual research',
         'Unclear next priorities',
-      ]),
-      competitors: toList(form.competitors),
+      ]).slice(0, 25).map((item) => item.slice(0, 160)),
+      competitors: limitedList(form.competitors),
       onboardingStep: 'company-basics-complete',
     }),
     [form],
@@ -164,7 +172,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
       <div className="form-grid section-gap">
         <div className="field">
           <label>Company Name</label>
-          <input value={form.companyName} onChange={(event) => updateField('companyName', event.target.value)} />
+          <input value={form.companyName} maxLength={160} onChange={(event) => updateField('companyName', event.target.value)} />
         </div>
         <div className="field">
           <label>Website URL</label>
@@ -172,7 +180,7 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
         </div>
         <div className="field">
           <label>Industry</label>
-          <input value={form.industry} onChange={(event) => updateField('industry', event.target.value)} />
+          <input value={form.industry} maxLength={120} onChange={(event) => updateField('industry', event.target.value)} />
         </div>
         <div className="field">
           <label>Company Size</label>
@@ -186,6 +194,66 @@ export function OnboardingForm({ projectId }: OnboardingFormProps) {
           </select>
         </div>
       </div>
+
+      <section className="section-gap">
+        <div className="field">
+          <label>Business Model</label>
+          <textarea
+            value={form.businessModel}
+            maxLength={120}
+            onChange={(event) => updateField('businessModel', event.target.value)}
+            placeholder="How does this company make money? Example: D2C and marketplace sales of audio products and wearables."
+            rows={3}
+          />
+          <p>{remaining(form.businessModel, 120)} characters remaining.</p>
+        </div>
+
+        <div className="field section-gap">
+          <label>Target Market</label>
+          <textarea
+            value={form.targetMarket}
+            maxLength={160}
+            onChange={(event) => updateField('targetMarket', event.target.value)}
+            placeholder="Who buys from this company? Example: young consumers, students, professionals, fitness users, and gamers."
+            rows={3}
+          />
+          <p>{remaining(form.targetMarket, 160)} characters remaining.</p>
+        </div>
+      </section>
+
+      <section className="form-grid section-gap">
+        <div className="field">
+          <label>Business Goals</label>
+          <textarea
+            value={form.businessGoals}
+            onChange={(event) => updateField('businessGoals', event.target.value)}
+            placeholder="One goal per line. Example: Improve product discovery"
+            rows={6}
+          />
+          <p>Add up to 25 goals, one per line.</p>
+        </div>
+        <div className="field">
+          <label>Primary Challenges</label>
+          <textarea
+            value={form.primaryChallenges}
+            onChange={(event) => updateField('primaryChallenges', event.target.value)}
+            placeholder="One challenge per line. Example: High customer support query volume"
+            rows={6}
+          />
+          <p>Add up to 25 challenges, one per line.</p>
+        </div>
+      </section>
+
+      <section className="field section-gap">
+        <label>Competitors</label>
+        <textarea
+          value={form.competitors}
+          onChange={(event) => updateField('competitors', event.target.value)}
+          placeholder="One competitor per line. Example: Noise"
+          rows={5}
+        />
+        <p>Add up to 25 competitors, one per line.</p>
+      </section>
 
       <div className="actions section-gap topbar-actions">
         <button className="button button-ghost" type="button" onClick={() => router.push(`/projects/${projectId}`)}>
