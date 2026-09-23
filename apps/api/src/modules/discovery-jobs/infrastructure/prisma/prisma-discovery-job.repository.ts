@@ -34,6 +34,8 @@ export class PrismaDiscoveryJobRepository implements DiscoveryJobRepository {
     projectId: string,
     actor: AuthenticatedUser,
   ): Promise<DiscoveryJobEntity | null> {
+    await this.ensureOwnedProject(projectId, actor);
+
     const job = await this.prisma.discoveryJob.findFirst({
       where: {
         projectId,

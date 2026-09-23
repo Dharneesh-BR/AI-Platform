@@ -15,6 +15,7 @@ import {
   getCompanyProfile,
   getDiscoveryStatus,
   getProjectProfile,
+  retryDiscovery,
   updateCompanyProfile,
   upsertProjectProfile,
   type UpdateCompanyProfilePayload,
@@ -144,6 +145,19 @@ export function useDiscoveryStatus(projectId: string, context?: QueryAuthContext
     queryFn: () => getDiscoveryStatus(apiClient, projectId),
     enabled: Boolean(hasUserContext(context) && projectId),
     refetchInterval: 5_000,
+  });
+}
+
+export function useRetryDiscovery(projectId: string, context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => retryDiscovery(apiClient, projectId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['discovery-status', projectId] });
+    },
   });
 }
 

@@ -68,23 +68,46 @@ export class DiscoveryWorkerProcessorService {
 
     try {
       await this.discoveryExecutionRepository.markRunning(payload.discoveryJobId, 'read_website');
-      await this.completeStep(payload.discoveryJobId, state, 'read_website', 15);
+      await this.startStep(payload.discoveryJobId, state, 'read_website', 5);
       const websiteDiscovery = await this.discoverWebsite(payload);
-      await this.completeStep(payload.discoveryJobId, state, 'find_products', 30);
-      await this.completeStep(payload.discoveryJobId, state, 'understand_services', 45);
-      await this.completeStep(payload.discoveryJobId, state, 'detect_competitors', 60);
+      await this.completeStep(payload.discoveryJobId, state, 'read_website', 20);
+      await this.startStep(payload.discoveryJobId, state, 'find_products', 25);
+      await this.completeStep(payload.discoveryJobId, state, 'find_products', 35);
+      await this.startStep(payload.discoveryJobId, state, 'understand_services', 40);
+      await this.completeStep(payload.discoveryJobId, state, 'understand_services', 50);
+      await this.startStep(payload.discoveryJobId, state, 'detect_competitors', 55);
+      await this.completeStep(payload.discoveryJobId, state, 'detect_competitors', 65);
+      await this.startStep(payload.discoveryJobId, state, 'build_profile', 70);
       const output = await this.buildDiscoveryOutput(payload, websiteDiscovery);
-      await this.completeStep(payload.discoveryJobId, state, 'build_profile', 78);
+      await this.completeStep(payload.discoveryJobId, state, 'build_profile', 82);
+      await this.startStep(payload.discoveryJobId, state, 'save_context', 86);
       await this.discoveryOutputRepository.persist(output);
       await this.completeStep(payload.discoveryJobId, state, 'save_context', 92);
+      await this.startStep(payload.discoveryJobId, state, 'prepare_workspace', 96);
       await this.completeStep(payload.discoveryJobId, state, 'prepare_workspace', 99);
       await this.discoveryExecutionRepository.markCompleted(payload.discoveryJobId);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown discovery failure.';
       this.logger.error(message, error instanceof Error ? error.stack : undefined);
+      await this.failCurrentStep(payload.discoveryJobId, state);
       await this.discoveryExecutionRepository.markFailed(payload.discoveryJobId, message);
       throw error;
     }
+  }
+
+  private async startStep(
+    discoveryJobId: string,
+    steps: DiscoveryStepUpdate[],
+    stepKey: string,
+    progress: number,
+  ): Promise<void> {
+    for (const step of steps) {
+      if (step.key === stepKey) {
+        step.status = 'RUNNING';
+      }
+    }
+
+    await this.discoveryExecutionRepository.updateProgress(discoveryJobId, progress, stepKey, steps);
   }
 
   private async completeStep(
@@ -100,6 +123,22 @@ export class DiscoveryWorkerProcessorService {
     }
 
     await this.discoveryExecutionRepository.updateProgress(discoveryJobId, progress, stepKey, steps);
+  }
+
+  private async failCurrentStep(
+    discoveryJobId: string,
+    steps: DiscoveryStepUpdate[],
+  ): Promise<void> {
+    const current = [...steps].reverse().find((step) => step.status === 'RUNNING');
+
+    if (!current) {
+      return;
+    }
+
+    current.status = 'FAILED';
+    const completedCount = steps.filter((step) => step.status === 'SUCCEEDED').length;
+    const progress = Math.max(5, Math.round((completedCount / steps.length) * 100));
+    await this.discoveryExecutionRepository.updateProgress(discoveryJobId, progress, current.key, steps);
   }
 
   private async discoverWebsite(payload: DiscoveryJobPayload): Promise<WebsiteDiscoverySnapshot | null> {

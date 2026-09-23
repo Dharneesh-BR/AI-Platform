@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Card, Pill, ProgressBar } from '../../../components/platform/app-shell';
-import { useCompleteOnboarding, useDiscoveryStatus } from '../../../lib/api/query-hooks';
+import { useCompleteOnboarding, useDiscoveryStatus, useRetryDiscovery } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
 
 interface DiscoveryProgressProps {
@@ -24,14 +24,24 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
   const completeOnboardingMutation = useCompleteOnboarding(projectId, {
     accessToken: session.accessToken,
   });
+  const retryDiscoveryMutation = useRetryDiscovery(projectId, {
+    accessToken: session.accessToken,
+  });
   const status = discoveryQuery.data;
   const isFinished = status?.status === 'SUCCEEDED' || status?.status === 'COMPLETED';
   const isRunning = status?.status === 'RUNNING';
-  const isWaiting = !status || status.status === 'PENDING' || status.status === 'QUEUED';
-  const canStartDiscovery = isWaiting || status?.status === 'FAILED';
+  const isQueued = status?.status === 'PENDING' || status?.status === 'QUEUED';
+  const isFailed = status?.status === 'FAILED';
+  const hasNotStarted = !status || status.status === 'NOT_STARTED';
+  const isBusy = completeOnboardingMutation.isPending || retryDiscoveryMutation.isPending;
 
   const handleStartDiscovery = async () => {
     await completeOnboardingMutation.mutateAsync();
+    await discoveryQuery.refetch();
+  };
+
+  const handleRetryDiscovery = async () => {
+    await retryDiscoveryMutation.mutateAsync();
     await discoveryQuery.refetch();
   };
 
@@ -45,7 +55,9 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
         </div>
         <div className="topbar-actions">
           <Link className="button button-muted" href={`/projects/${projectId}`}>Back to project</Link>
-          <Link className="button button-primary" href={`/projects/${projectId}/company-profile`}>Review profile</Link>
+          {isFinished ? (
+            <Link className="button button-primary" href={`/projects/${projectId}/company-profile`}>Review profile</Link>
+          ) : null}
         </div>
       </header>
 
@@ -62,19 +74,33 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
               ? 'Discovery is complete. Review the profile and continue the project.'
               : isRunning
                 ? `Current step: ${status?.currentStep ?? 'Preparing discovery.'}`
-                : 'Discovery has not completed yet. Start it now to build the first company profile.'}
+                : isQueued
+                  ? 'Discovery is queued and will begin shortly.'
+                  : isFailed
+                    ? status?.errorMessage ?? 'Discovery failed. Retry when you are ready.'
+                    : 'Discovery has not started yet. Start it now to build the first company profile.'}
           </p>
-          {canStartDiscovery ? (
+          {hasNotStarted ? (
             <button
               className="button button-primary section-gap"
               type="button"
               onClick={handleStartDiscovery}
-              disabled={completeOnboardingMutation.isPending}
+              disabled={isBusy}
             >
               {completeOnboardingMutation.isPending ? 'Generating profile...' : 'Generate company profile now'}
             </button>
           ) : null}
-          {completeOnboardingMutation.isError ? (
+          {isFailed ? (
+            <button
+              className="button button-primary section-gap"
+              type="button"
+              onClick={handleRetryDiscovery}
+              disabled={isBusy}
+            >
+              {retryDiscoveryMutation.isPending ? 'Retrying discovery...' : 'Retry discovery'}
+            </button>
+          ) : null}
+          {completeOnboardingMutation.isError || retryDiscoveryMutation.isError ? (
             <p className="form-error">Discovery could not start. Please check the API deployment and try again.</p>
           ) : null}
         </Card>

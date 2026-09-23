@@ -15,10 +15,12 @@ export interface ProjectProfileDto {
 }
 
 export interface DiscoveryStatusDto {
+  id?: string;
   projectId: string;
   status: string;
   progress: number;
   currentStep: string | null;
+  errorMessage?: string | null;
   steps: Array<{
     key: string;
     label: string;
