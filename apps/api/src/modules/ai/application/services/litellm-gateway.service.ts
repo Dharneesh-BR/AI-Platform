@@ -9,10 +9,12 @@ import type {
   LlmChatResult,
 } from '../types/ai-generation.types';
 
+type LiteLlmAssistantContent = string | Array<{ type?: string; text?: string }>;
+
 interface LiteLlmChatCompletionResponse {
   choices?: Array<{
     message?: {
-      content?: string;
+      content?: LiteLlmAssistantContent;
     };
     finish_reason?: string;
   }>;
@@ -38,6 +40,13 @@ interface LiteLlmEmbeddingResponse {
     index?: number;
   }>;
   model?: string;
+}
+
+class EmptyLiteLlmResponseError extends Error {
+  constructor() {
+    super('LiteLLM returned an empty response.');
+    this.name = 'EmptyLiteLlmResponseError';
+  }
 }
 
 @Injectable()
@@ -82,53 +91,70 @@ export class LiteLlmGatewayService {
       throw new ServiceUnavailableException('LiteLLM is not configured. Set LITELLM_BASE_URL and LITELLM_API_KEY.');
     }
 
-    try {
-      const response = await fetch(this.chatCompletionsUrl(baseUrl), {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: input.messages,
-          temperature: input.temperature ?? 0.3,
-          max_tokens: input.maxTokens ?? 900,
-          metadata: input.metadata,
-        }),
-        signal: AbortSignal.timeout(this.timeoutMs),
-      });
+    let lastRetryableError: unknown;
 
-      if (!response.ok) {
-        await this.handleFailedResponse(response, model);
+    for (let attempt = 1; attempt <= this.requestAttempts; attempt += 1) {
+      try {
+        const response = await fetch(this.chatCompletionsUrl(baseUrl), {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: input.messages,
+            temperature: input.temperature ?? 0.3,
+            max_tokens: input.maxTokens ?? 900,
+            metadata: input.metadata,
+          }),
+          signal: AbortSignal.timeout(this.timeoutMs),
+        });
+
+        if (!response.ok) {
+          await this.handleFailedResponse(response, model);
+        }
+
+        const completion = (await response.json()) as LiteLlmChatCompletionResponse;
+        const choice = completion.choices?.[0];
+        const content = this.extractAssistantContent(choice?.message?.content);
+
+        if (!content) {
+          this.logger.warn(`LiteLLM returned empty content: model=${model}, finishReason=${choice?.finish_reason ?? 'unknown'}, attempt=${attempt}`);
+          throw new EmptyLiteLlmResponseError();
+        }
+
+        return {
+          content,
+          model: completion.model ?? model,
+          provider: 'litellm',
+          finishReason: choice?.finish_reason,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+        };
+      } catch (error) {
+        if (error instanceof ServiceUnavailableException) {
+          throw error;
+        }
+
+        lastRetryableError = error;
+        const reason = error instanceof EmptyLiteLlmResponseError ? 'empty response' : this.requestFailureReason(error);
+
+        if (attempt < this.requestAttempts) {
+          this.logger.warn(`Retrying LiteLLM request: model=${model}, reason=${reason}, attempt=${attempt}, timeoutMs=${this.timeoutMs}`);
+          continue;
+        }
+
+        this.logger.error(`LiteLLM request failed: model=${model}, reason=${reason}, timeoutMs=${this.timeoutMs}`);
       }
-
-      const completion = (await response.json()) as LiteLlmChatCompletionResponse;
-      const choice = completion.choices?.[0];
-      const content = choice?.message?.content?.trim();
-
-      if (!content) {
-        throw new ServiceUnavailableException('LiteLLM returned an empty response.');
-      }
-
-      return {
-        content,
-        model: completion.model ?? model,
-        provider: 'litellm',
-        finishReason: choice?.finish_reason,
-        promptTokens: completion.usage?.prompt_tokens,
-        completionTokens: completion.usage?.completion_tokens,
-        totalTokens: completion.usage?.total_tokens,
-      };
-    } catch (error) {
-      if (error instanceof ServiceUnavailableException) {
-        throw error;
-      }
-
-      const reason = this.requestFailureReason(error);
-      this.logger.error(`LiteLLM request failed: model=${model}, reason=${reason}, timeoutMs=${this.timeoutMs}`);
-      throw new ServiceUnavailableException(`LiteLLM ${reason}.`);
     }
+
+    if (lastRetryableError instanceof EmptyLiteLlmResponseError) {
+      throw new ServiceUnavailableException('LiteLLM returned an empty response.');
+    }
+
+    throw new ServiceUnavailableException(`LiteLLM ${this.requestFailureReason(lastRetryableError)}.`);
   }
 
   async generateEmbeddings(input: AiGenerateEmbeddingsInput): Promise<number[][]> {
@@ -192,6 +218,27 @@ export class LiteLlmGatewayService {
   private get timeoutMs(): number {
     const configured = Number(this.configService.get<string>('LITELLM_TIMEOUT_MS') ?? 60000);
     return Number.isFinite(configured) && configured > 0 ? configured : 60000;
+  }
+
+  private get requestAttempts(): number {
+    const configured = Number(this.configService.get<string>('LITELLM_REQUEST_ATTEMPTS') ?? 2);
+    return Number.isFinite(configured) && configured > 0 ? Math.min(Math.floor(configured), 4) : 2;
+  }
+
+  private extractAssistantContent(content: LiteLlmAssistantContent | undefined): string {
+    if (typeof content === 'string') {
+      return content.trim();
+    }
+
+    if (!Array.isArray(content)) {
+      return '';
+    }
+
+    return content
+      .map((part) => part.text)
+      .filter((text): text is string => Boolean(text?.trim()))
+      .join('\n')
+      .trim();
   }
 
   private requestFailureReason(error: unknown): 'request timeout' | 'network failure' {

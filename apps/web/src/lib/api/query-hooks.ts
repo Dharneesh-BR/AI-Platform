@@ -45,6 +45,7 @@ import {
   retryKnowledgeDocument,
   searchKnowledge,
   uploadKnowledgeDocument,
+  type Conversation,
 } from './platform';
 
 interface QueryAuthContext {
@@ -233,6 +234,14 @@ export function useCreateConversation(projectId: string, context?: QueryAuthCont
   });
 }
 
+function mergeConversation(existing: Conversation[] | undefined, conversation: Conversation): Conversation[] {
+  const conversations = existing ?? [];
+  return [
+    conversation,
+    ...conversations.filter((candidate) => candidate.id !== conversation.id),
+  ];
+}
+
 export function useAddConversationMessage(projectId: string, context?: QueryAuthContext) {
   const apiClient = useApiClient(context);
   const queryClient = useQueryClient();
@@ -240,7 +249,12 @@ export function useAddConversationMessage(projectId: string, context?: QueryAuth
   return useMutation({
     mutationFn: (payload: { conversationId: string; content: string; agentSlug?: string }) =>
       addConversationMessage(apiClient, payload.conversationId, { content: payload.content, agentSlug: payload.agentSlug }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations', projectId] }),
+    onSuccess: (conversation) => {
+      queryClient.setQueryData<Conversation[]>(['conversations', projectId], (existing) =>
+        mergeConversation(existing, conversation),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['conversations', projectId] });
+    },
   });
 }
 

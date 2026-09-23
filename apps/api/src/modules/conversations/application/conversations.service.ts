@@ -32,11 +32,16 @@ export class ConversationsService {
   async listProjectConversations(projectId: string, actor: AuthenticatedUser) {
     await this.ensureProject(projectId, actor.id);
 
-    return this.prisma.conversation.findMany({
+    const conversations = await this.prisma.conversation.findMany({
       where: { projectId, deletedAt: null, project: { createdBy: actor.id, deletedAt: null } },
-      include: { messages: { orderBy: { createdAt: 'asc' }, take: 8 } },
+      include: { messages: { orderBy: { createdAt: 'desc' }, take: 100 } },
       orderBy: { updatedAt: 'desc' },
     });
+
+    return conversations.map((conversation) => ({
+      ...conversation,
+      messages: [...conversation.messages].reverse(),
+    }));
   }
 
   async createConversation(input: CreateConversationInput) {
@@ -98,6 +103,7 @@ export class ConversationsService {
         updatedBy: input.actor.id,
       },
     });
+    await this.touchConversation(input.conversationId, input.actor.id);
 
     const runtimeInput = {
       projectId: conversation.projectId,
@@ -200,6 +206,7 @@ export class ConversationsService {
         updatedBy: input.actor.id,
       },
     });
+    await this.touchConversation(input.conversationId, input.actor.id);
 
     const updatedConversation = await this.prisma.conversation.findUniqueOrThrow({
       where: { id: input.conversationId },
@@ -223,6 +230,16 @@ export class ConversationsService {
     if (!project) {
       throw new NotFoundException('Project not found.');
     }
+  }
+
+  private async touchConversation(conversationId: string, actorUserId: string) {
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        updatedAt: new Date(),
+        updatedBy: actorUserId,
+      },
+    });
   }
 
   private fallbackAnswer(
