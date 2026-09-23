@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { QueueModule } from '../../common/queue/queue.module';
+import { ProjectProfileModule } from '../project-profile/project-profile.module';
 import { DISCOVERY_EXECUTION_REPOSITORY } from './application/ports/discovery-execution.repository';
 import { DISCOVERY_JOB_REPOSITORY } from './application/ports/discovery-job.repository';
 import { DISCOVERY_QUEUE } from './application/ports/discovery-queue.port';
@@ -11,7 +12,7 @@ import { BullMqDiscoveryQueue } from './infrastructure/queues/bullmq-discovery.q
 import { DiscoveryJobsController } from './presentation/controllers/discovery-jobs.controller';
 
 @Module({
-  imports: [QueueModule],
+  imports: [ProjectProfileModule, QueueModule],
   controllers: [DiscoveryJobsController],
   providers: [
     GetDiscoveryStatusUseCase,
