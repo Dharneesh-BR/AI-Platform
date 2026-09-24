@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useCreateReport, useReports } from '../../../lib/api/query-hooks';
@@ -11,12 +12,13 @@ interface ReportsWorkspaceProps {
 }
 
 export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
+  const router = useRouter();
   const { session } = useAuth();
   const context = { accessToken: session.accessToken };
   const reportsQuery = useReports(projectId, context);
   const createReport = useCreateReport(projectId, context);
   const reports = reportsQuery.data ?? [];
-  const [message, setMessage] = useState('Generate a report when API auth is enabled.');
+  const [message, setMessage] = useState('Generate the first report when the project context is ready.');
 
   async function generateReport() {
     if (!session.accessToken) {
@@ -25,8 +27,10 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
     }
 
     try {
-      await createReport.mutateAsync({ title: 'Stakeholder AI Readiness Report' });
+      setMessage('Generating report from approved profile and project knowledge...');
+      const report = await createReport.mutateAsync({ title: 'Stakeholder AI Readiness Report' });
       setMessage('Generated report using approved profile, knowledge sources, and AI disclosure metadata.');
+      router.push(`/projects/${projectId}/reports/${report.id}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to generate report.');
     }
@@ -45,7 +49,7 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
           <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link>
           <Link className="button button-muted" href={`/projects/${projectId}/chat`}>AI chat</Link>
           <button className="button button-primary" onClick={() => void generateReport()} disabled={createReport.isPending}>
-            Generate report
+            {createReport.isPending ? 'Generating...' : 'Generate report'}
           </button>
         </div>
       </header>
@@ -72,7 +76,13 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
           ))}
         </div>
         {!reportsQuery.isLoading && !reportsQuery.isError && reports.length === 0 ? (
-          <p className="section-gap">No reports exist yet. Generate the first report from this page.</p>
+          <div className="empty-state section-gap">
+            <h3>No reports exist yet</h3>
+            <p>Generate the first report now. It will open automatically when ready.</p>
+            <button className="button button-primary" type="button" onClick={() => void generateReport()} disabled={createReport.isPending}>
+              {createReport.isPending ? 'Generating...' : 'Generate first report'}
+            </button>
+          </div>
         ) : null}
         <p className="section-gap">{message}</p>
       </section>
