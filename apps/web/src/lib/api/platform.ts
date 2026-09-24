@@ -62,6 +62,7 @@ export interface Report {
   id: string;
   title: string;
   status: string;
+  metadata?: Record<string, unknown>;
   sections: Array<{
     id: string;
     title: string;

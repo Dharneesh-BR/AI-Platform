@@ -24,8 +24,12 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
       return;
     }
 
-    await createReport.mutateAsync({ title: 'Stakeholder AI Readiness Report' });
-    setMessage('Generated report using live backend.');
+    try {
+      await createReport.mutateAsync({ title: 'Stakeholder AI Readiness Report' });
+      setMessage('Generated report using approved profile, knowledge sources, and AI disclosure metadata.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to generate report.');
+    }
   }
 
   return (
@@ -42,8 +46,8 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
       </header>
       <section className="grid-3">
         <MetricCard label="Reports" value={String(reports.length)} detail="Loaded from backend." />
-        <MetricCard label="Status" value="Ready" detail="Research context can feed generation." />
-        <MetricCard label="Exports" value="PDF / PPT" detail="Presentation-ready output planned." />
+        <MetricCard label="Status" value="Ready" detail="Profile and knowledge context feed generation." />
+        <MetricCard label="Disclosure" value="AI" detail="Reports show whether AI assisted generation." />
       </section>
       <section className="card section-gap">
         <div className="pill-row">
@@ -69,7 +73,7 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
       </section>
       <Card className="section-gap">
         <h2>Available report sections</h2>
-        <div className="flow-map"><Pill>Executive Summary</Pill><Pill>SWOT</Pill><Pill>PESTLE</Pill><Pill>Competitor Matrix</Pill><Pill>Pricing Strategy</Pill><Pill>Recommendations</Pill></div>
+        <div className="flow-map"><Pill>Executive Summary</Pill><Pill>Key Findings</Pill><Pill>Priority Opportunities</Pill><Pill>30-Day Roadmap</Pill><Pill>Risks & Assumptions</Pill></div>
       </Card>
     </div>
   );
