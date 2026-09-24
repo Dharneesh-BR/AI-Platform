@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
+import { AssistantMarkdown, AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
 import { Card, Pill } from '../../../components/platform/app-shell';
 import { useAddConversationMessage, useAgentRunStatus, useBusinessAgents, useConversations, useCreateConversation } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
@@ -29,7 +29,7 @@ export function ChatWorkspace({
   const agents = agentsQuery.data ?? [];
   const activeConversation = conversations[0];
   const addMessage = useAddConversationMessage(projectId, context);
-  const [prompt, setPrompt] = useState('Based on our company profile, what should we prioritize next?');
+  const [prompt, setPrompt] = useState('Based on our company profile and knowledge sources, what support issues should we prioritize first?');
   const [message, setMessage] = useState('');
   const [agentSlug, setAgentSlug] = useState(initialAgentSlug);
   const [activeRunId, setActiveRunId] = useState<string>();
@@ -145,7 +145,9 @@ export function ChatWorkspace({
           {displayMessages.map((chatMessage) => (
             <div className={`timeline-item message-card ${chatMessage.role}`} key={chatMessage.id}>
               <strong className="message-role">{chatMessage.role}</strong>
-              <span>{chatMessage.content}</span>
+              {chatMessage.role === 'assistant'
+                ? <AssistantMarkdown content={chatMessage.content} />
+                : <span>{chatMessage.content}</span>}
               <SourceList sources={messageSources(chatMessage)} />
             </div>
           ))}
@@ -156,7 +158,7 @@ export function ChatWorkspace({
         {activeRun ? (
           <div className="section-gap">
             <AsyncRunProgress run={activeRun} />
-            {activeRun.answer ? <p className="section-gap">{activeRun.answer}</p> : null}
+            {activeRun.answer ? <AssistantMarkdown content={activeRun.answer} /> : null}
             <SourceList sources={activeRun.sources} />
             {activeRun.status === 'FAILED' ? (
               <button className="button button-muted section-gap" onClick={() => void sendPrompt()} type="button">

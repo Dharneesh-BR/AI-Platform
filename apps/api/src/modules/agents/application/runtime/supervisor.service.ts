@@ -7,7 +7,25 @@ export class SupervisorService {
     const text = input.userInput.toLowerCase();
     const requiredCapabilities = new Set<AgentCapability>();
 
-    if (this.matches(text, ['document', 'uploaded', 'company profile', 'company information', 'available company', 'policy', 'based on our', 'using our'])) {
+    if (this.matches(text, [
+      'document',
+      'uploaded',
+      'company profile',
+      'company information',
+      'available company',
+      'policy',
+      'based on our',
+      'using our',
+      'knowledge',
+      'source',
+      'notes',
+      'customer',
+      'support',
+      'warranty',
+      'service',
+      'priority issues',
+      'prioritize first',
+    ])) {
       requiredCapabilities.add('rag');
     }
     if (this.matches(text, ['calculate', 'percent', '%', 'scenario', 'forecast', 'roi', 'margin'])) {

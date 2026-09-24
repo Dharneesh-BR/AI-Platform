@@ -50,13 +50,13 @@ export function SourceList({ sources }: { sources: unknown[] | undefined }) {
 
   return (
     <details className="source-list">
-      <summary>Sources · {normalized.length}</summary>
+      <summary>Knowledge sources · {normalized.length}</summary>
       <div className="timeline section-gap">
         {normalized.map((source, index) => (
           <div className="timeline-item" key={`${source.documentName}-${index}`}>
             <div>
               <strong>{source.documentName}</strong>
-              <span>{source.pageNumber ? `Page ${source.pageNumber}` : 'Company knowledge'}</span>
+              <span>{source.pageNumber ? `Page ${source.pageNumber}` : source.kind}</span>
             </div>
             {typeof source.similarity === 'number' ? <Pill tone="slate">{source.similarity.toFixed(2)}</Pill> : null}
           </div>
@@ -231,5 +231,6 @@ function normalizeSources(sources: unknown[] | undefined) {
       documentName: typeof source.documentName === 'string' ? source.documentName : 'Company source',
       pageNumber: typeof source.pageNumber === 'number' ? source.pageNumber : null,
       similarity: typeof source.similarity === 'number' ? source.similarity : null,
+      kind: source.documentId === source.chunkId ? 'Project knowledge source' : 'Project knowledge',
     }));
 }
