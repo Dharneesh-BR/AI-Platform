@@ -58,6 +58,9 @@ export function DiscoveryProgress({ projectId }: DiscoveryProgressProps) {
           {isFinished ? (
             <Link className="button button-primary" href={`/projects/${projectId}/company-profile`}>Review profile</Link>
           ) : null}
+          {isFinished ? (
+            <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Add knowledge</Link>
+          ) : null}
         </div>
       </header>
 

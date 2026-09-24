@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useAuth } from '../../../lib/auth/session';
@@ -23,12 +24,16 @@ export function ResearchWorkspace({ projectId }: ResearchWorkspaceProps) {
       return;
     }
 
-    await createPlan.mutateAsync({
-      title: 'Stakeholder AI opportunity analysis',
-      question: 'Which AI opportunities should the stakeholder team prioritize in the next sprint?',
-      objectives: ['Prioritize high-impact workflows', 'Identify risks', 'Prepare report-ready recommendations'],
-    });
-    setMessage('Created research plan from live API.');
+    try {
+      await createPlan.mutateAsync({
+        title: 'Stakeholder AI opportunity analysis',
+        question: 'Which AI opportunities should the stakeholder team prioritize in the next sprint?',
+        objectives: ['Prioritize high-impact workflows', 'Identify risks', 'Prepare report-ready recommendations'],
+      });
+      setMessage('Created research plan from live API.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to create research plan.');
+    }
   }
 
   return (
@@ -39,9 +44,14 @@ export function ResearchWorkspace({ projectId }: ResearchWorkspaceProps) {
           <h1>Plan evidence-backed strategic analysis.</h1>
           <p>Research consumes approved company profile, discovery sources, documents, and future integrations.</p>
         </div>
-        <button className="button button-primary" onClick={() => void createDefaultPlan()} disabled={createPlan.isPending}>
-          Create research plan
-        </button>
+        <div className="topbar-actions">
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/reports`}>Reports</Link>
+          <button className="button button-primary" onClick={() => void createDefaultPlan()} disabled={createPlan.isPending}>
+            Create research plan
+          </button>
+        </div>
       </header>
       <section className="grid-3">
         <MetricCard label="Plans" value={String(plans.length)} detail="Loaded from backend." />

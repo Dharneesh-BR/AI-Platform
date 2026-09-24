@@ -40,9 +40,14 @@ export function ReportsWorkspace({ projectId }: ReportsWorkspaceProps) {
           <h1>Generate consulting-grade deliverables.</h1>
           <p>Reports synthesize validated research, company profile, knowledge sources, and agent outputs.</p>
         </div>
-        <button className="button button-primary" onClick={() => void generateReport()} disabled={createReport.isPending}>
-          Generate report
-        </button>
+        <div className="topbar-actions">
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/chat`}>AI chat</Link>
+          <button className="button button-primary" onClick={() => void generateReport()} disabled={createReport.isPending}>
+            Generate report
+          </button>
+        </div>
       </header>
       <section className="grid-3">
         <MetricCard label="Reports" value={String(reports.length)} detail="Loaded from backend." />

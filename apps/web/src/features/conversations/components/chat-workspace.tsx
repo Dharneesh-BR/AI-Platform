@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { AssistantMarkdown, AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
 import { Card, Pill } from '../../../components/platform/app-shell';
@@ -200,9 +201,14 @@ export function ChatWorkspace({
           <h1>Ask company-aware strategic questions.</h1>
           <p>Chat opens after onboarding and uses the generated report card as company context.</p>
         </div>
-        <button className="button button-primary" onClick={() => void createConversation.mutateAsync({ title: 'New consulting chat' })} disabled={createConversation.isPending || !hasApiAuth(session)}>
-          New conversation
-        </button>
+        <div className="topbar-actions">
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/reports`}>Reports</Link>
+          <button className="button button-primary" onClick={() => void createConversation.mutateAsync({ title: 'New consulting chat' })} disabled={createConversation.isPending || !hasApiAuth(session)}>
+            New conversation
+          </button>
+        </div>
       </header>
       <section className="grid-2">
         {chatBody}

@@ -123,6 +123,15 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         </div>
         <div className="topbar-actions">
           <Link className="button button-muted" href={getModuleHref(project.id, 'company-profile')}>Review profile</Link>
+          {lifecycleProgress >= 82 ? (
+            <Link className="button button-muted" href={getModuleHref(project.id, 'knowledge')}>Knowledge</Link>
+          ) : null}
+          {lifecycleProgress >= 100 ? (
+            <Link className="button button-muted" href={getModuleHref(project.id, 'chat')}>AI chat</Link>
+          ) : null}
+          {lifecycleProgress >= 100 ? (
+            <Link className="button button-muted" href={getModuleHref(project.id, 'reports')}>Reports</Link>
+          ) : null}
           <Link className="button button-primary" href={project.nextRoute}>Continue setup</Link>
           <button
             className="button button-muted"
@@ -155,6 +164,12 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             ) : (
               <Link className="button button-muted" href={project.nextRoute}>Unlock knowledge</Link>
             )}
+            {lifecycleProgress >= 100 ? (
+              <>
+                <Link className="button button-muted" href={getModuleHref(project.id, 'chat')}>Open AI chat</Link>
+                <Link className="button button-muted" href={getModuleHref(project.id, 'reports')}>Open reports</Link>
+              </>
+            ) : null}
           </div>
         </Card>
         <Card>

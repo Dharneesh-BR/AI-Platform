@@ -117,6 +117,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
         </div>
         <div className="topbar-actions">
           <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/reports`}>Open reports</Link>
           <Link className="button button-primary" href={`/projects/${projectId}/chat`}>Open AI chat</Link>
         </div>
       </header>

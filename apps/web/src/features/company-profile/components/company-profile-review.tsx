@@ -130,6 +130,8 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
         </div>
         <div className="topbar-actions">
           {isAiReady ? <a className="button button-primary" href="#ai-chat">Open AI chat</a> : null}
+          {isAiReady ? <Link className="button button-muted" href={`/projects/${projectId}/reports`}>Open reports</Link> : null}
+          {isAiReady ? <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link> : null}
           <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
         </div>
       </header>

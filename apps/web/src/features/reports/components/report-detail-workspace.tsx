@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, Pill } from '../../../components/platform/app-shell';
 import { useReport } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
@@ -25,8 +26,12 @@ export function ReportDetailWorkspace({ projectId, reportId }: ReportDetailWorks
           <h1>{report?.title ?? 'AI Readiness report'}</h1>
           <p>Review the generated report and ask Magnafic AI follow-up questions in the same workspace.</p>
         </div>
-        <div className="pill-row">
+        <div className="topbar-actions">
           <Pill tone={report?.status === 'READY' ? 'green' : 'amber'}>{report?.status ?? 'Loading'}</Pill>
+          <Link className="button button-muted" href={`/projects/${projectId}/reports`}>All reports</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}`}>Project workspace</Link>
+          <Link className="button button-muted" href={`/projects/${projectId}/knowledge`}>Knowledge</Link>
+          <Link className="button button-primary" href={`/projects/${projectId}/chat`}>AI chat</Link>
         </div>
       </header>
 
