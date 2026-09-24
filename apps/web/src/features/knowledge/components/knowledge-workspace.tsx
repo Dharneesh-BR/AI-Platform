@@ -94,7 +94,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
 
     try {
       const results = await searchKnowledge.mutateAsync({ query: searchQuery.trim(), limit: 5 });
-      setMessage(results.length ? 'Knowledge search completed against project-scoped vectors.' : 'No matching chunks found yet. Add or process a document, then search again.');
+      setMessage(results.length ? 'Knowledge search completed against project-scoped context.' : 'No matching sources or chunks found yet. Add or process knowledge, then search again.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to search project knowledge.');
     }
@@ -238,7 +238,7 @@ export function KnowledgeWorkspace({ projectId }: KnowledgeWorkspaceProps) {
             Search project knowledge
           </button>
           {!searchKnowledge.isPending && searchKnowledge.data?.length === 0 ? (
-            <p className="section-gap">No matching knowledge chunks found.</p>
+            <p className="section-gap">No matching knowledge sources or chunks found.</p>
           ) : null}
           <div className="timeline section-gap">
             {(searchKnowledge.data ?? []).map((result) => (

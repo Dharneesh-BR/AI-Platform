@@ -33,15 +33,29 @@ export class VectorSearchService {
     documentId?: string;
     allowedKnowledgeScopes?: string[];
   }): Promise<KnowledgeSearchResult[]> {
-    const embedding = await this.embeddingService.embedQuery(input.query);
-    return this.searchByEmbedding({
-      projectId: input.projectId,
-      userId: input.userId,
-      embedding,
-      limit: input.limit,
-      documentId: input.documentId,
-      allowedKnowledgeScopes: input.allowedKnowledgeScopes,
-    });
+    try {
+      const embedding = await this.embeddingService.embedQuery(input.query);
+      const results = await this.searchByEmbedding({
+        projectId: input.projectId,
+        userId: input.userId,
+        embedding,
+        limit: input.limit,
+        documentId: input.documentId,
+        allowedKnowledgeScopes: input.allowedKnowledgeScopes,
+      });
+
+      if (results.length) {
+        return results;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Vector knowledge search unavailable; falling back to source text search. reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    return this.searchSourceText(input);
   }
 
   async searchByEmbedding(input: {
@@ -131,5 +145,105 @@ export class VectorSearchService {
     return this.knowledgeDocumentHasStatusColumn
       ? Prisma.sql`AND d.status = 'READY'`
       : Prisma.empty;
+  }
+
+  private async searchSourceText(input: {
+    projectId: string;
+    userId: string;
+    query: string;
+    limit?: number;
+    documentId?: string;
+  }): Promise<KnowledgeSearchResult[]> {
+    const limit = Math.max(1, Math.min(input.limit ?? this.ragConfig.maxRetrievedChunks, 20));
+    const sources = await this.prisma.researchSource.findMany({
+      where: {
+        projectId: input.projectId,
+        deletedAt: null,
+        project: {
+          createdBy: input.userId,
+          deletedAt: null,
+        },
+        ...(input.documentId
+          ? {
+              OR: [
+                { id: input.documentId },
+                { sourceId: input.documentId },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 50,
+    });
+
+    return sources
+      .map((source) => {
+        const content = this.extractContentText(source.content);
+        return {
+          source,
+          content,
+          score: this.lexicalScore(input.query, `${source.title}\n${content}`),
+        };
+      })
+      .filter((result) => result.content.trim() && result.score > 0)
+      .sort((left, right) => right.score - left.score)
+      .slice(0, limit)
+      .map((result) => ({
+        chunkId: result.source.id,
+        documentId: result.source.sourceId ?? result.source.id,
+        documentName: result.source.title,
+        content: result.content.slice(0, this.ragConfig.maxContextCharacters),
+        pageNumber: null,
+        similarity: Math.min(0.99, result.score),
+        metadata: {
+          ...this.asRecord(result.source.metadata),
+          fallback: 'research-source-text',
+          sourceType: result.source.type,
+        },
+      }));
+  }
+
+  private extractContentText(content: unknown): string {
+    if (typeof content === 'string') {
+      return content;
+    }
+
+    if (content && typeof content === 'object' && !Array.isArray(content)) {
+      const record = content as Record<string, unknown>;
+      if (typeof record.text === 'string') {
+        return record.text;
+      }
+      if (typeof record.summary === 'string') {
+        return record.summary;
+      }
+    }
+
+    return '';
+  }
+
+  private lexicalScore(query: string, text: string): number {
+    const terms = this.uniqueTerms(query);
+
+    if (!terms.length) {
+      return 0;
+    }
+
+    const normalizedText = text.toLowerCase();
+    const matchedTerms = terms.filter((term) => normalizedText.includes(term));
+    return matchedTerms.length / terms.length;
+  }
+
+  private uniqueTerms(value: string): string[] {
+    return [...new Set(
+      value
+        .toLowerCase()
+        .split(/[^a-z0-9]+/i)
+        .map((term) => term.trim())
+        .filter((term) => term.length >= 3),
+    )];
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
   }
 }
