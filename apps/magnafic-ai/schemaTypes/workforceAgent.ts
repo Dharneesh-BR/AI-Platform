@@ -173,6 +173,19 @@ export const workforceAgent = defineType({
       group: 'governance',
       fields: [
         defineField({
+          name: 'preferredModel',
+          title: 'Preferred Model Key',
+          type: 'string',
+          description: 'Optional LiteLLM model key for this agent, for example gpt-4o-mini or magnafic-reasoning.',
+        }),
+        defineField({
+          name: 'fallbackModels',
+          title: 'Fallback Model Keys',
+          type: 'array',
+          of: [defineArrayMember({type: 'string'})],
+          validation: (rule) => rule.unique(),
+        }),
+        defineField({
           name: 'defaultPolicy',
           type: 'string',
           initialValue: 'WRITING',
@@ -186,6 +199,50 @@ export const workforceAgent = defineType({
             ],
             layout: 'radio',
           },
+        }),
+        defineField({
+          name: 'capabilityOverrides',
+          title: 'Capability Overrides',
+          type: 'array',
+          of: [
+            defineArrayMember({
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'capability',
+                  type: 'string',
+                  options: {list: capabilityOptions},
+                  validation: (rule) => rule.required(),
+                }),
+                defineField({
+                  name: 'policy',
+                  type: 'string',
+                  options: {
+                    list: [
+                      {title: 'General', value: 'GENERAL'},
+                      {title: 'Reasoning', value: 'REASONING'},
+                      {title: 'Research', value: 'RESEARCH'},
+                      {title: 'Writing', value: 'WRITING'},
+                      {title: 'Verification', value: 'VERIFICATION'},
+                    ],
+                  },
+                }),
+                defineField({
+                  name: 'model',
+                  title: 'Model Key',
+                  type: 'string',
+                  description: 'Optional model key used only when this capability runs.',
+                }),
+              ],
+              preview: {
+                select: {
+                  title: 'capability',
+                  subtitle: 'model',
+                },
+              },
+            }),
+          ],
+          validation: (rule) => rule.unique(),
         }),
         defineField({
           name: 'allowedRoles',

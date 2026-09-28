@@ -32,6 +32,22 @@ SANITY_API_VERSION=2026-09-19
 - `modelPolicy`: Model routing policy and optional allowed roles.
 - `verificationPolicy`: Extra verification settings such as required phrases.
 
+## Model Routing
+
+Use `modelPolicy` to run different workforce agents on different models without redeploying code.
+
+- `preferredModel`: Optional LiteLLM model key for the agent, such as `gpt-4o-mini` or an internal alias.
+- `fallbackModels`: Ordered model keys to try if the preferred model fails.
+- `defaultPolicy`: Policy alias used when no explicit model is configured. Environment variables such as `MODEL_WRITING` and `MODEL_REASONING` still work.
+- `capabilityOverrides`: Optional specialist-level routing. For example, a strategy agent can use a fast default model but route `research` to a stronger research model.
+
+Resolution order:
+
+1. Matching `capabilityOverrides[].model`.
+2. Agent `preferredModel`.
+3. Environment model for the resolved policy, for example `MODEL_RESEARCH`.
+4. `MODEL_DEFAULT`, `LITELLM_DEFAULT_MODEL`, then the local test fallback.
+
 ## Output Control
 
 The final synthesis prompt uses `responseFormatInstructions` and required `outputSections`.

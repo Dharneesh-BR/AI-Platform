@@ -26,6 +26,8 @@ export const workforceAgents = [
       outputSection('Risks And Assumptions', 'Call out assumptions, missing context, and risks.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_GENERAL'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'REASONING',
       costPreference: 'balanced',
       speedPreference: 'balanced',
@@ -57,6 +59,8 @@ export const workforceAgents = [
       outputSection('Execution Notes', 'Include owners, timing, assumptions, or required data.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_SALES'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'WRITING',
       costPreference: 'balanced',
       speedPreference: 'fast',
@@ -88,6 +92,8 @@ export const workforceAgents = [
       outputSection('Measurement Plan', 'Define success metrics and learning loops.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_MARKETING'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'WRITING',
       costPreference: 'balanced',
       speedPreference: 'fast',
@@ -119,7 +125,17 @@ export const workforceAgents = [
       outputSection('Decision Risks', 'List financial risks, sensitivities, and missing data.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_FINANCE'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'REASONING',
+      capabilityOverrides: [
+        {
+          _type: 'object',
+          capability: 'calculation',
+          policy: 'REASONING',
+          model: envModel('SANITY_AGENT_MODEL_CALCULATION'),
+        },
+      ].filter((override) => Boolean(override.model)),
       costPreference: 'balanced',
       speedPreference: 'balanced',
     },
@@ -149,6 +165,8 @@ export const workforceAgents = [
       outputSection('Counsel Review Items', 'List questions or documents for qualified counsel.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_LEGAL'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'VERIFICATION',
       costPreference: 'balanced',
       speedPreference: 'balanced',
@@ -180,6 +198,8 @@ export const workforceAgents = [
       outputSection('Implementation Checks', 'List metrics, dependencies, and rollout risks.'),
     ],
     modelPolicy: {
+      preferredModel: envModel('SANITY_AGENT_MODEL_PRODUCTION'),
+      fallbackModels: envModelList('SANITY_AGENT_MODEL_FALLBACKS'),
       defaultPolicy: 'REASONING',
       costPreference: 'balanced',
       speedPreference: 'balanced',
@@ -199,4 +219,13 @@ function outputSection(heading, instructions, required = true) {
     instructions,
     required,
   }
+}
+
+function envModel(name) {
+  return process.env[name]?.trim() || undefined
+}
+
+function envModelList(name) {
+  const value = process.env[name]?.trim()
+  return value ? value.split(',').map((model) => model.trim()).filter(Boolean) : undefined
 }

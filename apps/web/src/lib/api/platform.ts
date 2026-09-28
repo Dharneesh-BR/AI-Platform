@@ -180,6 +180,7 @@ export interface AdminHealth {
 
 export interface BusinessAgentProfile {
   id?: string;
+  source?: 'database' | 'sanity';
   name: string;
   slug: string;
   department: string;
@@ -187,6 +188,9 @@ export interface BusinessAgentProfile {
   capabilities: string[];
   allowedSpecialists: string[];
   allowedTools: string[];
+  knowledgeScopes?: string[];
+  modelPolicy?: Record<string, unknown>;
+  verificationPolicy?: Record<string, unknown>;
   enabled: boolean;
 }
 

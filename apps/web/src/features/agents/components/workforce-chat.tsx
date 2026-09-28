@@ -57,6 +57,7 @@ const promptSuggestions: Record<string, string[]> = {
 };
 
 const defaultAgent: BusinessAgentProfile = {
+  source: 'database',
   name: 'Magnafic AI',
   slug: 'magnafic-ai',
   department: 'Strategy',
@@ -78,6 +79,20 @@ function agentInitial(name: string): string {
 
 function fallbackPrompt(agent?: BusinessAgentProfile) {
   return `Ask ${agent?.name ?? 'Magnafic AI'} about strategy, risks, priorities, or execution plans.`;
+}
+
+function agentSourceLabel(agent?: BusinessAgentProfile): string {
+  return agent?.source === 'sanity' ? 'Sanity' : 'Default';
+}
+
+function agentModelLabel(agent?: BusinessAgentProfile): string {
+  const modelPolicy = agent?.modelPolicy ?? {};
+  const preferredModel = modelPolicy.preferredModel ?? modelPolicy.defaultModel ?? modelPolicy.model;
+  if (typeof preferredModel === 'string' && preferredModel.trim()) {
+    return preferredModel.trim();
+  }
+  const defaultPolicy = modelPolicy.defaultPolicy;
+  return typeof defaultPolicy === 'string' && defaultPolicy.trim() ? `${defaultPolicy.trim()} policy` : 'Default model policy';
 }
 
 function conversationAgentSlug(conversation: Conversation): string | undefined {
@@ -286,6 +301,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
               <span>
                 <strong>{agent.name}</strong>
                 <small>{agent.department}</small>
+                <small>{agentSourceLabel(agent)} · {agentModelLabel(agent)}</small>
               </span>
             </Link>
           ))}
@@ -304,6 +320,8 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
           <div className="workforce-header-meta">
             {selectedAgent ? <Pill tone="green">Available</Pill> : null}
             {selectedAgent ? <Pill tone="slate">{selectedAgent.department}</Pill> : null}
+            {selectedAgent ? <Pill tone={selectedAgent.source === 'sanity' ? 'blue' : 'slate'}>{agentSourceLabel(selectedAgent)}</Pill> : null}
+            {selectedAgent ? <Pill tone="slate">{agentModelLabel(selectedAgent)}</Pill> : null}
           </div>
         </header>
 
