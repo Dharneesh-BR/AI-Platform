@@ -81,6 +81,7 @@ export type UpdateCompanyProfilePayload = Partial<
     | 'services'
     | 'painPoints'
     | 'uniqueSellingProposition'
+    | 'summaries'
   >
 >;
 

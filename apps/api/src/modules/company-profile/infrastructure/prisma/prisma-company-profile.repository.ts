@@ -119,6 +119,7 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
         services: this.toJsonArray(input.services),
         painPoints: this.toJsonArray(input.painPoints),
         uniqueSellingProposition: input.uniqueSellingProposition,
+        summaries: this.toJsonRecord(input.summaries),
         createdBy: input.actor.id,
         updatedBy: input.actor.id,
       },
@@ -135,6 +136,7 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
       services: input.services ? this.toJsonArray(input.services) : undefined,
       painPoints: input.painPoints ? this.toJsonArray(input.painPoints) : undefined,
       uniqueSellingProposition: input.uniqueSellingProposition,
+      summaries: input.summaries ? this.toJsonRecord(input.summaries) : undefined,
       updatedBy: input.actor.id,
     };
   }
@@ -179,6 +181,12 @@ export class PrismaCompanyProfileRepository implements CompanyProfileRepository 
 
   private toJsonArray(value: string[] | undefined): Prisma.InputJsonValue {
     return Array.isArray(value) ? value : [];
+  }
+
+  private toJsonRecord(value: Record<string, unknown> | null | undefined): Prisma.InputJsonValue | undefined {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? value as Prisma.InputJsonObject
+      : undefined;
   }
 
   private asRecord(value: unknown): Record<string, unknown> | null {

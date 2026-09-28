@@ -3,14 +3,28 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useApproveCompanyProfile, useUpdateCompanyProfile } from '../../../lib/api/query-hooks';
+import type { UpdateCompanyProfilePayload } from '../../../lib/api/onboarding';
 import { useAuth } from '../../../lib/auth/session';
 
 interface CompanyProfileActionsProps {
   projectId: string;
   profileId?: string;
+  draft?: UpdateCompanyProfilePayload;
+  isEditing?: boolean;
+  onEdit?: () => void;
+  onCancel?: () => void;
+  onSaved?: () => void;
 }
 
-export function CompanyProfileActions({ projectId, profileId }: CompanyProfileActionsProps) {
+export function CompanyProfileActions({
+  projectId,
+  profileId,
+  draft,
+  isEditing = false,
+  onEdit,
+  onCancel,
+  onSaved,
+}: CompanyProfileActionsProps) {
   const router = useRouter();
   const { session } = useAuth();
   const context = { accessToken: session.accessToken };
@@ -29,13 +43,14 @@ export function CompanyProfileActions({ projectId, profileId }: CompanyProfileAc
       return;
     }
 
-    await updateProfile.mutateAsync({
-      mission: 'Help businesses turn complex market questions into clear AI-assisted strategy.',
-      industry: 'AI Consulting',
-      products: ['AI strategy workshops', 'Market research', 'Competitor analysis'],
-      services: ['Research sprints', 'GTM strategy', 'Business planning'],
-    });
+    if (!draft) {
+      setMessage('Open edit mode before saving profile edits.');
+      return;
+    }
+
+    await updateProfile.mutateAsync(draft);
     setMessage('Profile edits saved.');
+    onSaved?.();
   }
 
   async function approve() {
@@ -55,8 +70,19 @@ export function CompanyProfileActions({ projectId, profileId }: CompanyProfileAc
 
   return (
     <div className="topbar-actions">
-      <button className="button button-muted" onClick={saveEdits} disabled={updateProfile.isPending}>Save edits</button>
-      <button className="button button-primary" onClick={approve} disabled={approveProfile.isPending}>Approve profile</button>
+      {isEditing ? (
+        <>
+          <button className="button button-primary" onClick={saveEdits} disabled={updateProfile.isPending}>
+            {updateProfile.isPending ? 'Saving...' : 'Save edits'}
+          </button>
+          <button className="button button-muted" type="button" onClick={onCancel} disabled={updateProfile.isPending}>Cancel edits</button>
+        </>
+      ) : (
+        <button className="button button-muted" type="button" onClick={onEdit} disabled={!profileId}>Edit report card</button>
+      )}
+      <button className="button button-primary" onClick={approve} disabled={approveProfile.isPending || isEditing}>
+        {approveProfile.isPending ? 'Approving...' : 'Approve profile'}
+      </button>
       <p>{message}</p>
     </div>
   );

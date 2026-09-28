@@ -1,4 +1,4 @@
-import { ArrayMaxSize, IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateCompanyProfileDto {
   @IsOptional()
@@ -44,4 +44,8 @@ export class UpdateCompanyProfileDto {
   @IsString()
   @MaxLength(2000)
   uniqueSellingProposition?: string | null;
+
+  @IsOptional()
+  @IsObject()
+  summaries?: Record<string, unknown> | null;
 }

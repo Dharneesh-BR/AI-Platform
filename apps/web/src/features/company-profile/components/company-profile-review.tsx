@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, MetricCard, Pill } from '../../../components/platform/app-shell';
 import { useCompanyProfile, useProject } from '../../../lib/api/query-hooks';
+import type { UpdateCompanyProfilePayload } from '../../../lib/api/onboarding';
 import { useAuth } from '../../../lib/auth/session';
 import { ChatWorkspace } from '../../conversations/components/chat-workspace';
 import { CompanyProfileActions } from './company-profile-actions';
@@ -85,6 +87,45 @@ function crawledPages(summaries: Record<string, unknown> | null | undefined): Ar
   return pages;
 }
 
+interface ReportCardFormState {
+  executiveSummary: string;
+  aiReadiness: string;
+  futureDirection: string;
+  industry: string;
+  opportunityAreas: string;
+  targetCustomers: string;
+  operationalGaps: string;
+  recommendedPositioning: string;
+  recommendedRoadmap: string;
+}
+
+function listToText(value: string[]): string {
+  return value.join('\n');
+}
+
+function textToList(value: string): string[] {
+  return value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter((item) => item && !isPlaceholderValue(item));
+}
+
+function buildFormState(profile: NonNullable<ReturnType<typeof useCompanyProfile>['data']>): ReportCardFormState {
+  const products = displayList(profile.products);
+  const services = displayList(profile.services);
+  return {
+    executiveSummary: summaryText(profile.summaries, 'executiveSummary') ?? profile.mission ?? '',
+    aiReadiness: summaryText(profile.summaries, 'aiReadiness') ?? '',
+    futureDirection: profile.vision ?? '',
+    industry: profile.industry ?? '',
+    opportunityAreas: listToText([...products, ...services]),
+    targetCustomers: listToText(displayList(profile.targetCustomers)),
+    operationalGaps: listToText(displayList(profile.painPoints)),
+    recommendedPositioning: profile.uniqueSellingProposition ?? '',
+    recommendedRoadmap: listToText(summaryList(profile.summaries, 'recommendedRoadmap')),
+  };
+}
+
 export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const { session } = useAuth();
   const profileQuery = useCompanyProfile(projectId, {
@@ -94,6 +135,8 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
     accessToken: session.accessToken,
   });
   const profile = profileQuery.data;
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState<ReportCardFormState | null>(null);
   const isAiReady = projectQuery.data?.lifecycleState === 'AI_READY';
   const products = displayList(profile?.products);
   const services = displayList(profile?.services);
@@ -106,19 +149,76 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
   const recommendedRoadmap = summaryList(profile?.summaries, 'recommendedRoadmap');
   const pages = crawledPages(profile?.summaries);
 
-  const profileBlocks = profile
-    ? [
-        ['Executive Summary', executiveSummary ?? profile.mission],
-        ['AI Readiness', aiReadiness],
-        ['Future Direction', profile.vision],
-        ['Industry', profile.industry],
-        ['AI Opportunity Areas', [...products, ...services]],
-        ['Target Users / Customers', targetCustomers],
-        ['Operational Gaps', painPoints],
-        ['Recommended Positioning', profile.uniqueSellingProposition],
-        ['Recommended Roadmap', recommendedRoadmap],
-      ]
-    : [];
+  useEffect(() => {
+    if (profile && !isEditing) {
+      setForm(buildFormState(profile));
+    }
+  }, [profile, isEditing]);
+
+  const profileBlocks = useMemo(
+    () => profile
+      ? [
+          ['Executive Summary', isEditing ? form?.executiveSummary : executiveSummary ?? profile.mission],
+          ['AI Readiness', isEditing ? form?.aiReadiness : aiReadiness],
+          ['Future Direction', isEditing ? form?.futureDirection : profile.vision],
+          ['Industry', isEditing ? form?.industry : profile.industry],
+          ['AI Opportunity Areas', isEditing ? textToList(form?.opportunityAreas ?? '') : [...products, ...services]],
+          ['Target Users / Customers', isEditing ? textToList(form?.targetCustomers ?? '') : targetCustomers],
+          ['Operational Gaps', isEditing ? textToList(form?.operationalGaps ?? '') : painPoints],
+          ['Recommended Positioning', isEditing ? form?.recommendedPositioning : profile.uniqueSellingProposition],
+          ['Recommended Roadmap', isEditing ? textToList(form?.recommendedRoadmap ?? '') : recommendedRoadmap],
+        ]
+      : [],
+    [
+      aiReadiness,
+      executiveSummary,
+      form,
+      isEditing,
+      painPoints,
+      products,
+      profile,
+      recommendedRoadmap,
+      services,
+      targetCustomers,
+    ],
+  );
+
+  const editPayload = profile && form
+    ? {
+        mission: form.executiveSummary || null,
+        vision: form.futureDirection || null,
+        industry: form.industry || null,
+        targetCustomers: textToList(form.targetCustomers),
+        products: textToList(form.opportunityAreas),
+        services: [],
+        painPoints: textToList(form.operationalGaps),
+        uniqueSellingProposition: form.recommendedPositioning || null,
+        summaries: {
+          ...(profile.summaries ?? {}),
+          executiveSummary: form.executiveSummary,
+          aiReadiness: form.aiReadiness,
+          recommendedRoadmap: textToList(form.recommendedRoadmap),
+        },
+      } satisfies UpdateCompanyProfilePayload
+    : undefined;
+
+  function updateField(field: keyof ReportCardFormState, value: string) {
+    setForm((current) => current ? { ...current, [field]: value } : current);
+  }
+
+  function startEditing() {
+    if (profile) {
+      setForm(buildFormState(profile));
+      setIsEditing(true);
+    }
+  }
+
+  function cancelEditing() {
+    if (profile) {
+      setForm(buildFormState(profile));
+    }
+    setIsEditing(false);
+  }
 
   return (
     <div>
@@ -150,7 +250,19 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
             <Pill tone={isAiReady ? 'green' : 'amber'}>{isAiReady ? 'AI unlocked' : 'Approval required'}</Pill>
           </div>
           <h2 className="section-gap">Executive report card</h2>
-          {profileBlocks.length ? (
+          {isEditing && form ? (
+            <div className="profile-list section-gap">
+              <ReportCardTextarea label="Executive Summary" value={form.executiveSummary} onChange={(value) => updateField('executiveSummary', value)} />
+              <ReportCardTextarea label="AI Readiness" value={form.aiReadiness} onChange={(value) => updateField('aiReadiness', value)} />
+              <ReportCardTextarea label="Future Direction" value={form.futureDirection} onChange={(value) => updateField('futureDirection', value)} />
+              <ReportCardTextarea label="Industry" value={form.industry} onChange={(value) => updateField('industry', value)} compact />
+              <ReportCardTextarea label="AI Opportunity Areas" value={form.opportunityAreas} onChange={(value) => updateField('opportunityAreas', value)} hint="One item per line." />
+              <ReportCardTextarea label="Target Users / Customers" value={form.targetCustomers} onChange={(value) => updateField('targetCustomers', value)} hint="One item per line." />
+              <ReportCardTextarea label="Operational Gaps" value={form.operationalGaps} onChange={(value) => updateField('operationalGaps', value)} hint="One item per line." />
+              <ReportCardTextarea label="Recommended Positioning" value={form.recommendedPositioning} onChange={(value) => updateField('recommendedPositioning', value)} />
+              <ReportCardTextarea label="Recommended Roadmap" value={form.recommendedRoadmap} onChange={(value) => updateField('recommendedRoadmap', value)} hint="One item per line." />
+            </div>
+          ) : profileBlocks.length ? (
             <div className="profile-list section-gap">
               {profileBlocks.map(([title, value]) => (
                 <div key={String(title)} className="profile-block">
@@ -169,7 +281,15 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
             </div>
           ) : null}
           <div className="section-gap">
-            <CompanyProfileActions projectId={projectId} profileId={profile?.id} />
+            <CompanyProfileActions
+              projectId={projectId}
+              profileId={profile?.id}
+              draft={editPayload}
+              isEditing={isEditing}
+              onEdit={startEditing}
+              onCancel={cancelEditing}
+              onSaved={() => setIsEditing(false)}
+            />
           </div>
         </div>
         {isAiReady ? (
@@ -186,5 +306,31 @@ export function CompanyProfileReview({ projectId }: CompanyProfileReviewProps) {
         )}
       </section>
     </div>
+  );
+}
+
+function ReportCardTextarea({
+  label,
+  value,
+  onChange,
+  compact = false,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  compact?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="profile-block field">
+      <span>{label}</span>
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={compact ? 2 : 5}
+      />
+      {hint ? <small>{hint}</small> : null}
+    </label>
   );
 }

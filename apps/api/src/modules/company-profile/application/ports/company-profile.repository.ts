@@ -15,6 +15,7 @@ export interface UpdateCompanyProfileInput {
   services?: string[];
   painPoints?: string[];
   uniqueSellingProposition?: string | null;
+  summaries?: Record<string, unknown> | null;
 }
 
 export interface CompanyProfileRepository {
