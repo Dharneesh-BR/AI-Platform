@@ -43,6 +43,7 @@ export interface AgentRunStatus {
   completedAt: string | null;
   answer: string | null;
   sources: unknown[];
+  handoffs?: unknown[];
   verification: unknown;
   errorMessage: string | null;
   steps: Array<{

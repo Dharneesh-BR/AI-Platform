@@ -7,6 +7,7 @@ import { AgentContextService } from './agent-context.service';
 import { AgentRuntimeConfigService } from './agent-runtime-config.service';
 import {
   type AgentGraphState,
+  type AgentHandoffResult,
   type AgentRuntimeInput,
   type AgentRuntimeResult,
   type SpecialistExecutionResult,
@@ -42,6 +43,7 @@ const AgentState = Annotation.Root({
   finalAnswer: Annotation<string>,
   finalAnswerFinishReason: Annotation<string | undefined>,
   sources: Annotation<AgentGraphState['sources']>,
+  handoffs: Annotation<AgentGraphState['handoffs']>,
   errors: Annotation<string[]>,
   usage: Annotation<AgentGraphState['usage']>,
   businessAgent: Annotation<AgentGraphState['businessAgent'] | undefined>,
@@ -111,6 +113,7 @@ export class AgentRuntimeService {
         agentSlug: run.agentSlug ?? 'magnafic-ai',
         agentName: run.agentSlug ?? 'Magnafic AI',
         sources: Array.isArray(finalOutput.sources) ? finalOutput.sources as AgentRuntimeResult['sources'] : [],
+        handoffs: Array.isArray(finalOutput.handoffs) ? finalOutput.handoffs as AgentRuntimeResult['handoffs'] : [],
         verification: finalOutput.verification as AgentRuntimeResult['verification'],
         totalTokens: run.totalTokens,
       };
@@ -156,6 +159,7 @@ export class AgentRuntimeService {
         finalAnswer: '',
         finalAnswerFinishReason: undefined,
         sources: [],
+        handoffs: [],
         errors: [],
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
         businessAgent,
@@ -171,10 +175,11 @@ export class AgentRuntimeService {
           finalOutput: {
             answer: finalState.finalAnswer,
             sources: finalState.sources,
+            handoffs: finalState.handoffs,
             verification: finalState.verification,
             finishReason: finalState.finalAnswerFinishReason,
           } as unknown as Prisma.InputJsonValue,
-          state: this.safeState(finalState) as Prisma.InputJsonValue,
+          state: this.safeState(finalState) as unknown as Prisma.InputJsonValue,
           totalTokens: finalState.usage.totalTokens,
           completedAt: new Date(),
           updatedBy: userId,
@@ -187,6 +192,7 @@ export class AgentRuntimeService {
         agentSlug: businessAgent.slug,
         agentName: businessAgent.name,
         sources: finalState.sources,
+        handoffs: finalState.handoffs,
         verification: finalState.verification,
         model: Object.values(finalState.selectedModels).at(-1),
         totalTokens: finalState.usage.totalTokens,
@@ -214,6 +220,7 @@ export class AgentRuntimeService {
       .addNode('supervise_node', (state) => this.supervise(state as AgentGraphState))
       .addNode('planner', (state) => this.plan(state as AgentGraphState))
       .addNode('specialists', (state) => this.runSpecialists(state as AgentGraphState))
+      .addNode('handoff', (state) => this.runHandoff(state as AgentGraphState))
       .addNode('synthesis', (state) => this.synthesize(state as AgentGraphState))
       .addNode('verify_node', (state) => this.verify(state as AgentGraphState))
       .addEdge(START, 'load_context')
@@ -223,7 +230,8 @@ export class AgentRuntimeService {
         specialists: 'specialists',
       })
       .addEdge('planner', 'specialists')
-      .addEdge('specialists', 'synthesis')
+      .addEdge('specialists', 'handoff')
+      .addEdge('handoff', 'synthesis')
       .addEdge('synthesis', 'verify_node')
       .addConditionalEdges('verify_node', (state) => this.afterVerification(state as AgentGraphState), {
         synthesis: 'synthesis',
@@ -322,6 +330,81 @@ export class AgentRuntimeService {
     };
   }
 
+  private async runHandoff(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
+    const businessAgent = this.requireBusinessAgent(state);
+    const decision = this.selectHandoff(state);
+
+    if (!decision) {
+      return { handoffs: state.handoffs };
+    }
+
+    let targetAgent;
+    try {
+      targetAgent = await this.profileService.getBySlug(decision.toAgentSlug);
+    } catch (error) {
+      this.logger.warn(
+        `Agent handoff skipped: target=${decision.toAgentSlug}, reason=${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return { handoffs: state.handoffs };
+    }
+
+    if (!targetAgent.enabled || targetAgent.slug === businessAgent.slug) {
+      return { handoffs: state.handoffs };
+    }
+
+    const route = this.modelRouter.select({
+      capability: decision.capability,
+      complexity: state.complexity,
+      businessAgent: targetAgent,
+    });
+    const handoff = await this.recordStep(state, `handoff_${targetAgent.slug}`, async () => {
+      const draft = await this.callModelWithFallback({
+        models: [route.model, ...route.fallbackModels],
+        state,
+        systemPrompt: [
+          targetAgent.systemInstructions,
+          'You are being consulted internally by another workforce agent. Answer only the requested handoff question.',
+          'Use the supplied project context and prior specialist outputs. Be specific, concise, and avoid generic advice.',
+          this.outputFormatInstruction(targetAgent),
+        ].filter(Boolean).join('\n\n'),
+        userPrompt: [
+          `Original user request: ${state.userInput}`,
+          `Primary agent: ${businessAgent.name} (${businessAgent.department})`,
+          `Handoff reason: ${decision.reason}`,
+          `Handoff question: ${decision.question}`,
+          `Company context:\n${state.companyContext}`,
+          `Primary specialist outputs:\n${state.specialistResults.map((result) => `${result.capability}: ${result.content}`).join('\n\n')}`,
+          'Return only the internal consultation result.',
+        ].join('\n\n'),
+      });
+
+      return {
+        fromAgentSlug: businessAgent.slug,
+        fromAgentName: businessAgent.name,
+        toAgentSlug: targetAgent.slug,
+        toAgentName: targetAgent.name,
+        reason: decision.reason,
+        question: decision.question,
+        result: draft.content,
+        model: draft.model,
+      } satisfies AgentHandoffResult;
+    }, `handoff:${targetAgent.slug}`, route.model);
+
+    const handoffResult: SpecialistExecutionResult = {
+      capability: decision.capability,
+      content: `${handoff.toAgentName} consultation: ${handoff.result}`,
+      metadata: { handoff },
+    };
+
+    return {
+      handoffs: [...state.handoffs, handoff],
+      specialistResults: [...state.specialistResults, handoffResult],
+      selectedModels: { ...state.selectedModels, [`handoff:${targetAgent.slug}`]: handoff.model ?? route.model },
+    };
+  }
+
   private async synthesize(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
     const businessAgent = this.requireBusinessAgent(state);
     const route = this.modelRouter.select({ capability: 'synthesis', complexity: state.complexity, businessAgent });
@@ -342,6 +425,7 @@ export class AgentRuntimeService {
         `Business agent: ${businessAgent.name} (${businessAgent.department})`,
         `Company context:\n${state.companyContext}`,
         `Retrieved source names: ${this.sourceNames(state.sources).join(', ') || 'None'}`,
+        `Internal workforce consultations:\n${this.handoffSummary(state.handoffs) || 'None'}`,
         `Specialist outputs:\n${state.specialistResults.map((result) => `${result.capability}: ${result.content}`).join('\n\n')}`,
         'Return the final user-facing answer only. Include caveats where context is missing.',
       ].join('\n\n'),
@@ -506,6 +590,7 @@ export class AgentRuntimeService {
       selectedModels: state.selectedModels,
       verification: state.verification,
       sourceCount: state.sources.length,
+      handoffs: state.handoffs,
       errors: state.errors,
       usage: state.usage,
     };
@@ -592,10 +677,124 @@ export class AgentRuntimeService {
       return {};
     }
     const record = result as Record<string, unknown>;
+    const isHandoff = typeof record.toAgentSlug === 'string' && typeof record.result === 'string';
     return {
       capability: record.capability,
       sourceCount: Array.isArray(record.sources) ? record.sources.length : undefined,
       tokenUsage: record.tokenUsage,
+      handoff: record.handoff ?? (isHandoff ? record : undefined),
     };
+  }
+
+  private selectHandoff(state: AgentGraphState): {
+    toAgentSlug: string;
+    reason: string;
+    question: string;
+    capability: 'analysis' | 'writing' | 'calculation';
+  } | null {
+    if (state.handoffs.length > 0) {
+      return null;
+    }
+
+    const agent = this.requireBusinessAgent(state);
+    const text = `${state.userInput} ${state.intent}`.toLowerCase();
+    const question = (agentName: string, focus: string) =>
+      `As ${agentName}, review the original request and current project context. Provide ${focus} that the primary agent should incorporate into the final answer.`;
+
+    if (agent.slug === 'sales' && this.matches(text, ['strategy', 'campaign', 'positioning', 'segment', 'channel', 'growth', 'next month'])) {
+      return {
+        toAgentSlug: 'marketing',
+        reason: 'Sales strategy needs campaign, positioning, and segment activation input.',
+        question: question('Marketing Agent', 'campaign, positioning, and customer-segment recommendations'),
+        capability: 'writing',
+      };
+    }
+
+    if (agent.slug === 'marketing' && this.matches(text, ['sales', 'pipeline', 'revenue', 'conversion', 'lead'])) {
+      return {
+        toAgentSlug: 'sales',
+        reason: 'Marketing recommendation needs sales pipeline and conversion input.',
+        question: question('Sales Agent', 'sales pipeline, conversion, and revenue execution input'),
+        capability: 'analysis',
+      };
+    }
+
+    if (agent.slug === 'finance' && this.matches(text, ['legal', 'compliance', 'contract', 'risk', 'caveat'])) {
+      return {
+        toAgentSlug: 'legal',
+        reason: 'Financial recommendation needs legal or compliance caveats.',
+        question: question('Legal Agent', 'risk caveats and counsel-review questions'),
+        capability: 'analysis',
+      };
+    }
+
+    if (agent.slug === 'production' && this.matches(text, ['cost', 'budget', 'roi', 'finance', 'savings'])) {
+      return {
+        toAgentSlug: 'finance',
+        reason: 'Operational plan needs financial assumptions or ROI framing.',
+        question: question('Finance Agent', 'cost assumptions, ROI framing, and decision risks'),
+        capability: 'calculation',
+      };
+    }
+
+    if (agent.slug === 'magnafic-ai') {
+      if (this.matches(text, ['sales', 'revenue', 'pipeline'])) {
+        return {
+          toAgentSlug: 'sales',
+          reason: 'General strategy request needs sales execution input.',
+          question: question('Sales Agent', 'sales execution and revenue recommendations'),
+          capability: 'analysis',
+        };
+      }
+      if (this.matches(text, ['marketing', 'campaign', 'positioning', 'channel'])) {
+        return {
+          toAgentSlug: 'marketing',
+          reason: 'General strategy request needs marketing execution input.',
+          question: question('Marketing Agent', 'campaign and positioning recommendations'),
+          capability: 'writing',
+        };
+      }
+      if (this.matches(text, ['finance', 'cost', 'budget', 'roi'])) {
+        return {
+          toAgentSlug: 'finance',
+          reason: 'General strategy request needs financial input.',
+          question: question('Finance Agent', 'financial assumptions and decision risks'),
+          capability: 'calculation',
+        };
+      }
+      if (this.matches(text, ['legal', 'compliance', 'policy'])) {
+        return {
+          toAgentSlug: 'legal',
+          reason: 'General strategy request needs legal or compliance input.',
+          question: question('Legal Agent', 'risk caveats and counsel-review questions'),
+          capability: 'analysis',
+        };
+      }
+      if (this.matches(text, ['operations', 'production', 'process', 'automation'])) {
+        return {
+          toAgentSlug: 'production',
+          reason: 'General strategy request needs operations execution input.',
+          question: question('Production Agent', 'operational workflow and implementation recommendations'),
+          capability: 'analysis',
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private matches(text: string, terms: string[]): boolean {
+    return terms.some((term) => text.includes(term));
+  }
+
+  private handoffSummary(handoffs: AgentHandoffResult[]): string {
+    return handoffs
+      .map((handoff) => [
+        `${handoff.fromAgentName} consulted ${handoff.toAgentName}.`,
+        `Reason: ${handoff.reason}`,
+        `Question: ${handoff.question}`,
+        `Result: ${handoff.result}`,
+      ].join('\n'))
+      .join('\n\n');
   }
 }

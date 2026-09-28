@@ -113,9 +113,21 @@ export interface AgentRuntimeResult {
   agentSlug: string;
   agentName: string;
   sources: AgentSourceReference[];
+  handoffs?: AgentHandoffResult[];
   verification?: VerificationResult;
   model?: string;
   totalTokens?: number;
+}
+
+export interface AgentHandoffResult {
+  fromAgentSlug: string;
+  fromAgentName: string;
+  toAgentSlug: string;
+  toAgentName: string;
+  reason: string;
+  question: string;
+  result: string;
+  model?: string;
 }
 
 export interface AgentGraphState {
@@ -141,6 +153,7 @@ export interface AgentGraphState {
   finalAnswer: string;
   finalAnswerFinishReason?: string;
   sources: AgentSourceReference[];
+  handoffs: AgentHandoffResult[];
   errors: string[];
   usage: {
     promptTokens: number;

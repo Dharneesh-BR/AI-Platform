@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { AssistantMarkdown, AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
+import { AssistantMarkdown, AsyncRunProgress, HandoffList, MessageHandoffs, messageSources, SourceList } from '../../../components/platform/ai-primitives';
 import { Card, Pill } from '../../../components/platform/app-shell';
 import { useAddConversationMessage, useAgentRunStatus, useBusinessAgents, useConversations, useCreateConversation } from '../../../lib/api/query-hooks';
 import { useAuth } from '../../../lib/auth/session';
@@ -149,6 +149,7 @@ export function ChatWorkspace({
               {chatMessage.role === 'assistant'
                 ? <AssistantMarkdown content={chatMessage.content} />
                 : <span>{chatMessage.content}</span>}
+              {chatMessage.role === 'assistant' ? <MessageHandoffs message={chatMessage} /> : null}
               <SourceList sources={messageSources(chatMessage)} />
             </div>
           ))}
@@ -160,6 +161,7 @@ export function ChatWorkspace({
           <div className="section-gap">
             <AsyncRunProgress run={activeRun} />
             {activeRun.answer ? <AssistantMarkdown content={activeRun.answer} /> : null}
+            <HandoffList handoffs={activeRun.handoffs} />
             <SourceList sources={activeRun.sources} />
             {activeRun.status === 'FAILED' ? (
               <button className="button button-muted section-gap" onClick={() => void sendPrompt()} type="button">

@@ -191,6 +191,7 @@ export class AgentsService {
       completedAt: run.completedAt,
       answer: typeof finalOutput.answer === 'string' ? finalOutput.answer : null,
       sources: Array.isArray(finalOutput.sources) ? finalOutput.sources : [],
+      handoffs: Array.isArray(finalOutput.handoffs) ? finalOutput.handoffs : [],
       verification: finalOutput.verification ?? null,
       errorMessage: run.status === AiExecutionStatus.FAILED ? run.errorMessage : null,
       steps: steps.map((step) => ({
@@ -229,6 +230,10 @@ export class AgentsService {
       synthesis: 'Writing final answer',
       verification: 'Verifying response',
     };
+
+    if (node?.startsWith('handoff_')) {
+      return `Consulting ${node.replace('handoff_', '').replaceAll('-', ' ')} agent`;
+    }
 
     return labels[node ?? ''] ?? 'Working';
   }

@@ -19,6 +19,7 @@ const baseState: AgentGraphState = {
   selectedModels: {},
   finalAnswer: 'Here is a grounded answer.',
   sources: [],
+  handoffs: [],
   errors: [],
   usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
   verificationAttempts: 0,

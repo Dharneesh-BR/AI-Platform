@@ -37,7 +37,37 @@ export function AsyncRunProgress({ run }: { run: AgentRunStatus }) {
           </div>
         ))}
       </div>
+      <HandoffList handoffs={run.handoffs} />
     </div>
+  );
+}
+
+export function MessageHandoffs({ message }: { message: ConversationMessage }) {
+  return <HandoffList handoffs={message.metadata?.handoffs} />;
+}
+
+export function HandoffList({ handoffs }: { handoffs: unknown }) {
+  const normalized = normalizeHandoffs(handoffs);
+
+  if (!normalized.length) {
+    return null;
+  }
+
+  return (
+    <details className="source-list">
+      <summary>Workforce consulted · {normalized.length}</summary>
+      <div className="timeline section-gap">
+        {normalized.map((handoff, index) => (
+          <div className="timeline-item" key={`${handoff.toAgentSlug}-${index}`}>
+            <div>
+              <strong>{handoff.toAgentName}</strong>
+              <span>{handoff.reason}</span>
+            </div>
+            <Pill tone="blue">Consulted</Pill>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -232,5 +262,15 @@ function normalizeSources(sources: unknown[] | undefined) {
       pageNumber: typeof source.pageNumber === 'number' ? source.pageNumber : null,
       similarity: typeof source.similarity === 'number' ? source.similarity : null,
       kind: source.documentId === source.chunkId ? 'Project knowledge source' : 'Project knowledge',
+    }));
+}
+
+function normalizeHandoffs(handoffs: unknown) {
+  return (Array.isArray(handoffs) ? handoffs : [])
+    .filter((handoff): handoff is Record<string, unknown> => Boolean(handoff) && typeof handoff === 'object')
+    .map((handoff) => ({
+      toAgentSlug: typeof handoff.toAgentSlug === 'string' ? handoff.toAgentSlug : 'agent',
+      toAgentName: typeof handoff.toAgentName === 'string' ? handoff.toAgentName : 'Workforce agent',
+      reason: typeof handoff.reason === 'string' ? handoff.reason : 'Internal workforce consultation',
     }));
 }

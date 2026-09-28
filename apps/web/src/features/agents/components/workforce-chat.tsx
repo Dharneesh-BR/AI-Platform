@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronLeft, MessageSquarePlus, Plus } from 'lucide-react';
-import { AssistantMarkdown, AsyncRunProgress, messageSources, SourceList } from '../../../components/platform/ai-primitives';
+import { AssistantMarkdown, AsyncRunProgress, HandoffList, MessageHandoffs, messageSources, SourceList } from '../../../components/platform/ai-primitives';
 import { Pill, ProgressBar } from '../../../components/platform/app-shell';
 import {
   useAddConversationMessage,
@@ -379,6 +379,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                         {chatMessage.role === 'assistant'
                           ? <AssistantMarkdown content={chatMessage.content} />
                           : <p>{chatMessage.content}</p>}
+                        {chatMessage.role === 'assistant' ? <MessageHandoffs message={chatMessage} /> : null}
                         <SourceList sources={messageSources(chatMessage)} />
                       </div>
                     </article>
@@ -389,6 +390,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                       <div className="chat-message-bubble">
                         <AsyncRunProgress run={activeRun} />
                         {activeRun.answer ? <AssistantMarkdown content={activeRun.answer} /> : null}
+                        <HandoffList handoffs={activeRun.handoffs} />
                         <SourceList sources={activeRun.sources} />
                       </div>
                     </article>

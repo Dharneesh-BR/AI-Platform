@@ -186,9 +186,10 @@ export class ConversationsService {
         agentName: 'Magnafic AI',
         model: 'fallback',
         totalTokens: 0,
-        verification: null,
-        sources: [],
-      };
+          verification: null,
+          sources: [],
+          handoffs: [],
+        };
     }
 
     await this.prisma.conversationMessage.create({
@@ -205,6 +206,7 @@ export class ConversationsService {
           totalTokens: runtimeResult.totalTokens,
           verification: runtimeResult.verification,
           sources: runtimeResult.sources,
+          handoffs: runtimeResult.handoffs ?? [],
         } as unknown as Prisma.InputJsonValue,
         createdBy: input.actor.id,
         updatedBy: input.actor.id,
