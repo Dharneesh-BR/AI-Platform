@@ -46,6 +46,24 @@ export class RagConfigService {
     return this.configService.get<string>('KNOWLEDGE_STORAGE_DIR')?.trim() || 'storage/knowledge';
   }
 
+  get storageProvider(): 'local' | 'supabase' {
+    return this.configService.get<string>('KNOWLEDGE_STORAGE_PROVIDER')?.trim().toLowerCase() === 'supabase'
+      ? 'supabase'
+      : 'local';
+  }
+
+  get supabaseUrl(): string | null {
+    return this.configService.get<string>('SUPABASE_URL')?.trim() || null;
+  }
+
+  get supabaseServiceRoleKey(): string | null {
+    return this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')?.trim() || null;
+  }
+
+  get supabaseStorageBucket(): string {
+    return this.configService.get<string>('SUPABASE_STORAGE_BUCKET')?.trim() || 'project-documents';
+  }
+
   get maxUploadBytes(): number {
     return this.positiveNumber('KNOWLEDGE_MAX_UPLOAD_BYTES', 10 * 1024 * 1024);
   }

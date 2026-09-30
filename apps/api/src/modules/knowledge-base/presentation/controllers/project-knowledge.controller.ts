@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, type AuthenticatedUser } from '../../../../common/auth';
@@ -64,9 +64,13 @@ export class ProjectKnowledgeController {
   @UseInterceptors(FileInterceptor('file'))
   uploadDocument(
     @Param('projectId') projectId: string,
-    @UploadedFile() file: UploadedKnowledgeFile,
+    @UploadedFile() file: UploadedKnowledgeFile | undefined,
     @CurrentUser() user: AuthenticatedUser,
   ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Document file is required.');
+    }
+
     return this.knowledgeDocumentService.upload({
       projectId,
       actor: user,

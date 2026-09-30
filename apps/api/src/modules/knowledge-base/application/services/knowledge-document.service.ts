@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DocumentSourceType, KnowledgeDocumentStatus, ProjectLifecycleState, ResearchSourceType } from '@prisma/client';
+import { DocumentSourceType, KnowledgeDocumentStatus, Prisma, ProjectLifecycleState, ResearchSourceType } from '@prisma/client';
 import { QUEUE_NAMES } from '../../../../common/queue/queue.constants';
 import { QueueInfrastructureService } from '../../../../common/queue/queue-infrastructure.service';
 import type { AuthenticatedUser } from '../../../../common/auth';
@@ -92,6 +92,10 @@ export class KnowledgeDocumentService {
         uri: storageResult.uri,
         storageKey: storageResult.storageKey,
         checksum: storageResult.checksum,
+        metadata: {
+          uploadMode: 'multipart',
+          ...this.storageMetadata(),
+        },
         updatedBy: input.actor.id,
       },
     });
@@ -194,6 +198,10 @@ export class KnowledgeDocumentService {
         uri: storageResult.uri,
         storageKey: storageResult.storageKey,
         checksum: storageResult.checksum,
+        metadata: {
+          ...(document.metadata as Record<string, unknown>),
+          ...this.storageMetadata(),
+        } as Prisma.InputJsonObject,
       },
     });
 
@@ -299,6 +307,15 @@ export class KnowledgeDocumentService {
         updatedBy: actorUserId,
       },
     });
+  }
+
+  private storageMetadata(): Record<string, string> {
+    return {
+      storageProvider: this.ragConfig.storageProvider,
+      ...(this.ragConfig.storageProvider === 'supabase'
+        ? { storageBucket: this.ragConfig.supabaseStorageBucket }
+        : {}),
+    };
   }
 
   private async ensureProject(projectId: string, actorUserId: string): Promise<void> {

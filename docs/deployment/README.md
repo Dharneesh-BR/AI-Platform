@@ -8,6 +8,35 @@ This project deploys best as separate services from the same pnpm monorepo:
 - Redis: BullMQ queues and worker coordination.
 - Sanity Studio: optional content/workforce-agent studio in `apps/magnafic-ai`.
 
+## Knowledge Document Storage
+
+For production document uploads, use a private Supabase Storage bucket.
+
+Recommended bucket:
+
+```text
+project-documents
+```
+
+Railway/API environment:
+
+```env
+KNOWLEDGE_STORAGE_PROVIDER=supabase
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<backend-only-service-role-key>
+SUPABASE_STORAGE_BUCKET=project-documents
+KNOWLEDGE_MAX_UPLOAD_BYTES=10485760
+```
+
+Keep `SUPABASE_SERVICE_ROLE_KEY` on the backend only. Do not add it to Netlify or any `NEXT_PUBLIC_*` variable.
+
+Local development can continue using filesystem storage:
+
+```env
+KNOWLEDGE_STORAGE_PROVIDER=local
+KNOWLEDGE_STORAGE_DIR=storage/knowledge
+```
+
 Run the deploy check before publishing:
 
 ```bash
