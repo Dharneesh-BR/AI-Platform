@@ -200,12 +200,11 @@ p { color: var(--muted); line-height: 1.65; margin: 0; }
 .workflow-header strong { display: block; }
 .workflow-header span { display: block; color: var(--muted); font-size: 13px; font-weight: 850; margin-top: 3px; }
 .workflow-canvas {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  min-height: 196px;
+  display: grid;
+  gap: 24px;
+  min-height: 230px;
   overflow-x: auto;
-  padding: 14px;
+  padding: 18px;
   border: 1px solid #d7e2ef;
   border-radius: 18px;
   background:
@@ -214,7 +213,48 @@ p { color: var(--muted); line-height: 1.65; margin: 0; }
     #fbfdff;
   background-size: 22px 22px;
 }
-.workflow-stage { display: flex; align-items: center; flex: 0 0 auto; }
+.workflow-lane { display: flex; align-items: stretch; min-width: max-content; }
+.workflow-lane-main .workflow-node,
+.workflow-lane-branch .workflow-node { position: relative; }
+.workflow-lane-main .workflow-node:not(:last-child),
+.workflow-lane-branch .workflow-node:not(:last-child) { margin-right: 70px; }
+.workflow-lane-main .workflow-node:not(:last-child)::after,
+.workflow-lane-branch .workflow-node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: -70px;
+  top: 50%;
+  width: 70px;
+  height: 2px;
+  background: #8da2ba;
+}
+.workflow-lane-main .workflow-node:not(:last-child)::before,
+.workflow-lane-branch .workflow-node:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  right: -74px;
+  top: calc(50% - 5px);
+  width: 0;
+  height: 0;
+  border-left: 9px solid #8da2ba;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.workflow-branch {
+  display: grid;
+  grid-template-columns: 36px minmax(0, max-content);
+  align-items: start;
+  min-width: max-content;
+  padding-left: 136px;
+}
+.workflow-branch-line {
+  width: 24px;
+  height: 82px;
+  border-left: 2px solid #8da2ba;
+  border-bottom: 2px solid #8da2ba;
+  border-radius: 0 0 0 12px;
+  margin-top: -44px;
+}
 .workflow-node {
   width: 224px;
   min-height: 168px;
@@ -246,24 +286,6 @@ p { color: var(--muted); line-height: 1.65; margin: 0; }
 .workflow-node-failed .workflow-node-icon,
 .workflow-node-cancelled .workflow-node-icon { background: var(--danger); }
 .workflow-node-skipped { opacity: 0.72; }
-.workflow-connector {
-  width: 54px;
-  height: 2px;
-  background: #9db0c5;
-  position: relative;
-  margin: 0 8px;
-}
-.workflow-connector::after {
-  content: "";
-  position: absolute;
-  right: -1px;
-  top: -4px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid #9db0c5;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-}
 .agent-card { text-align: left; min-height: 260px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 .agent-icon {
   width: 48px;

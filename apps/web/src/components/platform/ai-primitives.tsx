@@ -44,6 +44,9 @@ export function AsyncRunProgress({ run }: { run: AgentRunStatus }) {
 }
 
 function AgentWorkflowDiagram({ workflow }: { workflow: NonNullable<AgentRunStatus['workflow']> }) {
+  const mainNodes = workflow.nodes.filter((node) => node.type !== 'handoff');
+  const handoffNodes = workflow.nodes.filter((node) => node.type === 'handoff');
+
   return (
     <section className="agent-workflow" aria-label={`${workflow.teamName} workflow`}>
       <div className="workflow-header">
@@ -54,22 +57,47 @@ function AgentWorkflowDiagram({ workflow }: { workflow: NonNullable<AgentRunStat
         <Pill tone="slate">{workflow.source === 'sanity' ? 'Sanity' : 'Default'}</Pill>
       </div>
       <div className="workflow-canvas" role="list">
-        {workflow.nodes.map((node, index) => (
-          <div className="workflow-stage" key={node.id} role="listitem">
-            <article className={`workflow-node workflow-node-${node.status.toLowerCase()}`}>
-              <div className="workflow-node-topline">
-                <span className="workflow-node-icon" aria-hidden="true">{node.title.slice(0, 1).toUpperCase()}</span>
-                <Pill tone={pillToneForWorkflow(node.status)}>{workflowStatusLabel(node.status)}</Pill>
-              </div>
-              <strong>{node.title}</strong>
-              <span className="workflow-node-type">{node.type.replaceAll('_', ' ')}</span>
-              <p>{node.error ?? node.summary}</p>
-            </article>
-            {index < workflow.nodes.length - 1 ? <span className="workflow-connector" aria-hidden="true" /> : null}
+        <div className="workflow-lane workflow-lane-main">
+          <WorkflowNode
+            node={{
+              id: 'start',
+              title: 'User Request',
+              type: 'trigger',
+              status: mainNodes.some((node) => node.status === 'SUCCEEDED' || node.status === 'RUNNING') ? 'SUCCEEDED' : 'QUEUED',
+              summary: `Route request to ${workflow.teamName}.`,
+              startedAt: null,
+              completedAt: null,
+              error: null,
+              order: 0,
+              sourceStepId: null,
+            }}
+          />
+          {mainNodes.map((node) => <WorkflowNode node={node} key={node.id} />)}
+        </div>
+        {handoffNodes.length ? (
+          <div className="workflow-branch">
+            <span className="workflow-branch-line" aria-hidden="true" />
+            <div className="workflow-lane workflow-lane-branch">
+              {handoffNodes.map((node) => <WorkflowNode node={node} key={node.id} />)}
+            </div>
           </div>
-        ))}
+        ) : null}
       </div>
     </section>
+  );
+}
+
+function WorkflowNode({ node }: { node: NonNullable<AgentRunStatus['workflow']>['nodes'][number] }) {
+  return (
+    <article className={`workflow-node workflow-node-${node.status.toLowerCase()}`} role="listitem">
+      <div className="workflow-node-topline">
+        <span className="workflow-node-icon" aria-hidden="true">{node.title.slice(0, 1).toUpperCase()}</span>
+        <Pill tone={pillToneForWorkflow(node.status)}>{workflowStatusLabel(node.status)}</Pill>
+      </div>
+      <strong>{node.title}</strong>
+      <span className="workflow-node-type">{node.type.replaceAll('_', ' ')}</span>
+      <p>{node.error ?? node.summary}</p>
+    </article>
   );
 }
 

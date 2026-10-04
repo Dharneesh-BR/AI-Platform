@@ -75,6 +75,11 @@ export class AgentRuntimeService {
 
   async classifyExecutionMode(input: AgentRuntimeInput): Promise<'sync' | 'async'> {
     const businessAgent = await this.profileService.getBySlug(input.agentSlug);
+    const agentTeam = await this.teamService.getByAgentSlug(businessAgent.slug);
+    if (agentTeam?.internalRoles.length) {
+      return 'async';
+    }
+
     const supervisor = this.supervisorService.classify({ userInput: input.userInput, businessAgent });
     return supervisor.complexity === 'complex' || (supervisor.requiresPlanning && supervisor.requiredCapabilities.length >= 3) ? 'async' : 'sync';
   }
