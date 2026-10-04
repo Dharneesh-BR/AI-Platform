@@ -48,7 +48,7 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <header className="app-header">
         <Link href="/" className="brand-lockup" aria-label="Magnafic AI home">
           <span className="brand-mark" aria-hidden="true" />
           <span>
@@ -56,7 +56,7 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
             <small>AI</small>
           </span>
         </Link>
-        <nav className="sidebar-nav" aria-label="Primary navigation">
+        <nav className="primary-nav" aria-label="Primary navigation">
           {navigationItems.map((item) => (
             <Link
               className={pathname === item.href || pathname.startsWith(`${item.href}/`) ? 'active' : ''}
@@ -67,28 +67,30 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
             </Link>
           ))}
         </nav>
-        <div className="sidebar-card">
-          <span className="status-dot" />
-          <div>
-            <strong>{session.mode === 'api' ? session.user.displayName : 'Guest user'}</strong>
-            <p>{session.user.email}</p>
+        <div className="app-header-actions">
+          <div className="user-chip">
+            <span className="status-dot" />
+            <span>
+              <strong>{session.mode === 'api' ? session.user.displayName : 'Guest user'}</strong>
+              <small>{session.user.email}</small>
+            </span>
           </div>
+          <button className="button button-muted" type="button" onClick={() => void handleSignOut()}>
+            Sign out
+          </button>
+          <Link className="button button-primary" href="/projects">Open projects</Link>
         </div>
-      </aside>
+      </header>
       <div className="workspace">
-        <header className="topbar">
-          <div>
+        {eyebrow || title || description ? (
+          <header className="topbar">
+            <div>
             {eyebrow ? <span className="eyebrow">{eyebrow}</span> : null}
             {title ? <h1>{title}</h1> : null}
             {description ? <p>{description}</p> : null}
-          </div>
-          <div className="topbar-actions">
-            <button className="button button-muted" type="button" onClick={() => void handleSignOut()}>
-              Sign out
-            </button>
-            <Link className="button button-primary" href="/projects">Open projects</Link>
-          </div>
-        </header>
+            </div>
+          </header>
+        ) : null}
         {children}
       </div>
     </div>
