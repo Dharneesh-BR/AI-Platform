@@ -195,6 +195,75 @@ p { color: var(--muted); line-height: 1.65; margin: 0; }
 .step-running, .step-queued { background: var(--brand-2); box-shadow: 0 0 0 5px var(--brand-soft); }
 .step-failed { background: var(--danger); }
 .source-list summary { cursor: pointer; font-weight: 950; color: var(--brand); }
+.agent-workflow { margin-top: 16px; display: grid; gap: 12px; }
+.workflow-header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.workflow-header strong { display: block; }
+.workflow-header span { display: block; color: var(--muted); font-size: 13px; font-weight: 850; margin-top: 3px; }
+.workflow-canvas {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-height: 196px;
+  overflow-x: auto;
+  padding: 14px;
+  border: 1px solid #d7e2ef;
+  border-radius: 18px;
+  background:
+    linear-gradient(#eef4fb 1px, transparent 1px),
+    linear-gradient(90deg, #eef4fb 1px, transparent 1px),
+    #fbfdff;
+  background-size: 22px 22px;
+}
+.workflow-stage { display: flex; align-items: center; flex: 0 0 auto; }
+.workflow-node {
+  width: 224px;
+  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #cad8e8;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+.workflow-node-topline { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.workflow-node-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: white;
+  background: var(--brand);
+  font-weight: 950;
+}
+.workflow-node strong { line-height: 1.2; }
+.workflow-node-type { color: var(--brand); font-size: 12px; font-weight: 950; text-transform: capitalize; }
+.workflow-node p { font-size: 12px; line-height: 1.45; color: var(--muted); }
+.workflow-node-running { border-color: var(--brand-2); box-shadow: 0 0 0 4px var(--brand-soft), 0 12px 28px rgba(15, 23, 42, 0.08); }
+.workflow-node-succeeded .workflow-node-icon { background: var(--success); }
+.workflow-node-failed .workflow-node-icon,
+.workflow-node-cancelled .workflow-node-icon { background: var(--danger); }
+.workflow-node-skipped { opacity: 0.72; }
+.workflow-connector {
+  width: 54px;
+  height: 2px;
+  background: #9db0c5;
+  position: relative;
+  margin: 0 8px;
+}
+.workflow-connector::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid #9db0c5;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
 .agent-card { text-align: left; min-height: 260px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
 .agent-icon {
   width: 48px;

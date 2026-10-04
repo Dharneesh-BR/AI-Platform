@@ -8,6 +8,7 @@ import { AgentContextService } from './application/runtime/agent-context.service
 import { AgentRuntimeConfigService } from './application/runtime/agent-runtime-config.service';
 import { AgentRuntimeService } from './application/runtime/agent-runtime.service';
 import { BusinessAgentProfileService } from './application/runtime/business-agent-profile.service';
+import { BusinessAgentTeamService } from './application/runtime/business-agent-team.service';
 import { ModelRouterService } from './application/runtime/model-router.service';
 import { AnalysisSpecialist } from './application/runtime/specialists/analysis.specialist';
 import { CalculationSpecialist } from './application/runtime/specialists/calculation.specialist';
@@ -35,6 +36,7 @@ import { AgentsController } from './presentation/controllers/agents.controller';
     AgentsService,
     AnalysisSpecialist,
     BusinessAgentProfileService,
+    BusinessAgentTeamService,
     CalculationSpecialist,
     DocumentSpecialist,
     ModelRouterService,
@@ -49,6 +51,6 @@ import { AgentsController } from './presentation/controllers/agents.controller';
     VerificationService,
     WritingSpecialist,
   ],
-  exports: [AgentRuntimeService, BusinessAgentProfileService, AgentsService],
+  exports: [AgentRuntimeService, BusinessAgentProfileService, BusinessAgentTeamService, AgentsService],
 })
 export class AgentsModule {}

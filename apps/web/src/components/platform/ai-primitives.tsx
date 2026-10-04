@@ -26,6 +26,7 @@ export function AsyncRunProgress({ run }: { run: AgentRunStatus }) {
         <strong>{run.progressLabel}</strong>
         <p>{run.status === 'FAILED' ? run.errorMessage ?? 'The agent run failed.' : `Status: ${run.status}`}</p>
       </div>
+      {run.workflow?.nodes.length ? <AgentWorkflowDiagram workflow={run.workflow} /> : null}
       <div className="async-step-list">
         {steps.map((step) => (
           <div className="async-step" key={step.id}>
@@ -39,6 +40,36 @@ export function AsyncRunProgress({ run }: { run: AgentRunStatus }) {
       </div>
       <HandoffList handoffs={run.handoffs} />
     </div>
+  );
+}
+
+function AgentWorkflowDiagram({ workflow }: { workflow: NonNullable<AgentRunStatus['workflow']> }) {
+  return (
+    <section className="agent-workflow" aria-label={`${workflow.teamName} workflow`}>
+      <div className="workflow-header">
+        <div>
+          <strong>{workflow.teamName}</strong>
+          <span>{workflow.department} workflow</span>
+        </div>
+        <Pill tone="slate">{workflow.source === 'sanity' ? 'Sanity' : 'Default'}</Pill>
+      </div>
+      <div className="workflow-canvas" role="list">
+        {workflow.nodes.map((node, index) => (
+          <div className="workflow-stage" key={node.id} role="listitem">
+            <article className={`workflow-node workflow-node-${node.status.toLowerCase()}`}>
+              <div className="workflow-node-topline">
+                <span className="workflow-node-icon" aria-hidden="true">{node.title.slice(0, 1).toUpperCase()}</span>
+                <Pill tone={pillToneForWorkflow(node.status)}>{workflowStatusLabel(node.status)}</Pill>
+              </div>
+              <strong>{node.title}</strong>
+              <span className="workflow-node-type">{node.type.replaceAll('_', ' ')}</span>
+              <p>{node.error ?? node.summary}</p>
+            </article>
+            {index < workflow.nodes.length - 1 ? <span className="workflow-connector" aria-hidden="true" /> : null}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -252,6 +283,38 @@ function labelForStep(node: string): string {
   };
 
   return labels[node] ?? node.replaceAll('_', ' ');
+}
+
+function workflowStatusLabel(status: string): string {
+  if (status === 'SUCCEEDED') {
+    return 'Done';
+  }
+  if (status === 'RUNNING') {
+    return 'Running';
+  }
+  if (status === 'QUEUED') {
+    return 'Queued';
+  }
+  if (status === 'SKIPPED') {
+    return 'Skipped';
+  }
+  if (status === 'FAILED') {
+    return 'Failed';
+  }
+  return status;
+}
+
+function pillToneForWorkflow(status: string): 'blue' | 'green' | 'amber' | 'slate' {
+  if (status === 'SUCCEEDED') {
+    return 'green';
+  }
+  if (status === 'FAILED' || status === 'CANCELLED') {
+    return 'amber';
+  }
+  if (status === 'SKIPPED') {
+    return 'slate';
+  }
+  return 'blue';
 }
 
 function normalizeSources(sources: unknown[] | undefined) {

@@ -1,6 +1,7 @@
 import {existsSync, readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {agentTeams} from './agent-teams.seed-data.mjs'
 import {workforceAgents} from './workforce-agents.seed-data.mjs'
 
 const scriptDir = fileURLToPath(new URL('.', import.meta.url))
@@ -28,6 +29,7 @@ async function main() {
       dataset,
       apiVersion,
       agentCount: workforceAgents.length,
+      teamCount: agentTeams.length,
     }),
   )
 
@@ -56,10 +58,57 @@ async function main() {
     const createdId = result?.transactionId ?? null
     console.info(JSON.stringify({action: 'created', slug: agent.slug.current, transactionId: createdId}))
   }
+
+  for (const team of agentTeams) {
+    const existing = await findPublishedTeamBySlug(team.teamSlug.current)
+    const primaryAgent = await findPublishedAgentBySlug(team.primaryAgentSlug)
+
+    if (dryRun) {
+      console.info(
+        JSON.stringify({
+          action: existing ? 'would-patch-team' : 'would-create-team',
+          slug: team.teamSlug.current,
+          name: team.teamName,
+          primaryAgentSlug: team.primaryAgentSlug,
+          primaryAgentId: primaryAgent?._id ?? null,
+          existingId: existing?._id ?? null,
+        }),
+      )
+      continue
+    }
+
+    if (!primaryAgent?._id) {
+      throw new Error(`Cannot seed team '${team.teamSlug.current}' because primary agent '${team.primaryAgentSlug}' was not found.`)
+    }
+
+    const document = toSanityTeamDocument(team, primaryAgent._id)
+
+    if (existing) {
+      await mutate([{patch: {id: existing._id, set: document}}])
+      console.info(JSON.stringify({action: 'patched-team', slug: team.teamSlug.current, id: existing._id}))
+      continue
+    }
+
+    const result = await mutate([{create: document}])
+    console.info(JSON.stringify({action: 'created-team', slug: team.teamSlug.current, transactionId: result?.transactionId ?? null}))
+  }
 }
 
 async function findPublishedAgentBySlug(slug) {
   const query = '*[_type == "workforceAgent" && !(_id in path("drafts.**")) && slug.current == $slug][0]{_id}'
+  const url = queryUrl(query, {slug})
+  const response = await fetch(url, {headers: readHeaders()})
+
+  if (!response.ok) {
+    throw new Error(`Sanity query failed: ${response.status} ${response.statusText} ${await response.text()}`)
+  }
+
+  const body = await response.json()
+  return body.result ?? null
+}
+
+async function findPublishedTeamBySlug(slug) {
+  const query = '*[_type == "agentTeam" && !(_id in path("drafts.**")) && teamSlug.current == $slug][0]{_id}'
   const url = queryUrl(query, {slug})
   const response = await fetch(url, {headers: readHeaders()})
 
@@ -95,6 +144,18 @@ function toSanityDocument(agent) {
   return {
     _type: 'workforceAgent',
     ...agent,
+  }
+}
+
+function toSanityTeamDocument(team, primaryAgentId) {
+  const {primaryAgentSlug, ...document} = team
+  return {
+    _type: 'agentTeam',
+    ...document,
+    primaryAgent: {
+      _type: 'reference',
+      _ref: primaryAgentId,
+    },
   }
 }
 

@@ -6,6 +6,7 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 import type { AuthenticatedUser } from '../../../common/auth';
 import type { AgentExecutionJobPayload } from './ports/agent-execution-job.payload';
 import { BusinessAgentProfileService } from './runtime/business-agent-profile.service';
+import { BusinessAgentTeamService } from './runtime/business-agent-team.service';
 import { AgentRuntimeService } from './runtime/agent-runtime.service';
 
 export interface CreateAgentRunInput {
@@ -20,6 +21,7 @@ export class AgentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profileService: BusinessAgentProfileService,
+    private readonly teamService: BusinessAgentTeamService,
     private readonly agentRuntimeService: AgentRuntimeService,
     private readonly queueInfrastructure: QueueInfrastructureService,
   ) {}
@@ -86,6 +88,7 @@ export class AgentsService {
   }) {
     await this.ensureProject(input.projectId, input.actor.id);
     const businessAgent = await this.profileService.getBySlug(input.agentSlug);
+    const agentTeam = await this.teamService.getByAgentSlug(businessAgent.slug);
 
     const run = await this.prisma.agentRun.create({
       data: {
@@ -98,11 +101,13 @@ export class AgentsService {
         input: {
           userInput: input.message,
           agentSlug: businessAgent.slug,
+          agentTeamSlug: agentTeam?.teamSlug,
           mode: 'async',
         },
         state: {
           progressLabel: 'Queued',
           progressPercent: 0,
+          workflow: agentTeam ? this.workflowState(agentTeam) : undefined,
         },
         createdBy: input.actor.id,
         updatedBy: input.actor.id,
@@ -205,6 +210,163 @@ export class AgentsService {
         error: step.error,
         metadata: step.metadata,
       })),
+      workflow: this.workflowStatus(run, steps, state),
+    };
+  }
+
+  private workflowStatus(
+    run: Prisma.AgentRunGetPayload<{ include?: { steps: true } }>,
+    steps: Array<{
+      id: string;
+      node: string;
+      specialist: string | null;
+      status: AiExecutionStatus;
+      model: string | null;
+      startedAt: Date | null;
+      completedAt: Date | null;
+      error: string | null;
+      metadata: Prisma.JsonValue;
+    }>,
+    state: Record<string, unknown>,
+  ) {
+    const workflow = state.workflow && typeof state.workflow === 'object' && !Array.isArray(state.workflow)
+      ? state.workflow as Record<string, unknown>
+      : null;
+    const roles = Array.isArray(workflow?.internalRoles)
+      ? workflow.internalRoles.filter((role): role is Record<string, unknown> => Boolean(role) && typeof role === 'object')
+      : [];
+
+    if (!workflow || !roles.length) {
+      return null;
+    }
+
+    const nodes = roles.map((role) => {
+      const roleSlug = stringValue(role.roleSlug);
+      const roleType = stringValue(role.roleType);
+      const matchedStep = this.matchWorkflowStep(steps, roleSlug, roleType);
+      const status = matchedStep?.status ?? this.pendingWorkflowStatus(run.status);
+      return {
+        id: roleSlug,
+        title: stringValue(role.roleName) || roleSlug,
+        type: roleType,
+        status,
+        summary: this.workflowNodeSummary(role, matchedStep?.metadata ?? null),
+        startedAt: matchedStep?.startedAt ?? null,
+        completedAt: matchedStep?.completedAt ?? null,
+        error: matchedStep?.error ?? null,
+        order: numberValue(role.order),
+        sourceStepId: matchedStep?.id ?? null,
+      };
+    });
+
+    const handoffNodes = steps
+      .filter((step) => step.node.startsWith('handoff_'))
+      .map((step, index) => ({
+        id: `handoff-${index + 1}`,
+        title: step.specialist ? `Consult ${step.specialist.replace(/^handoff:/, '')}` : 'Agent handoff',
+        type: 'handoff',
+        status: step.status,
+        summary: this.workflowNodeSummary({}, step.metadata),
+        startedAt: step.startedAt,
+        completedAt: step.completedAt,
+        error: step.error,
+        order: nodes.length + index + 1,
+        sourceStepId: step.id,
+      }));
+
+    const allNodes = [...nodes, ...handoffNodes].sort((left, right) => left.order - right.order);
+    const edges = allNodes.slice(1).map((node, index) => ({
+      id: `${allNodes[index]?.id}-${node.id}`,
+      source: allNodes[index]?.id ?? '',
+      target: node.id,
+    }));
+
+    return {
+      teamName: stringValue(workflow.teamName),
+      teamSlug: stringValue(workflow.teamSlug),
+      primaryAgentSlug: stringValue(workflow.primaryAgentSlug),
+      department: stringValue(workflow.department),
+      source: stringValue(workflow.source),
+      nodes: allNodes,
+      edges,
+    };
+  }
+
+  private matchWorkflowStep(
+    steps: Array<{
+      id: string;
+      node: string;
+      specialist: string | null;
+      status: AiExecutionStatus;
+      model: string | null;
+      startedAt: Date | null;
+      completedAt: Date | null;
+      error: string | null;
+      metadata: Prisma.JsonValue;
+    }>,
+    roleSlug: string,
+    roleType: string,
+  ) {
+    if (roleType === 'verification') {
+      return steps.find((step) => step.node === 'verification');
+    }
+    if (roleType === 'final_output') {
+      return steps.find((step) => step.node === 'synthesis');
+    }
+
+    return steps.find((step) => {
+      const metadata = step.metadata && typeof step.metadata === 'object' && !Array.isArray(step.metadata)
+        ? step.metadata as Record<string, unknown>
+        : {};
+      const workflowRole = metadata.workflowRole && typeof metadata.workflowRole === 'object' && !Array.isArray(metadata.workflowRole)
+        ? metadata.workflowRole as Record<string, unknown>
+        : {};
+      return step.node === `role-${roleSlug}` || stringValue(workflowRole.roleSlug) === roleSlug;
+    });
+  }
+
+  private pendingWorkflowStatus(status: AiExecutionStatus) {
+    if (status === AiExecutionStatus.SUCCEEDED) {
+      return 'SKIPPED';
+    }
+    if (status === AiExecutionStatus.FAILED || status === AiExecutionStatus.CANCELLED) {
+      return status;
+    }
+    return AiExecutionStatus.QUEUED;
+  }
+
+  private workflowNodeSummary(role: Record<string, unknown>, metadata: Prisma.JsonValue): string {
+    const metadataRecord = metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? metadata as Record<string, unknown>
+      : {};
+    return stringValue(metadataRecord.outputSummary)
+      || stringValue(role.expectedOutput)
+      || stringValue(role.description)
+      || 'Workflow step';
+  }
+
+  private workflowState(agentTeam: Awaited<ReturnType<BusinessAgentTeamService['getByAgentSlug']>>) {
+    if (!agentTeam) {
+      return undefined;
+    }
+    return {
+      teamName: agentTeam.teamName,
+      teamSlug: agentTeam.teamSlug,
+      primaryAgentSlug: agentTeam.primaryAgentSlug,
+      department: agentTeam.department,
+      description: agentTeam.description,
+      source: agentTeam.source,
+      internalRoles: agentTeam.internalRoles.map((role) => ({
+        roleName: role.roleName,
+        roleSlug: role.roleSlug,
+        roleType: role.roleType,
+        description: role.description,
+        instructions: role.instructions,
+        expectedOutput: role.expectedOutput,
+        required: role.required,
+        runCondition: role.runCondition,
+        order: role.order,
+      })),
     };
   }
 
@@ -265,4 +427,12 @@ export class AgentsService {
       throw new NotFoundException('Project not found.');
     }
   }
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function numberValue(value: unknown): number {
+  return typeof value === 'number' ? value : 0;
 }

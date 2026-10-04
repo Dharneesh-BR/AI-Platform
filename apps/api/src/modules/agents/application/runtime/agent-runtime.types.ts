@@ -26,6 +26,13 @@ export const PlanStepSchema = z.object({
   goal: z.string().min(1),
   capability: AgentCapabilitySchema,
   dependencies: z.array(z.string()).default([]),
+  workflowRole: z.object({
+    roleName: z.string().min(1),
+    roleSlug: z.string().min(1),
+    roleType: z.string().min(1),
+    order: z.number(),
+    expectedOutput: z.string().optional(),
+  }).optional(),
 });
 
 export const TaskPlanSchema = z.object({
@@ -63,6 +70,31 @@ export interface BusinessAgentProfileView {
   knowledgeScopes: string[];
   modelPolicy: Record<string, unknown>;
   verificationPolicy: Record<string, unknown>;
+  enabled: boolean;
+}
+
+export interface AgentTeamRoleView {
+  roleName: string;
+  roleSlug: string;
+  roleType: string;
+  description?: string | null;
+  instructions: string;
+  expectedOutput: string;
+  required: boolean;
+  runCondition?: string | null;
+  order: number;
+}
+
+export interface AgentTeamView {
+  id?: string;
+  source?: 'sanity' | 'default';
+  teamName: string;
+  teamSlug: string;
+  primaryAgentSlug: string;
+  department: string;
+  description?: string | null;
+  supportedIntents: string[];
+  internalRoles: AgentTeamRoleView[];
   enabled: boolean;
 }
 
@@ -161,6 +193,7 @@ export interface AgentGraphState {
     totalTokens: number;
   };
   businessAgent?: BusinessAgentProfileView;
+  agentTeam?: AgentTeamView;
   supervisor?: SupervisorOutput;
   verificationAttempts: number;
 }

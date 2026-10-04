@@ -8,12 +8,14 @@ import { AgentRuntimeConfigService } from './agent-runtime-config.service';
 import {
   type AgentGraphState,
   type AgentHandoffResult,
+  type AgentTeamRoleView,
   type AgentRuntimeInput,
   type AgentRuntimeResult,
   type SpecialistExecutionResult,
   type TaskPlanStep,
 } from './agent-runtime.types';
 import { BusinessAgentProfileService } from './business-agent-profile.service';
+import { BusinessAgentTeamService, capabilityForRole } from './business-agent-team.service';
 import { ModelRouterService } from './model-router.service';
 import { SpecialistRegistryService } from './specialists/specialist-registry.service';
 import { SupervisorService } from './supervisor.service';
@@ -48,6 +50,7 @@ const AgentState = Annotation.Root({
   usage: Annotation<AgentGraphState['usage']>,
   businessAgent: Annotation<AgentGraphState['businessAgent'] | undefined>,
   supervisor: Annotation<AgentGraphState['supervisor'] | undefined>,
+  agentTeam: Annotation<AgentGraphState['agentTeam'] | undefined>,
   verificationAttempts: Annotation<number>,
 });
 
@@ -59,6 +62,7 @@ export class AgentRuntimeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profileService: BusinessAgentProfileService,
+    private readonly teamService: BusinessAgentTeamService,
     private readonly contextService: AgentContextService,
     private readonly supervisorService: SupervisorService,
     private readonly plannerService: TaskPlannerService,
@@ -77,6 +81,7 @@ export class AgentRuntimeService {
 
   async execute(input: AgentRuntimeInput): Promise<AgentRuntimeResult> {
     const businessAgent = await this.profileService.getBySlug(input.agentSlug);
+    const agentTeam = await this.teamService.getByAgentSlug(businessAgent.slug);
     const run = await this.prisma.agentRun.create({
       data: {
         projectId: input.projectId,
@@ -85,8 +90,8 @@ export class AgentRuntimeService {
         agentType: AgentType.ORCHESTRATOR,
         agentSlug: businessAgent.slug,
         status: AiExecutionStatus.RUNNING,
-        input: { userInput: input.userInput, agentSlug: businessAgent.slug },
-        state: {},
+        input: { userInput: input.userInput, agentSlug: businessAgent.slug, agentTeamSlug: agentTeam?.teamSlug },
+        state: agentTeam ? { workflow: this.workflowState(agentTeam) } : {},
         startedAt: new Date(),
         createdBy: input.userId,
         updatedBy: input.userId,
@@ -123,6 +128,7 @@ export class AgentRuntimeService {
     const userInput = typeof inputRecord.userInput === 'string' ? inputRecord.userInput : '';
     const userId = run.createdBy ?? '00000000-0000-0000-0000-000000000000';
     const businessAgent = await this.profileService.getBySlug(run.agentSlug ?? undefined);
+    const agentTeam = await this.teamService.getByAgentSlug(businessAgent.slug);
     const authorization = await this.resolveRuntimeAuthorization({
       projectId: run.projectId,
       userId,
@@ -163,6 +169,7 @@ export class AgentRuntimeService {
         errors: [],
         usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
         businessAgent,
+        agentTeam: agentTeam ?? undefined,
         verificationAttempts: 0,
       };
 
@@ -267,11 +274,7 @@ export class AgentRuntimeService {
 
   private async plan(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
     const plan = await this.recordStep(state, 'planner', async () =>
-      this.plannerService.createPlan({
-        userInput: state.userInput,
-        supervisor: this.requireSupervisor(state),
-        businessAgent: this.requireBusinessAgent(state),
-      }),
+      this.createRuntimePlan(state),
     );
 
     return { plan };
@@ -280,12 +283,14 @@ export class AgentRuntimeService {
   private async runSpecialists(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
     const businessAgent = this.requireBusinessAgent(state);
     const supervisor = this.requireSupervisor(state);
-    const steps = (state.plan?.steps?.length ? state.plan.steps : supervisor.requiredCapabilities.map((capability, index) => ({
+    const teamSteps = this.teamPlanSteps(state);
+    const fallbackSteps: TaskPlanStep[] = supervisor.requiredCapabilities.map((capability, index) => ({
       id: `step-${index + 1}`,
       goal: `Run ${capability}.`,
       capability,
       dependencies: [],
-    } satisfies TaskPlanStep))).slice(0, this.config.maxAgentSteps);
+    }));
+    const steps: TaskPlanStep[] = (state.plan?.steps?.length ? state.plan.steps : teamSteps.length ? teamSteps : fallbackSteps).slice(0, this.config.maxAgentSteps);
 
     const results: SpecialistExecutionResult[] = [];
     const selectedModels = { ...state.selectedModels };
@@ -309,8 +314,9 @@ export class AgentRuntimeService {
           planStep: step,
           selectedModel: route.model,
         }),
-        step.capability,
+        step.workflowRole?.roleName ?? step.capability,
         route.model,
+        step.workflowRole ? { workflowRole: step.workflowRole } : undefined,
       );
 
       results.push(result);
@@ -408,6 +414,7 @@ export class AgentRuntimeService {
   private async synthesize(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
     const businessAgent = this.requireBusinessAgent(state);
     const route = this.modelRouter.select({ capability: 'synthesis', complexity: state.complexity, businessAgent });
+    const finalOutputRole = this.roleByType(state, 'final_output');
     const draft = await this.recordStep(state, 'synthesis', () => this.callModelWithFallback({
       models: [route.model, ...route.fallbackModels],
       state,
@@ -429,7 +436,7 @@ export class AgentRuntimeService {
         `Specialist outputs:\n${state.specialistResults.map((result) => `${result.capability}: ${result.content}`).join('\n\n')}`,
         'Return the final user-facing answer only. Include caveats where context is missing.',
       ].join('\n\n'),
-    }), undefined, route.model);
+    }), finalOutputRole?.roleName, route.model, finalOutputRole ? { workflowRole: this.workflowRoleMetadata(finalOutputRole) } : undefined);
 
     const finalAnswer = this.applyDeterministicSafetyCaveats(draft.content, businessAgent.slug);
 
@@ -442,7 +449,15 @@ export class AgentRuntimeService {
   }
 
   private async verify(state: AgentGraphState): Promise<Partial<AgentGraphState>> {
-    const verification = await this.recordStep(state, 'verification', async () => this.verificationService.verify(state));
+    const verificationRole = this.roleByType(state, 'verification');
+    const verification = await this.recordStep(
+      state,
+      'verification',
+      async () => this.verificationService.verify(state),
+      verificationRole?.roleName,
+      undefined,
+      verificationRole ? { workflowRole: this.workflowRoleMetadata(verificationRole) } : undefined,
+    );
     return {
       verification,
       verificationAttempts: state.verificationAttempts + 1,
@@ -497,6 +512,7 @@ export class AgentRuntimeService {
     work: (agentStepId: string) => Promise<T> | T,
     specialist?: string,
     model?: string,
+    metadata?: Record<string, unknown>,
   ): Promise<T> {
     const step = await this.prisma.agentStep.create({
       data: {
@@ -518,7 +534,7 @@ export class AgentRuntimeService {
         data: {
           status: AiExecutionStatus.SUCCEEDED,
           completedAt: new Date(),
-          metadata: this.stepMetadata(result) as Prisma.InputJsonValue,
+          metadata: { ...metadata, ...this.stepMetadata(result) } as Prisma.InputJsonValue,
           updatedBy: state.userId,
         },
       });
@@ -593,6 +609,75 @@ export class AgentRuntimeService {
       handoffs: state.handoffs,
       errors: state.errors,
       usage: state.usage,
+      workflow: state.agentTeam ? this.workflowState(state.agentTeam) : undefined,
+    };
+  }
+
+  private async createRuntimePlan(state: AgentGraphState) {
+    const teamSteps = this.teamPlanSteps(state);
+    if (teamSteps.length) {
+      return {
+        objective: state.userInput,
+        steps: teamSteps,
+      };
+    }
+
+    return this.plannerService.createPlan({
+      userInput: state.userInput,
+      supervisor: this.requireSupervisor(state),
+      businessAgent: this.requireBusinessAgent(state),
+    });
+  }
+
+  private teamPlanSteps(state: AgentGraphState): TaskPlanStep[] {
+    const roles = state.agentTeam?.internalRoles ?? [];
+    const executableRoles = roles.filter((role) => role.roleType !== 'verification' && role.roleType !== 'final_output');
+    return executableRoles.map((role, index) => ({
+      id: `role-${role.roleSlug}`,
+      goal: [
+        `${role.roleName}: ${role.instructions}`,
+        role.runCondition ? `Run condition: ${role.runCondition}` : '',
+        `Expected output: ${role.expectedOutput}`,
+      ].filter(Boolean).join('\n'),
+      capability: capabilityForRole(role),
+      dependencies: index === 0 ? [] : [`role-${executableRoles[index - 1]?.roleSlug}`],
+      workflowRole: this.workflowRoleMetadata(role),
+    }));
+  }
+
+  private roleByType(state: AgentGraphState, roleType: string): AgentTeamRoleView | undefined {
+    return state.agentTeam?.internalRoles.find((role) => role.roleType === roleType);
+  }
+
+  private workflowRoleMetadata(role: AgentTeamRoleView) {
+    return {
+      roleName: role.roleName,
+      roleSlug: role.roleSlug,
+      roleType: role.roleType,
+      order: role.order,
+      expectedOutput: role.expectedOutput,
+    };
+  }
+
+  private workflowState(agentTeam: NonNullable<AgentGraphState['agentTeam']>) {
+    return {
+      teamName: agentTeam.teamName,
+      teamSlug: agentTeam.teamSlug,
+      primaryAgentSlug: agentTeam.primaryAgentSlug,
+      department: agentTeam.department,
+      description: agentTeam.description,
+      source: agentTeam.source,
+      internalRoles: agentTeam.internalRoles.map((role) => ({
+        roleName: role.roleName,
+        roleSlug: role.roleSlug,
+        roleType: role.roleType,
+        description: role.description,
+        instructions: role.instructions,
+        expectedOutput: role.expectedOutput,
+        required: role.required,
+        runCondition: role.runCondition,
+        order: role.order,
+      })),
     };
   }
 
@@ -683,7 +768,22 @@ export class AgentRuntimeService {
       sourceCount: Array.isArray(record.sources) ? record.sources.length : undefined,
       tokenUsage: record.tokenUsage,
       handoff: record.handoff ?? (isHandoff ? record : undefined),
+      outputSummary: this.outputSummary(record),
     };
+  }
+
+  private outputSummary(record: Record<string, unknown>): string | undefined {
+    const content = typeof record.content === 'string'
+      ? record.content
+      : typeof record.result === 'string'
+        ? record.result
+        : undefined;
+
+    if (!content) {
+      return undefined;
+    }
+
+    return content.replace(/\s+/g, ' ').trim().slice(0, 220);
   }
 
   private selectHandoff(state: AgentGraphState): {

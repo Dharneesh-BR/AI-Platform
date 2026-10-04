@@ -46,6 +46,7 @@ export interface AgentRunStatus {
   handoffs?: unknown[];
   verification: unknown;
   errorMessage: string | null;
+  workflow: AgentWorkflow | null;
   steps: Array<{
     id: string;
     node: string;
@@ -57,6 +58,35 @@ export interface AgentRunStatus {
     error: string | null;
     metadata: Record<string, unknown>;
   }>;
+}
+
+export interface AgentWorkflow {
+  teamName: string;
+  teamSlug: string;
+  primaryAgentSlug: string;
+  department: string;
+  source: string;
+  nodes: AgentWorkflowNode[];
+  edges: AgentWorkflowEdge[];
+}
+
+export interface AgentWorkflowNode {
+  id: string;
+  title: string;
+  type: string;
+  status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'SKIPPED' | string;
+  summary: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  error: string | null;
+  order: number;
+  sourceStepId: string | null;
+}
+
+export interface AgentWorkflowEdge {
+  id: string;
+  source: string;
+  target: string;
 }
 
 export interface Report {
