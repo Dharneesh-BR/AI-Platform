@@ -89,6 +89,11 @@ export class AgentsService {
     await this.ensureProject(input.projectId, input.actor.id);
     const businessAgent = await this.profileService.getBySlug(input.agentSlug);
     const agentTeam = await this.teamService.getByAgentSlug(businessAgent.slug);
+    const queueHealthy = await this.queueInfrastructure.hasHealthyConnection();
+
+    if (!queueHealthy) {
+      throw new ServiceUnavailableException('AI execution queue is unavailable.');
+    }
 
     const run = await this.prisma.agentRun.create({
       data: {

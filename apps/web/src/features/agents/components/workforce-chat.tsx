@@ -13,8 +13,7 @@ import {
   useCreateConversation,
   useProjects,
 } from '../../../lib/api/query-hooks';
-import type { BusinessAgentProfile } from '../../../lib/api/platform';
-import type { Conversation } from '../../../lib/api/platform';
+import type { AgentRunStatus, AgentWorkflow, BusinessAgentProfile, Conversation } from '../../../lib/api/platform';
 import { hasApiAuth } from '../../../lib/auth/api-access';
 import { useAuth } from '../../../lib/auth/session';
 import { getLifecycleProgress, getLifecycleTone } from '../../projects/components/project-lifecycle';
@@ -110,6 +109,127 @@ function conversationAgentSlug(conversation: Conversation): string | undefined {
   return typeof messageAgentSlug === 'string' ? messageAgentSlug : undefined;
 }
 
+const workflowRoleTemplates: Record<string, Array<{ title: string; type: string; summary: string }>> = {
+  marketing: [
+    roleTemplate('Product Understanding', 'context'),
+    roleTemplate('Audience Researcher', 'analysis'),
+    roleTemplate('Campaign Ideation', 'ideation'),
+    roleTemplate('Content Creator', 'content'),
+    roleTemplate('Designer Direction', 'design'),
+    roleTemplate('Channel Planner', 'planning'),
+    roleTemplate('Campaign Calendar', 'planning'),
+    roleTemplate('Verification', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+  sales: [
+    roleTemplate('Sales Context Review', 'context'),
+    roleTemplate('Opportunity Finder', 'analysis'),
+    roleTemplate('Distributor Segmentation', 'analysis'),
+    roleTemplate('Sales Action Planner', 'planning'),
+    roleTemplate('Objection And Risk Review', 'analysis'),
+    roleTemplate('Sales Output Writer', 'content'),
+    roleTemplate('Verification', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+  finance: [
+    roleTemplate('Financial Context Review', 'context'),
+    roleTemplate('Assumption Builder', 'analysis'),
+    roleTemplate('Calculation Reviewer', 'calculation'),
+    roleTemplate('Budget Impact Reviewer', 'analysis'),
+    roleTemplate('Decision Risk Reviewer', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+  legal: [
+    roleTemplate('Context And Document Review', 'context'),
+    roleTemplate('Issue Spotting', 'analysis'),
+    roleTemplate('Risk Framing', 'analysis'),
+    roleTemplate('Counsel Questions', 'content'),
+    roleTemplate('Verification', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+  production: [
+    roleTemplate('Operations Context Review', 'context'),
+    roleTemplate('Bottleneck Analysis', 'analysis'),
+    roleTemplate('Improvement Ideation', 'ideation'),
+    roleTemplate('Implementation Planner', 'planning'),
+    roleTemplate('Measurement Reviewer', 'analysis'),
+    roleTemplate('Verification', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+  'magnafic-ai': [
+    roleTemplate('Request Understanding', 'analysis'),
+    roleTemplate('Knowledge Review', 'context'),
+    roleTemplate('Opportunity Analysis', 'analysis'),
+    roleTemplate('Action Planning', 'planning'),
+    roleTemplate('Executive Writing', 'content'),
+    roleTemplate('Verification', 'verification'),
+    roleTemplate('Final Output', 'final_output'),
+  ],
+};
+
+function roleTemplate(title: string, type: string) {
+  return {
+    title,
+    type,
+    summary: `Prepare ${title.toLowerCase()} output for the final response.`,
+  };
+}
+
+function workflowRunForAgent(agent: BusinessAgentProfile, status: AgentRunStatus['status'], errorMessage?: string): AgentRunStatus | null {
+  const templates = workflowRoleTemplates[agent.slug];
+  if (!templates?.length) {
+    return null;
+  }
+
+  const workflow: AgentWorkflow = {
+    teamName: `${agent.name} Team`,
+    teamSlug: agent.slug,
+    primaryAgentSlug: agent.slug,
+    department: agent.department,
+    source: agent.source === 'sanity' ? 'sanity' : 'default',
+    nodes: templates.map((template, index) => ({
+      id: slugifyWorkflowNode(template.title),
+      title: template.title,
+      type: template.type,
+      status: status === 'RUNNING' ? (index === 0 ? 'RUNNING' : 'QUEUED') : status,
+      summary: template.summary,
+      startedAt: null,
+      completedAt: status === 'SUCCEEDED' ? new Date().toISOString() : null,
+      error: status === 'FAILED' ? errorMessage ?? 'Workflow failed.' : null,
+      order: index + 1,
+      sourceStepId: null,
+    })),
+    edges: templates.slice(1).map((template, index) => ({
+      id: `${slugifyWorkflowNode(templates[index]?.title ?? 'start')}-${slugifyWorkflowNode(template.title)}`,
+      source: slugifyWorkflowNode(templates[index]?.title ?? 'start'),
+      target: slugifyWorkflowNode(template.title),
+    })),
+  };
+
+  return {
+    runId: `local-${agent.slug}`,
+    status,
+    progressLabel: status === 'SUCCEEDED' ? 'Workflow completed' : status === 'FAILED' ? 'Workflow failed' : 'Starting workflow',
+    progressPercent: status === 'SUCCEEDED' || status === 'FAILED' ? 100 : 5,
+    currentStep: workflow.nodes[0]
+      ? { node: workflow.nodes[0].id, specialist: workflow.nodes[0].title, status: workflow.nodes[0].status }
+      : null,
+    startedAt: new Date().toISOString(),
+    completedAt: status === 'SUCCEEDED' ? new Date().toISOString() : null,
+    answer: null,
+    sources: [],
+    handoffs: [],
+    verification: null,
+    errorMessage: errorMessage ?? null,
+    workflow,
+    steps: [],
+  };
+}
+
+function slugifyWorkflowNode(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
 export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceChatProps) {
   const { session } = useAuth();
   const context = { accessToken: session.accessToken };
@@ -132,8 +252,10 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
   const [prompt, setPrompt] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [activeRunId, setActiveRunId] = useState<string>();
+  const [localWorkflowRun, setLocalWorkflowRun] = useState<AgentRunStatus | null>(null);
   const runStatusQuery = useAgentRunStatus(activeRunId, context);
   const activeRun = runStatusQuery.data;
+  const displayedRun = activeRun ?? localWorkflowRun;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const displayMessages = useMemo(
@@ -167,7 +289,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [displayMessages.length, activeRun?.status]);
+  }, [displayMessages.length, displayedRun?.status]);
 
   useEffect(() => {
     const latestAsyncMessage = [...displayMessages].reverse().find((chatMessage) => {
@@ -187,6 +309,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
 
     if (activeRun.status === 'SUCCEEDED') {
       setStatusMessage('Answer completed and verified.');
+      setLocalWorkflowRun(null);
       void conversationsQuery.refetch();
       return;
     }
@@ -228,6 +351,11 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
     }
 
     try {
+      const optimisticRun = selectedAgent ? workflowRunForAgent(selectedAgent, 'RUNNING') : null;
+      setLocalWorkflowRun(optimisticRun);
+      setActiveRunId(undefined);
+      setStatusMessage(optimisticRun ? `${selectedAgent.name} workflow is starting.` : `${selectedAgent.name} is working.`);
+
       const conversation = activeConversation ?? await createConversation.mutateAsync({
         title: `${selectedAgent.name} chat`,
         agentSlug: selectedAgent.slug,
@@ -242,13 +370,16 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
 
       if (response.mode === 'async' && response.runId) {
         setActiveRunId(response.runId);
+        setLocalWorkflowRun(null);
         setStatusMessage(`${selectedAgent.name} is working on this request.`);
         return;
       }
 
       setActiveRunId(undefined);
+      setLocalWorkflowRun(selectedAgent ? workflowRunForAgent(selectedAgent, 'SUCCEEDED') : null);
       setStatusMessage(`Answered by ${selectedAgent.name}.`);
     } catch (error) {
+      setLocalWorkflowRun(selectedAgent ? workflowRunForAgent(selectedAgent, 'FAILED', error instanceof Error ? error.message : 'Unable to send message.') : null);
       setStatusMessage(error instanceof Error ? error.message : 'Unable to send message. Please retry.');
     }
   }
@@ -260,6 +391,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
 
     await createConversation.mutateAsync({ title: `${selectedAgent.name} chat`, agentSlug: selectedAgent.slug });
     setActiveRunId(undefined);
+    setLocalWorkflowRun(null);
     setStatusMessage('New chat is ready.');
   }
 
@@ -384,14 +516,14 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                       </div>
                     </article>
                   ))}
-                  {activeRun ? (
+                  {displayedRun ? (
                     <article className="chat-message-row assistant">
                       <div className="chat-message-avatar">{agentInitial(selectedAgent?.name ?? 'AI')}</div>
                       <div className="chat-message-bubble">
-                        <AsyncRunProgress run={activeRun} />
-                        {activeRun.answer ? <AssistantMarkdown content={activeRun.answer} /> : null}
-                        <HandoffList handoffs={activeRun.handoffs} />
-                        <SourceList sources={activeRun.sources} />
+                        <AsyncRunProgress run={displayedRun} />
+                        {displayedRun.answer ? <AssistantMarkdown content={displayedRun.answer} /> : null}
+                        <HandoffList handoffs={displayedRun.handoffs} />
+                        <SourceList sources={displayedRun.sources} />
                       </div>
                     </article>
                   ) : null}
