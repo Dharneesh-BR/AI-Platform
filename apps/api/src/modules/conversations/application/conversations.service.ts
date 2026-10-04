@@ -170,7 +170,7 @@ export class ConversationsService {
 
       runtimeResult = await this.agentRuntimeService.execute(runtimeInput);
       if (!runtimeResult.answer?.trim()) {
-        runtimeResult.answer = this.fallbackAnswer(conversation.project, input.content);
+        runtimeResult.answer = this.fallbackAnswer(conversation.project, input.content, input.agentSlug);
         runtimeResult.model = runtimeResult.model ?? 'fallback';
       }
     } catch (error) {
@@ -181,7 +181,7 @@ export class ConversationsService {
       );
       runtimeResult = {
         runId: null,
-        answer: this.fallbackAnswer(conversation.project, input.content),
+        answer: this.fallbackAnswer(conversation.project, input.content, input.agentSlug),
         agentSlug: input.agentSlug ?? 'magnafic-ai',
         agentName: 'Magnafic AI',
         model: 'fallback',
@@ -286,6 +286,7 @@ export class ConversationsService {
       }>;
     },
     userInput: string,
+    agentSlug?: string,
   ): string {
     const projectProfile = project.projectProfile;
     const companyProfile = project.companyProfiles[0];
@@ -298,6 +299,7 @@ export class ConversationsService {
     const businessModel = this.meaningfulBusinessModel(projectProfile?.businessModel, project.description);
     const positioning = companyProfile?.uniqueSellingProposition ?? companyProfile?.mission;
     const isReportRequest = /\b(report|readiness|growth|summary|assessment)\b/i.test(userInput);
+    const isMarketingCampaignRequest = agentSlug === 'marketing' && /\b(campaign|launch|promotion|market|content|next month)\b/i.test(userInput);
     const opportunityAreas = this.uniqueStrings([
       ...products.slice(0, 2),
       ...services.slice(0, 2),
@@ -307,6 +309,19 @@ export class ConversationsService {
       ...painPoints.slice(0, 3),
       ...challenges.slice(0, 3),
     ]);
+
+    if (isMarketingCampaignRequest) {
+      return this.marketingCampaignFallback({
+        companyName,
+        userInput,
+        productName: this.productNameFromRequest(userInput),
+        industry: companyProfile?.industry ?? projectProfile?.industry ?? 'Consumer electronics',
+        websiteUrl: projectProfile?.websiteUrl,
+        targetCustomers,
+        positioning,
+        priorityGaps,
+      });
+    }
 
     if (isReportRequest) {
       return [
@@ -379,6 +394,94 @@ export class ConversationsService {
       `3. Add one or two source documents later, but do not block the MVP flow on that.`,
       `4. Generate the readiness/growth report and use the gaps above as the first action plan.`,
     ].join('\n').trim();
+  }
+
+  private marketingCampaignFallback(input: {
+    companyName: string;
+    userInput: string;
+    productName: string;
+    industry: string;
+    websiteUrl?: string | null;
+    targetCustomers: string[];
+    positioning?: string | null;
+    priorityGaps: string[];
+  }): string {
+    const audience = input.targetCustomers.length
+      ? input.targetCustomers.slice(0, 3).join(', ')
+      : 'young digital-first buyers, existing customers, and value-conscious audio shoppers';
+    const product = input.productName;
+
+    return [
+      `${input.companyName} Marketing Campaign Plan`,
+      '',
+      `Campaign brief: ${input.userInput}`,
+      '',
+      'Objective',
+      `Create a one-month demand campaign for ${product} that increases product discovery, builds purchase intent, and converts high-intent shoppers across D2C and marketplace channels.`,
+      '',
+      'Target audience',
+      `- Primary: ${audience}`,
+      '- Secondary: existing customers who can be retargeted for upgrades, gifting, or accessory purchases',
+      '- Buyer mindset: wants reliable sound, good design, strong value, easy purchase, and social proof before buying',
+      '',
+      'Core campaign idea',
+      `Theme: Make Every Moment Sound Better with ${product}.`,
+      `Position ${product} as the everyday audio companion for work, commute, fitness, gaming, entertainment, and calls.`,
+      '',
+      'Key messages',
+      '- Clear sound for daily entertainment and calls',
+      '- Stylish design that fits everyday use',
+      '- Strong value from a trusted audio brand',
+      '- Easy purchase through website and marketplace channels',
+      input.positioning ? `- Brand proof: ${input.positioning}` : '- Brand proof: use customer ratings, warranty, best-seller tags, and review snippets',
+      '',
+      'Channel plan',
+      '- Instagram and YouTube Shorts: short product-led reels, use cases, influencer demos, and offer reminders',
+      '- Google Search and Shopping: capture high-intent searches for earphones, earbuds, and audio deals',
+      '- Website banners and landing page: one focused campaign page with product benefits, offer, reviews, and FAQ',
+      '- WhatsApp/email: retarget existing customers with launch offer, reminder, and last-call messages',
+      '- Marketplace content: improve product titles, images, A+ content, reviews, and comparison points',
+      '',
+      'Weekly execution calendar',
+      `Week 1 - Awareness: announce the ${product} campaign, publish product-benefit reels, update landing page, and launch search ads.`,
+      'Week 2 - Consideration: run use-case content for calls, music, workouts, gaming, and commute; add comparison posts and review-led creatives.',
+      'Week 3 - Conversion: push limited-period offer, retarget website visitors, send WhatsApp/email reminders, and highlight best-selling variants.',
+      'Week 4 - Urgency and retention: run last-call offer content, bundle suggestions, review collection, and post-purchase accessory/upgrade communication.',
+      '',
+      'Content ideas',
+      `- Reel: "One ${product}, five daily moments"`,
+      '- Reel: office call test, commute sound test, workout comfort test',
+      '- Carousel: choose the right audio product by use case',
+      '- Story poll: music, calls, gaming, or workouts?',
+      '- Email subject: Your next everyday audio upgrade is here',
+      '- WhatsApp CTA: Shop now before this month’s offer ends',
+      '',
+      'Design direction',
+      '- Use clean product close-ups with lifestyle shots',
+      '- Keep the offer and product name visible in the first frame',
+      '- Use bold contrast, short benefit-led copy, and one clear CTA',
+      '- Create variants for awareness, comparison, offer, and last-call creatives',
+      '',
+      'KPIs',
+      '- Reach and video completion rate for awareness',
+      '- Landing page visits, product page CTR, and add-to-cart rate for consideration',
+      '- Conversion rate, CAC, ROAS, and revenue for sales impact',
+      '- Repeat purchase, review count, and email/WhatsApp CTR for retention',
+      '',
+      'Assumptions and gaps',
+      ...(input.priorityGaps.length
+        ? input.priorityGaps.slice(0, 4).map((gap) => `- ${gap}`)
+        : [
+            '- Confirm exact product model, price, offer, inventory, and target market before launch',
+            '- Add customer reviews and product differentiators to sharpen conversion creatives',
+          ]),
+    ].join('\n').trim();
+  }
+
+  private productNameFromRequest(userInput: string): string {
+    const match = /\bfor\s+(.+?)(?:\s+for\s+next month|\s+next month|[.?!]|$)/i.exec(userInput);
+    const productName = match?.[1]?.trim();
+    return productName || 'the selected audio product';
   }
 
   private asStringArray(value: unknown): string[] {
