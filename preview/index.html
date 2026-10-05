@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <title>Agentic AI Platform Flow Preview</title>
   <style>
     :root {
@@ -17,9 +20,9 @@
       --warning: #b7791f;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--ink); }
+    body { margin: 0; font-family: Quicksand, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; font-weight: 500; background: var(--bg); color: var(--ink); }
     header { height: 96px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.78); backdrop-filter: blur(18px); position: sticky; top: 0; z-index: 5; }
-    .brand { display: flex; align-items: center; gap: 14px; font-weight: 900; font-size: 24px; letter-spacing: -.04em; }
+    .brand { display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 24px; letter-spacing: 0; }
     .mark { width: 48px; height: 36px; position: relative; }
     .mark:before, .mark:after { content: ''; position: absolute; top: 4px; width: 18px; height: 34px; border-radius: 100% 100% 0 0; border-top: 9px solid var(--accent); transform: rotate(17deg); }
     .mark:before { left: 6px; } .mark:after { right: 6px; transform: rotate(-17deg); }
@@ -29,8 +32,8 @@
     main { padding: 34px 40px 60px; max-width: 1240px; margin: auto; }
     .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 24px; align-items: stretch; }
     .card { background: var(--panel); border: 1px solid var(--line); border-radius: 28px; box-shadow: 0 22px 55px rgba(1,0,138,.08); padding: 28px; }
-    h1 { font-size: 48px; line-height: 1.02; margin: 0 0 14px; letter-spacing: -.06em; }
-    h2 { font-size: 25px; margin: 0 0 18px; letter-spacing: -.04em; }
+    h1 { font-size: clamp(30px, 4vw, 44px); line-height: 1.08; margin: 0 0 14px; letter-spacing: 0; font-weight: 800; }
+    h2 { font-size: clamp(24px, 2.6vw, 32px); margin: 0 0 18px; letter-spacing: 0; font-weight: 800; line-height: 1.2; }
     p { color: var(--muted); line-height: 1.7; margin: 0; }
     .flow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
     .pill { background: var(--accent-soft); color: var(--accent); border: 1px solid #d8dfff; border-radius: 999px; padding: 9px 12px; font-size: 13px; font-weight: 800; }
@@ -42,13 +45,13 @@
     .side { display: grid; gap: 10px; align-content: start; }
     .side div { padding: 14px; border-radius: 16px; background: #fff; border: 1px solid var(--line); font-weight: 800; color: var(--muted); }
     .side div.current { background: var(--accent); color: #fff; }
-    label { display: block; font-size: 13px; font-weight: 900; margin-bottom: 8px; color: var(--ink); }
+    label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 8px; color: var(--ink); }
     input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 16px; padding: 14px 15px; font: inherit; color: var(--ink); background: #fbfdff; }
     textarea { min-height: 106px; resize: vertical; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; }
-    .primary { background: var(--accent); color: #fff; border: 0; padding: 13px 18px; border-radius: 16px; font-weight: 900; cursor: pointer; }
-    .ghost { background: #fff; color: var(--accent); border: 1px solid #cfd8ff; padding: 13px 18px; border-radius: 16px; font-weight: 900; cursor: pointer; }
+    .primary { background: var(--accent); color: #fff; border: 0; padding: 13px 18px; border-radius: 16px; font-weight: 700; cursor: pointer; }
+    .ghost { background: #fff; color: var(--accent); border: 1px solid #cfd8ff; padding: 13px 18px; border-radius: 16px; font-weight: 700; cursor: pointer; }
     .progress-list { display: grid; gap: 13px; }
     .progress-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: #fff; }
     .bar { height: 12px; background: #e7edf5; border-radius: 99px; overflow: hidden; margin: 20px 0; }
