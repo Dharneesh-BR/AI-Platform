@@ -1,4 +1,5 @@
 node_modules
+.pnpm-store
 .next
 dist
 coverage
@@ -9,3 +10,10 @@ coverage
 !.env.example
 *.log
 *.tsbuildinfo
+tmp
+output
+stakeholder-deck-build
+preview
+apps/web/playwright-report
+apps/web/test-results
+apps/magnafic-ai/.sanity

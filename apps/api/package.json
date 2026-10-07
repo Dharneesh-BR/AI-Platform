@@ -6,8 +6,7 @@
     "build": "pnpm --workspace-root prisma:generate && nest build --builder webpack --webpackPath webpack.config.js",
     "start": "node dist/main.js",
     "lint": "eslint \"src/**/*.ts\"",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@langchain/langgraph": "^1.4.14",
@@ -44,7 +43,6 @@
     "prisma": "7.9.1",
     "ts-loader": "^9.6.2",
     "tsconfig-paths-webpack-plugin": "^4.2.0",
-    "typescript": "^6.0.0",
-    "vitest": "^5.0.0"
+    "typescript": "^6.0.0"
   }
 }

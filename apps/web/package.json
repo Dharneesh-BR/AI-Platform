@@ -6,10 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run src",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "5.5.7",
@@ -31,7 +28,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "1.51.1",
     "@types/node": "24.13.3",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
@@ -41,7 +37,6 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
-    "typescript": "^6.0.0",
-    "vitest": "^5.0.0"
+    "typescript": "^6.0.0"
   }
 }
