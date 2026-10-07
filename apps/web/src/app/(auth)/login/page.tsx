@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { BarChart3, ClipboardCheck, DollarSign, Lightbulb, Mail, PieChart } from 'lucide-react';
 import { useAuth } from '../../../lib/auth/session';
 import { createFirebaseSession } from '../../../lib/api/auth';
-import { signInWithEmailPassword } from '../../../lib/firebase/client';
+import { signInWithEmailPassword, signInWithGoogleProvider } from '../../../lib/firebase/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
 
   async function completeFirebaseLogin(firebaseIdToken: string) {
     setApiSession(await createFirebaseSession(firebaseIdToken));
@@ -35,6 +36,18 @@ export default function LoginPage() {
       setMessage(error instanceof Error ? error.message : 'Email sign-in failed.');
     } finally {
       setIsSigningIn(false);
+    }
+  }
+
+  async function continueWithGoogle() {
+    setIsGoogleSigningIn(true);
+    setMessage('Opening Google sign-in...');
+    try {
+      await completeFirebaseLogin(await signInWithGoogleProvider());
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Google sign-in failed.');
+    } finally {
+      setIsGoogleSigningIn(false);
     }
   }
 
@@ -112,16 +125,30 @@ export default function LoginPage() {
             id="login-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Password"
+            placeholder=""
             type="password"
             autoComplete="current-password"
           />
 
-          <button className="login-submit" disabled={isSigningIn} type="submit">
+          <button className="login-submit" disabled={isSigningIn || isGoogleSigningIn} type="submit">
             <Mail size={15} strokeWidth={2.4} />
             {isSigningIn ? 'Logging in...' : 'Login'}
           </button>
         </form>
+
+        <div className="login-divider">
+          <span>or</span>
+        </div>
+
+        <button
+          className="login-google"
+          disabled={isSigningIn || isGoogleSigningIn}
+          type="button"
+          onClick={() => void continueWithGoogle()}
+        >
+          <span aria-hidden="true">G</span>
+          {isGoogleSigningIn ? 'Connecting...' : 'Continue with Google'}
+        </button>
 
         <p className="login-signup">
           Not signed up yet? <Link href="/">Create account</Link>
