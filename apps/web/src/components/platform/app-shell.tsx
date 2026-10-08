@@ -50,11 +50,7 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
     <div className="app-shell">
       <header className="app-header">
         <Link href="/" className="brand-lockup" aria-label="Magnafic AI home">
-          <span className="brand-mark" aria-hidden="true" />
-          <span>
-            <strong>Magnafic</strong>
-            <small>AI</small>
-          </span>
+          <img src="/images/Magnafic.png" alt="Magnafic" />
         </Link>
         <nav className="primary-nav" aria-label="Primary navigation">
           {navigationItems.map((item) => (

@@ -24,10 +24,7 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(91, 92, 246, 0.16), transparent 32rem),
-    radial-gradient(circle at top right, rgba(1, 0, 138, 0.09), transparent 30rem),
-    var(--background);
+  background: #111346;
   color: var(--ink);
   font-family: "Quicksand", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 500;
@@ -41,6 +38,7 @@ button, input, textarea, select { font: inherit; }
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 100vh;
+  background: #111346;
 }
 
 .app-header {
@@ -61,31 +59,15 @@ button, input, textarea, select { font: inherit; }
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 14px;
-  letter-spacing: 0;
+  min-width: 0;
 }
 
-.brand-lockup strong { display: block; font-size: 24px; font-weight: 700; line-height: 1; }
-.brand-lockup small { display: block; color: var(--muted); font-weight: 700; margin-top: 4px; }
-
-.brand-mark {
-  width: 54px;
-  height: 42px;
-  position: relative;
-  display: inline-block;
+.brand-lockup img {
+  width: 152px;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
-.brand-mark::before,
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  top: 5px;
-  width: 20px;
-  height: 34px;
-  border-top: 10px solid var(--brand);
-  border-radius: 999px 999px 0 0;
-}
-.brand-mark::before { left: 8px; transform: rotate(16deg); }
-.brand-mark::after { right: 8px; transform: rotate(-16deg); }
 
 .primary-nav {
   display: flex;
@@ -134,7 +116,11 @@ button, input, textarea, select { font: inherit; }
 .user-chip small { font-weight: 600; }
 .status-dot { width: 10px; height: 10px; margin-top: 5px; border-radius: 99px; background: var(--success); box-shadow: 0 0 0 6px var(--success-soft); }
 
-.workspace { min-width: 0; padding: 24px 28px 28px; }
+.workspace {
+  min-width: 0;
+  padding: 24px 28px 28px;
+  background: #111346;
+}
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -162,6 +148,11 @@ p { color: var(--muted); line-height: 1.7; margin: 0; }
 .topbar p { max-width: 720px; margin-top: 14px; }
 .topbar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
+.workspace > .topbar h1,
+.workspace > .topbar p {
+  color: white;
+}
+
 .button {
   border: 0;
   border-radius: 16px;
@@ -174,14 +165,9 @@ p { color: var(--muted); line-height: 1.7; margin: 0; }
 .button-muted { color: var(--brand); background: white; border: 1px solid #cfd8ff; }
 .button-ghost { color: var(--ink); background: var(--surface-soft); border: 1px solid var(--line); }
 
-.workspace:has(.projects-page-surface) {
-  padding: 0;
-  background: #111346;
-}
-
 .projects-page-surface {
   min-height: calc(100vh - 76px);
-  padding: clamp(20px, 2.8vw, 34px);
+  padding: 0;
   background: #111346;
 }
 
@@ -241,44 +227,6 @@ p { color: var(--muted); line-height: 1.7; margin: 0; }
   width: 78px;
   height: 48px;
   object-fit: contain;
-}
-
-.login-mini-mark span,
-.login-logo-mark {
-  width: 76px;
-  height: 42px;
-  position: relative;
-  display: block;
-}
-
-.login-mini-mark span::before,
-.login-mini-mark span::after,
-.login-logo-mark::before,
-.login-logo-mark::after {
-  content: "";
-  position: absolute;
-  top: 4px;
-  width: 28px;
-  height: 38px;
-  border-top: 13px solid currentColor;
-  border-radius: 999px 999px 0 0;
-}
-
-.login-mini-mark span,
-.login-logo-mark {
-  color: currentColor;
-}
-
-.login-mini-mark span::before,
-.login-logo-mark::before {
-  left: 11px;
-  transform: rotate(18deg);
-}
-
-.login-mini-mark span::after,
-.login-logo-mark::after {
-  right: 11px;
-  transform: rotate(-18deg);
 }
 
 .login-showcase-title {
@@ -500,28 +448,6 @@ p { color: var(--muted); line-height: 1.7; margin: 0; }
   height: auto;
   display: block;
   object-fit: contain;
-}
-
-.login-logo-mark {
-  width: 56px;
-  height: 30px;
-}
-
-.login-logo-mark::before,
-.login-logo-mark::after {
-  top: 2px;
-  width: 22px;
-  height: 28px;
-  border-top-width: 9px;
-}
-
-.login-logo-mark::before { left: 6px; }
-.login-logo-mark::after { right: 6px; }
-
-.login-logo strong {
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1;
 }
 
 .login-card h2 {
