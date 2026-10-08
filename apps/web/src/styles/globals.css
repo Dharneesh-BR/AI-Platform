@@ -174,13 +174,14 @@ p { color: var(--muted); line-height: 1.7; margin: 0; }
 .button-muted { color: var(--brand); background: white; border: 1px solid #cfd8ff; }
 .button-ghost { color: var(--ink); background: var(--surface-soft); border: 1px solid var(--line); }
 
+.workspace:has(.projects-page-surface) {
+  padding: 0;
+  background: #111346;
+}
+
 .projects-page-surface {
-  min-height: calc(100vh - 128px);
+  min-height: calc(100vh - 76px);
   padding: clamp(20px, 2.8vw, 34px);
-  border: 3px solid #36d5e4;
-  border-right-color: #1054e6;
-  border-bottom-color: #1054e6;
-  border-radius: 28px;
   background: #111346;
 }
 
