@@ -19,7 +19,7 @@ export default function LoginPage() {
 
   async function completeFirebaseLogin(firebaseIdToken: string) {
     setApiSession(await createFirebaseSession(firebaseIdToken));
-    router.push('/dashboard');
+    router.push('/projects');
   }
 
   async function continueWithEmail() {
@@ -55,7 +55,7 @@ export default function LoginPage() {
     <main className="login-page">
       <section className="login-showcase" aria-label="Magnafic AI workforce introduction">
         <div className="login-mini-mark" aria-hidden="true">
-          <span />
+          <img src="/images/favicon.png" alt="" />
         </div>
         <div className="login-showcase-title">
           <h1>Super Intelligent Workforce</h1>
@@ -100,8 +100,7 @@ export default function LoginPage() {
 
       <section className="login-card" aria-label="Magnafic login form">
         <div className="login-logo" aria-label="Magnafic">
-          <span className="login-logo-mark" aria-hidden="true" />
-          <strong>Magnafic</strong>
+          <img src="/images/Magnafic.png" alt="Magnafic" />
         </div>
 
         <h2>Welcome</h2>

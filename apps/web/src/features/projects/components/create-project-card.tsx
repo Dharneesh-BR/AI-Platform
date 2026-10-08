@@ -44,7 +44,7 @@ export function CreateProjectCard() {
   }
 
   return (
-    <Card>
+    <Card className="project-create-card">
       <div className="pill-row">
         <Pill>Project creation</Pill>
         <Pill tone="green">Redirects to onboarding</Pill>

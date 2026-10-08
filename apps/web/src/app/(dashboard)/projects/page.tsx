@@ -3,7 +3,7 @@ import { LiveProjectsSection } from '../../../features/projects/components/live-
 
 export default function ProjectsPage() {
   return (
-    <div>
+    <div className="projects-page-surface">
       <header className="topbar">
         <div>
           <span className="eyebrow">Projects</span>
