@@ -55,18 +55,6 @@ const promptSuggestions: Record<string, string[]> = {
   ],
 };
 
-const defaultAgent: BusinessAgentProfile = {
-  source: 'database',
-  name: 'Magnafic AI',
-  slug: 'magnafic-ai',
-  department: 'Strategy',
-  description: 'General AI strategy consultant for project onboarding, knowledge, research, and reporting.',
-  capabilities: ['rag', 'analysis', 'writing', 'planning'],
-  allowedSpecialists: ['rag', 'analysis', 'writing', 'research'],
-  allowedTools: ['knowledge_search'],
-  enabled: true,
-};
-
 function agentInitial(name: string): string {
   return name
     .split(/\s+/)
@@ -77,7 +65,9 @@ function agentInitial(name: string): string {
 }
 
 function fallbackPrompt(agent?: BusinessAgentProfile) {
-  return `Ask ${agent?.name ?? 'Magnafic AI'} about strategy, risks, priorities, or execution plans.`;
+  return agent
+    ? `Ask ${agent.name} about strategy, risks, priorities, or execution plans.`
+    : 'Select a specialist workforce agent to start.';
 }
 
 function agentSourceLabel(agent?: BusinessAgentProfile): string {
@@ -230,12 +220,12 @@ function slugifyWorkflowNode(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceChatProps) {
+export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatProps) {
   const { session } = useAuth();
   const context = { accessToken: session.accessToken };
   const agentsQuery = useBusinessAgents(context);
   const projectsQuery = useProjects(context);
-  const agents = agentsQuery.data?.length ? agentsQuery.data : [defaultAgent];
+  const agents = (agentsQuery.data ?? []).filter((agent) => agent.slug !== 'magnafic-ai');
   const [selectedAgentSlug, setSelectedAgentSlug] = useState(initialAgentSlug);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const selectedProject = (projectsQuery.data ?? []).find((project) => project.id === selectedProjectId) ?? (projectsQuery.data ?? [])[0];
@@ -439,7 +429,10 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
           ))}
         </div>
 
-        {agentsQuery.isError ? <p className="rail-note">Using the default Magnafic AI agent while the agent directory is unavailable.</p> : null}
+        {agentsQuery.isError ? <p className="rail-note">Specialist workforce agents are unavailable right now.</p> : null}
+        {!agentsQuery.isLoading && !agentsQuery.isError && agents.length === 0 ? (
+          <p className="rail-note">No specialist workforce agents are available yet.</p>
+        ) : null}
       </aside>
 
       <div className="workforce-chat-main">
@@ -489,7 +482,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
               {displayMessages.length === 0 ? (
                 <div className="chat-empty-state">
                   <div className="agent-avatar large">{selectedAgent ? agentInitial(selectedAgent.name) : 'AI'}</div>
-                  <h2>How can {selectedAgent?.name ?? 'Magnafic AI'} help?</h2>
+                  <h2>{selectedAgent ? `How can ${selectedAgent.name} help?` : 'Select a specialist agent'}</h2>
                   <p>{fallbackPrompt(selectedAgent)}</p>
                   <div className="suggestion-grid">
                     {suggestions.map((suggestion) => (

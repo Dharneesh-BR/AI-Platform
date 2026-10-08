@@ -1,5 +1,5 @@
 import { WorkforceChat } from './workforce-chat';
 
 export function WorkforceWorkspace() {
-  return <WorkforceChat />;
+  return <WorkforceChat initialAgentSlug="marketing" />;
 }
