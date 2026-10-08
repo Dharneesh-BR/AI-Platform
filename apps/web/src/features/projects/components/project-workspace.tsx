@@ -66,7 +66,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       },
       {
         href: getModuleHref(project?.id ?? normalizedProjectId, 'chat'),
-        title: 'AI Workforce',
+        title: 'SI Workforce',
         detail: 'Ask Magnafic AI and specialized agents',
         tone: lifecycleProgress >= 100 ? 'green' : 'slate',
         minimumProgress: 100,

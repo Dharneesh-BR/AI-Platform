@@ -401,9 +401,9 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
     <section className="workforce-chat-shell">
       <aside className="workforce-agent-rail" aria-label="AI workforce agents">
         <div className="workforce-rail-header">
-          <Link className="workforce-back-link" href="/dashboard">
+          <Link className="workforce-back-link" href="/agents">
             <ChevronLeft size={17} aria-hidden="true" />
-            Dashboard
+            Agents
           </Link>
           <button className="icon-button" type="button" onClick={() => void startNewChat()} disabled={isBusy || !projectId} title="New chat">
             <MessageSquarePlus size={18} aria-hidden="true" />
@@ -445,8 +445,8 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
       <div className="workforce-chat-main">
         <header className="workforce-chat-header">
           <div>
-            <span className="eyebrow">AI Workforce</span>
-            <h1>{selectedAgent?.name ?? 'AI Workforce'}</h1>
+            <span className="eyebrow">SI Workforce</span>
+            <h1>{selectedAgent?.name ?? 'SI Workforce'}</h1>
             <p>{selectedAgent?.description ?? 'Choose an agent and ask a company-aware question.'}</p>
           </div>
           <div className="workforce-header-meta">
@@ -542,7 +542,7 @@ export function WorkforceChat({ initialAgentSlug = 'magnafic-ai' }: WorkforceCha
                 }}
               >
                 <textarea
-                  aria-label={`Message ${selectedAgent?.name ?? 'AI Workforce'}`}
+                  aria-label={`Message ${selectedAgent?.name ?? 'SI Workforce'}`}
                   placeholder={fallbackPrompt(selectedAgent)}
                   value={prompt}
                   onChange={(event) => setPrompt(event.target.value)}

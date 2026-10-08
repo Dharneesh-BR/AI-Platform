@@ -26,7 +26,7 @@ export function DashboardWorkspace() {
           <p>Track projects, readiness, agent availability and platform health from one live workspace.</p>
         </div>
         <div className="topbar-actions">
-          <Link className="button button-muted" href="/workforce">Open AI Workforce</Link>
+          <Link className="button button-muted" href="/workforce">Open SI Workforce</Link>
           <Link className="button button-primary" href="/projects">Create project</Link>
         </div>
       </header>
@@ -85,7 +85,7 @@ export function DashboardWorkspace() {
 
       <section className="grid-2 section-gap">
         <Card>
-          <h2>AI Workforce</h2>
+          <h2>SI Workforce</h2>
           <p>{agents.length} live agent profiles are available to this workspace.</p>
           <div className="pill-row section-gap">
             {agents.slice(0, 6).map((agent) => <Pill key={agent.slug}>{agent.name}</Pill>)}

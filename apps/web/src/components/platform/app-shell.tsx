@@ -6,9 +6,17 @@ import { useEffect, type ReactNode } from 'react';
 import { useAuth } from '../../lib/auth/session';
 
 const navigationItems = [
+  { href: '/projects', label: 'Project' },
+  { href: '/agents', label: 'Agents' },
+  { href: '/workforce', label: 'SI Workforce' },
+];
+
+const utilityItems = [
   { href: '/dashboard', label: 'Dashboard' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/workforce', label: 'AI Workforce' },
+  { href: '/billing', label: 'Billing' },
+  { href: '/model-management', label: 'Model Management' },
+  { href: '/prompt-library', label: 'Prompt Library' },
+  { href: '/admin', label: 'Admin Console' },
 ];
 
 interface AppShellProps {
@@ -74,7 +82,14 @@ export function AppShell({ children, eyebrow, title, description }: AppShellProp
           <button className="button button-muted" type="button" onClick={() => void handleSignOut()}>
             Sign out
           </button>
-          <Link className="button button-primary" href="/projects">Open projects</Link>
+          <details className="utility-menu">
+            <summary className="button button-primary">More</summary>
+            <div>
+              {utilityItems.map((item) => (
+                <Link key={item.href} href={item.href}>{item.label}</Link>
+              ))}
+            </div>
+          </details>
         </div>
       </header>
       <div className="workspace">
