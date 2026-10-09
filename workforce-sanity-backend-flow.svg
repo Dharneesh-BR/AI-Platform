@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1020" viewBox="0 0 1500 1020">
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#edf1f5" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7db4e8"/>
+    </marker>
+    <style>
+      .title { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; font-size: 24px; font-weight: 700; }
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; font-size: 21px; font-weight: 650; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #26334a; font-size: 16px; font-weight: 600; }
+      .tiny { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #344258; font-size: 14px; font-weight: 560; }
+      .blue { fill: #cfe4ff; stroke: #75aee8; stroke-width: 2.5; }
+      .green { fill: #dff6df; stroke: #43a07f; stroke-width: 2.5; }
+      .mint { fill: #e7f8ec; stroke: #4aa787; stroke-width: 2.2; }
+      .yellow { fill: #fff0cd; stroke: #efc261; stroke-width: 2.2; }
+      .purple { fill: #eadfff; stroke: #9b7bd8; stroke-width: 2.3; }
+      .gray { fill: #f4f6f8; stroke: #aeb7c2; stroke-width: 2.2; }
+      .backend { fill: rgba(245,255,250,.55); stroke: #35c0a3; stroke-width: 2.5; stroke-dasharray: 8 7; }
+      .sanity { fill: rgba(255,247,222,.62); stroke: #efb64f; stroke-width: 2.5; stroke-dasharray: 8 7; }
+      .dbgroup { fill: rgba(239,244,249,.72); stroke: #95a4b7; stroke-width: 2.3; stroke-dasharray: 8 7; }
+      .line { fill: none; stroke: #8bc0ef; stroke-width: 2.8; marker-end: url(#arrow); }
+      .softline { fill: none; stroke: #b6cee4; stroke-width: 2.4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1500" height="1020" fill="#ffffff"/>
+  <rect width="1500" height="1020" fill="url(#grid)" opacity="0.9"/>
+
+  <!-- User and authentication -->
+  <rect class="blue" x="420" y="40" width="190" height="105" rx="8"/>
+  <text class="label" text-anchor="middle" x="515" y="82">User</text>
+  <text class="label" text-anchor="middle" x="515" y="109">Interface</text>
+  <text class="small" text-anchor="middle" x="515" y="132">(chat)</text>
+
+  <rect class="blue" x="760" y="40" width="320" height="105" rx="8"/>
+  <text class="label" text-anchor="middle" x="920" y="82">Authentication</text>
+  <text class="small" text-anchor="middle" x="920" y="112">company app login</text>
+
+  <path class="line" d="M610 92 H760"/>
+  <path class="line" d="M515 145 V200"/>
+
+  <rect class="blue" x="420" y="200" width="190" height="96" rx="8"/>
+  <text class="label" text-anchor="middle" x="515" y="258">Chat API</text>
+  <path class="line" d="M515 296 V355"/>
+
+  <!-- Backend orchestration -->
+  <rect class="backend" x="80" y="340" width="820" height="415" rx="9"/>
+  <text class="title" x="105" y="376">Backend Code</text>
+  <text class="tiny" x="105" y="400">Coordinator/router lives here, not in Sanity</text>
+
+  <rect class="purple" x="400" y="425" width="230" height="105" rx="8"/>
+  <text class="label" text-anchor="middle" x="515" y="465">Coordinator /</text>
+  <text class="label" text-anchor="middle" x="515" y="492">Router Logic</text>
+  <text class="tiny" text-anchor="middle" x="515" y="515">selects agent + helpers</text>
+
+  <rect class="green" x="120" y="605" width="180" height="94" rx="8"/>
+  <text class="label" text-anchor="middle" x="210" y="642">Sales</text>
+  <text class="label" text-anchor="middle" x="210" y="670">Agent</text>
+
+  <rect class="green" x="425" y="605" width="180" height="94" rx="8"/>
+  <text class="label" text-anchor="middle" x="515" y="642">Support</text>
+  <text class="label" text-anchor="middle" x="515" y="670">Agent</text>
+
+  <rect class="green" x="730" y="605" width="140" height="94" rx="8"/>
+  <text class="label" text-anchor="middle" x="800" y="642">HR /</text>
+  <text class="label" text-anchor="middle" x="800" y="670">Legal</text>
+
+  <path class="softline" d="M515 530 V565 H210 V605"/>
+  <path class="softline" d="M515 530 V605"/>
+  <path class="softline" d="M515 565 H800 V605"/>
+
+  <!-- LLM -->
+  <rect class="yellow" x="1035" y="455" width="170" height="105" rx="8"/>
+  <text class="label" text-anchor="middle" x="1120" y="515">LLM</text>
+  <path class="line" d="M900 508 H1035"/>
+
+  <!-- Sanity group -->
+  <rect class="sanity" x="960" y="625" width="460" height="330" rx="9"/>
+  <text class="title" x="985" y="661">Sanity</text>
+  <text class="tiny" x="985" y="685">Stores configuration and uploaded knowledge sources</text>
+
+  <rect class="yellow" x="990" y="710" width="175" height="66" rx="7"/>
+  <text class="small" text-anchor="middle" x="1077" y="737">Workforce</text>
+  <text class="tiny" text-anchor="middle" x="1077" y="758">name, settings</text>
+
+  <rect class="yellow" x="1210" y="710" width="175" height="66" rx="7"/>
+  <text class="small" text-anchor="middle" x="1297" y="737">Agents</text>
+  <text class="tiny" text-anchor="middle" x="1297" y="758">role, prompt</text>
+
+  <rect class="yellow" x="990" y="810" width="175" height="66" rx="7"/>
+  <text class="small" text-anchor="middle" x="1077" y="837">Shared Docs</text>
+  <text class="tiny" text-anchor="middle" x="1077" y="858">PDFs, SOPs, FAQs</text>
+
+  <rect class="yellow" x="1210" y="810" width="175" height="66" rx="7"/>
+  <text class="small" text-anchor="middle" x="1297" y="837">Agent Docs</text>
+  <text class="tiny" text-anchor="middle" x="1297" y="858">per-agent files</text>
+
+  <path class="softline" d="M960 745 H870"/>
+  <path class="softline" d="M960 842 H870"/>
+
+  <!-- Vector DB -->
+  <rect class="dbgroup" x="100" y="790" width="760" height="170" rx="9"/>
+  <text class="title" x="125" y="827">PostgreSQL + pgvector</text>
+  <text class="tiny" x="125" y="851">Stores searchable chunks and embeddings generated from Sanity documents</text>
+
+  <rect class="gray" x="135" y="880" width="205" height="55" rx="7"/>
+  <text class="tiny" text-anchor="middle" x="237" y="913">Sales knowledge chunks</text>
+
+  <rect class="gray" x="375" y="880" width="210" height="55" rx="7"/>
+  <text class="tiny" text-anchor="middle" x="480" y="913">Shared workforce chunks</text>
+
+  <rect class="gray" x="620" y="880" width="205" height="55" rx="7"/>
+  <text class="tiny" text-anchor="middle" x="722" y="913">HR / Legal chunks</text>
+
+  <path class="line" d="M210 699 V790"/>
+  <path class="line" d="M515 699 V790"/>
+  <path class="line" d="M800 699 V790"/>
+
+  <!-- Sanity to indexing -->
+  <path class="softline" d="M1077 876 V930 H860"/>
+  <text class="tiny" x="895" y="918">indexing script reads docs</text>
+
+  <!-- Final response -->
+  <path class="line" d="M1205 508 H1330 V210 H610"/>
+  <text class="tiny" x="1095" y="205">final answer returned to chat</text>
+
+  <!-- Legend -->
+  <rect class="blue" x="60" y="50" width="34" height="24" rx="4"/>
+  <text class="tiny" x="105" y="68">User-facing app</text>
+  <rect class="purple" x="60" y="88" width="34" height="24" rx="4"/>
+  <text class="tiny" x="105" y="106">Backend coordinator logic</text>
+  <rect class="yellow" x="60" y="126" width="34" height="24" rx="4"/>
+  <text class="tiny" x="105" y="144">Stored in Sanity</text>
+  <rect class="gray" x="60" y="164" width="34" height="24" rx="4"/>
+  <text class="tiny" x="105" y="182">Vector database content</text>
+</svg>

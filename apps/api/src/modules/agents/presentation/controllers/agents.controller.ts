@@ -59,6 +59,19 @@ export class AgentsController {
     });
   }
 
+  @Post('projects/:projectId/sanity-knowledge/sync')
+  syncSanityKnowledge(
+    @Param('projectId') projectId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.agentsService.syncSanityKnowledge(projectId, user);
+  }
+
+  @Post('workforce/sanity-knowledge/sync')
+  syncWorkforceSanityKnowledge(@CurrentUser() user: AuthenticatedUser) {
+    return this.agentsService.syncWorkforceSanityKnowledge(user);
+  }
+
   @Post('projects/:projectId/agents/:slug/chat')
   chat(
     @Param('projectId') projectId: string,

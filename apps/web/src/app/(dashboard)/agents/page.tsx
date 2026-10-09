@@ -1,5 +1,5 @@
-import { AgentsChatWorkspace } from '../../../features/agents/components/agents-chat-workspace';
+import { WorkforceWorkspace } from '../../../features/agents/components/workforce-workspace';
 
 export default function AgentsPage() {
-  return <AgentsChatWorkspace />;
+  return <WorkforceWorkspace />;
 }

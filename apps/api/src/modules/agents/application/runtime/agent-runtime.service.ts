@@ -315,6 +315,7 @@ export class AgentRuntimeService {
           permissions: state.permissions,
           userInput: state.userInput,
           businessAgent,
+          agentTeam: state.agentTeam,
           companyContext: this.contextWithResults(state.companyContext, results),
           planStep: step,
           selectedModel: route.model,
@@ -805,6 +806,11 @@ export class AgentRuntimeService {
     const text = `${state.userInput} ${state.intent}`.toLowerCase();
     const question = (agentName: string, focus: string) =>
       `As ${agentName}, review the original request and current project context. Provide ${focus} that the primary agent should incorporate into the final answer.`;
+    const teamMemberDecision = this.selectTeamMemberHandoff(state, text);
+
+    if (teamMemberDecision) {
+      return teamMemberDecision;
+    }
 
     if (agent.slug === 'sales' && this.matches(text, ['strategy', 'campaign', 'positioning', 'segment', 'channel', 'growth', 'next month'])) {
       return {
@@ -890,6 +896,42 @@ export class AgentRuntimeService {
 
   private matches(text: string, terms: string[]): boolean {
     return terms.some((term) => text.includes(term));
+  }
+
+  private selectTeamMemberHandoff(state: AgentGraphState, text: string): {
+    toAgentSlug: string;
+    reason: string;
+    question: string;
+    capability: 'analysis' | 'writing' | 'calculation';
+  } | null {
+    const agent = this.requireBusinessAgent(state);
+    const memberSlugs = state.agentTeam?.memberAgentSlugs?.filter((slug) => slug !== agent.slug) ?? [];
+
+    for (const memberSlug of memberSlugs) {
+      const tokens = memberSlug.split('-').filter((token) => token.length >= 3);
+      if (!tokens.length || !this.matches(text, tokens)) {
+        continue;
+      }
+
+      return {
+        toAgentSlug: memberSlug,
+        reason: `The ${state.agentTeam?.teamName ?? 'selected'} team configuration includes ${memberSlug}, and the user request matched that member agent's focus area.`,
+        question: `Review the original request as ${memberSlug}. Provide the specific team-member input the primary agent should incorporate into the final answer.`,
+        capability: this.handoffCapabilityForSlug(memberSlug),
+      };
+    }
+
+    return null;
+  }
+
+  private handoffCapabilityForSlug(slug: string): 'analysis' | 'writing' | 'calculation' {
+    if (this.matches(slug, ['content', 'creative', 'design', 'social', 'marketing', 'writing'])) {
+      return 'writing';
+    }
+    if (this.matches(slug, ['finance', 'roi', 'budget', 'calculation'])) {
+      return 'calculation';
+    }
+    return 'analysis';
   }
 
   private handoffSummary(handoffs: AgentHandoffResult[]): string {

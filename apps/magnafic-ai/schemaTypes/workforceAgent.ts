@@ -25,7 +25,9 @@ export const workforceAgent = defineType({
   type: 'document',
   groups: [
     {name: 'profile', title: 'Profile', default: true},
+    {name: 'presentation', title: 'Presentation'},
     {name: 'runtime', title: 'Runtime'},
+    {name: 'knowledge', title: 'Knowledge'},
     {name: 'output', title: 'Output Format'},
     {name: 'governance', title: 'Governance'},
   ],
@@ -80,6 +82,46 @@ export const workforceAgent = defineType({
       validation: (rule) => rule.max(300).warning('Keep this short for the agent picker.'),
     }),
     defineField({
+      name: 'roleSummary',
+      title: 'Role Summary',
+      type: 'string',
+      group: 'profile',
+      description: 'Short UI label such as "Ads, SEO, leads" or "Graphics, video".',
+      validation: (rule) => rule.max(90),
+    }),
+    defineField({
+      name: 'avatar',
+      title: 'Agent Image',
+      type: 'image',
+      group: 'presentation',
+      description: 'Used for agent cards, org charts, and workforce graphics.',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          validation: (rule) => rule.max(140),
+        }),
+      ],
+    }),
+    defineField({
+      name: 'icon',
+      title: 'Icon Key',
+      type: 'string',
+      group: 'presentation',
+      description: 'Optional frontend icon key such as megaphone, palette, chart, phone, scale.',
+      validation: (rule) => rule.max(40),
+    }),
+    defineField({
+      name: 'displayOrder',
+      title: 'Display Order',
+      type: 'number',
+      group: 'presentation',
+      initialValue: 100,
+      validation: (rule) => rule.integer().min(1),
+    }),
+    defineField({
       name: 'systemInstructions',
       title: 'System Instructions',
       type: 'text',
@@ -120,6 +162,49 @@ export const workforceAgent = defineType({
       group: 'runtime',
       of: [defineArrayMember({type: 'string'})],
       validation: (rule) => rule.unique(),
+    }),
+    defineField({
+      name: 'knowledgeSources',
+      title: 'Agent Knowledge Sources',
+      type: 'array',
+      group: 'knowledge',
+      description: 'Files or source records intended for this agent. Backend indexing should tag these with this agent slug.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'title',
+              type: 'string',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'scope',
+              type: 'string',
+              description: 'RAG scope key, for example MARKETING, SALES, LEGAL, HR, FINANCE, PRODUCTION.',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'file',
+              type: 'file',
+              options: {
+                accept: '.pdf,.doc,.docx,.txt,.md,.markdown,.csv,.xlsx,.ppt,.pptx',
+              },
+            }),
+            defineField({
+              name: 'notes',
+              type: 'text',
+              rows: 2,
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'title',
+              subtitle: 'scope',
+            },
+          },
+        }),
+      ],
     }),
     defineField({
       name: 'responseFormatInstructions',

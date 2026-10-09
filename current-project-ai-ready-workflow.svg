@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1180" viewBox="0 0 1680 1180">
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#edf1f5" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7db4e8"/>
+    </marker>
+    <style>
+      .title { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; font-size: 25px; font-weight: 720; }
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; font-size: 21px; font-weight: 670; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #253148; font-size: 16px; font-weight: 610; }
+      .tiny { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #344258; font-size: 14px; font-weight: 560; }
+      .micro { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #46536a; font-size: 12px; font-weight: 540; }
+      .blue { fill: #cfe4ff; stroke: #75aee8; stroke-width: 2.5; }
+      .green { fill: #dff6df; stroke: #43a07f; stroke-width: 2.5; }
+      .mint { fill: #e7f8ec; stroke: #4aa787; stroke-width: 2.2; }
+      .yellow { fill: #fff0cd; stroke: #efc261; stroke-width: 2.2; }
+      .purple { fill: #eadfff; stroke: #9b7bd8; stroke-width: 2.3; }
+      .gray { fill: #f4f6f8; stroke: #aeb7c2; stroke-width: 2.2; }
+      .success { fill: #dcfce7; stroke: #22a06b; stroke-width: 2.3; }
+      .group-blue { fill: rgba(239,248,255,.62); stroke: #75aee8; stroke-width: 2.5; stroke-dasharray: 8 7; }
+      .group-green { fill: rgba(245,255,250,.62); stroke: #35c0a3; stroke-width: 2.5; stroke-dasharray: 8 7; }
+      .group-yellow { fill: rgba(255,247,222,.62); stroke: #efb64f; stroke-width: 2.5; stroke-dasharray: 8 7; }
+      .group-gray { fill: rgba(244,246,248,.65); stroke: #95a4b7; stroke-width: 2.3; stroke-dasharray: 8 7; }
+      .line { fill: none; stroke: #8bc0ef; stroke-width: 2.8; marker-end: url(#arrow); }
+      .softline { fill: none; stroke: #b6cee4; stroke-width: 2.4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1680" height="1180" fill="#ffffff"/>
+  <rect width="1680" height="1180" fill="url(#grid)" opacity="0.9"/>
+
+  <text class="title" x="54" y="48">Updated Current Project: Login to AI-Ready Workforce Chat</text>
+  <text class="tiny" x="54" y="73">Project onboarding is no longer user-facing. Workforce endpoints hide the internal AI-ready context from chat users.</text>
+
+  <!-- User facing layer -->
+  <rect class="group-blue" x="54" y="110" width="430" height="415" rx="10"/>
+  <text class="title" x="78" y="146">User-Facing App</text>
+  <text class="micro" x="78" y="168">apps/web</text>
+
+  <rect class="blue" x="110" y="205" width="300" height="78" rx="8"/>
+  <text class="label" text-anchor="middle" x="260" y="237">User Logs In</text>
+  <text class="tiny" text-anchor="middle" x="260" y="260">Firebase session token</text>
+
+  <rect class="blue" x="110" y="325" width="300" height="90" rx="8"/>
+  <text class="label" text-anchor="middle" x="260" y="358">Workforce Chat UI</text>
+  <text class="tiny" text-anchor="middle" x="260" y="381">no project creation screen</text>
+  <text class="tiny" text-anchor="middle" x="260" y="401">no onboarding lock</text>
+
+  <rect class="blue" x="110" y="450" width="300" height="52" rx="8"/>
+  <text class="small" text-anchor="middle" x="260" y="482">User asks selected agent</text>
+
+  <path class="line" d="M260 283 V325"/>
+  <path class="line" d="M260 415 V450"/>
+
+  <!-- Hidden workforce context -->
+  <rect class="group-green" x="540" y="110" width="520" height="415" rx="10"/>
+  <text class="title" x="564" y="146">Hidden Workforce Context</text>
+  <text class="micro" x="564" y="168">created only inside backend services</text>
+
+  <rect class="mint" x="610" y="205" width="360" height="82" rx="8"/>
+  <text class="label" text-anchor="middle" x="790" y="237">GET /workforce/conversations</text>
+  <text class="tiny" text-anchor="middle" x="790" y="261">frontend does not request projects</text>
+
+  <rect class="success" x="610" y="325" width="360" height="95" rx="8"/>
+  <text class="label" text-anchor="middle" x="790" y="358">WorkforceContextService</text>
+  <text class="tiny" text-anchor="middle" x="790" y="381">ensures internal AI context</text>
+  <text class="tiny" text-anchor="middle" x="790" y="401">keeps RAG/history scoped safely</text>
+
+  <rect class="mint" x="610" y="450" width="360" height="52" rx="8"/>
+  <text class="small" text-anchor="middle" x="790" y="482">No projectId in chat UI/API calls</text>
+
+  <path class="line" d="M410 370 H610"/>
+  <path class="line" d="M790 287 V325"/>
+  <path class="line" d="M790 420 V450"/>
+
+  <!-- Sanity config -->
+  <rect class="group-yellow" x="1120" y="110" width="500" height="415" rx="10"/>
+  <text class="title" x="1144" y="146">Sanity Configuration</text>
+  <text class="micro" x="1144" y="168">apps/magnafic-ai</text>
+
+  <rect class="yellow" x="1160" y="205" width="190" height="80" rx="8"/>
+  <text class="small" text-anchor="middle" x="1255" y="236">workforceAgent</text>
+  <text class="tiny" text-anchor="middle" x="1255" y="259">agent role, prompt,</text>
+  <text class="tiny" text-anchor="middle" x="1255" y="278">tools, model policy</text>
+
+  <rect class="yellow" x="1390" y="205" width="190" height="80" rx="8"/>
+  <text class="small" text-anchor="middle" x="1485" y="236">agentTeam</text>
+  <text class="tiny" text-anchor="middle" x="1485" y="259">internal roles,</text>
+  <text class="tiny" text-anchor="middle" x="1485" y="278">workflow order</text>
+
+  <rect class="yellow" x="1160" y="330" width="420" height="80" rx="8"/>
+  <text class="small" text-anchor="middle" x="1370" y="361">SanityAgentProfileClient</text>
+  <text class="tiny" text-anchor="middle" x="1370" y="384">loads enabled agents and teams with GROQ</text>
+
+  <rect class="gray" x="1160" y="445" width="420" height="52" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="1370" y="476">fallback: database profiles + default teams</text>
+
+  <!-- Conversation API -->
+  <rect class="group-green" x="54" y="575" width="430" height="255" rx="10"/>
+  <text class="title" x="78" y="611">Conversation API</text>
+  <text class="micro" x="78" y="633">apps/api</text>
+
+  <rect class="mint" x="105" y="665" width="320" height="72" rx="8"/>
+  <text class="small" text-anchor="middle" x="265" y="694">POST /conversations/:id/messages</text>
+  <text class="tiny" text-anchor="middle" x="265" y="716">stores user message</text>
+
+  <rect class="mint" x="105" y="765" width="320" height="45" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="265" y="793">ConversationsService calls agent runtime</text>
+
+  <path class="line" d="M260 502 V665"/>
+  <path class="line" d="M425 702 H530"/>
+
+  <!-- Agent runtime -->
+  <rect class="group-green" x="530" y="575" width="605" height="520" rx="10"/>
+  <text class="title" x="554" y="611">Agent Runtime Orchestration</text>
+  <text class="micro" x="554" y="633">AgentRuntimeService + LangGraph</text>
+
+  <rect class="purple" x="710" y="660" width="250" height="70" rx="8"/>
+  <text class="label" text-anchor="middle" x="835" y="689">Create AgentRun</text>
+  <text class="tiny" text-anchor="middle" x="835" y="711">sync or async</text>
+
+  <rect class="green" x="570" y="775" width="165" height="70" rx="8"/>
+  <text class="small" text-anchor="middle" x="652" y="803">load_context</text>
+  <text class="micro" text-anchor="middle" x="652" y="824">project/company</text>
+
+  <rect class="green" x="760" y="775" width="165" height="70" rx="8"/>
+  <text class="small" text-anchor="middle" x="842" y="803">supervisor</text>
+  <text class="micro" text-anchor="middle" x="842" y="824">intent + need</text>
+
+  <rect class="green" x="950" y="775" width="145" height="70" rx="8"/>
+  <text class="small" text-anchor="middle" x="1022" y="803">planner</text>
+  <text class="micro" text-anchor="middle" x="1022" y="824">if needed</text>
+
+  <rect class="green" x="570" y="895" width="165" height="75" rx="8"/>
+  <text class="small" text-anchor="middle" x="652" y="922">specialists</text>
+  <text class="micro" text-anchor="middle" x="652" y="943">RAG, analysis,</text>
+  <text class="micro" text-anchor="middle" x="652" y="961">writing, calc</text>
+
+  <rect class="green" x="760" y="895" width="165" height="75" rx="8"/>
+  <text class="small" text-anchor="middle" x="842" y="922">handoff</text>
+  <text class="micro" text-anchor="middle" x="842" y="943">consult helper</text>
+  <text class="micro" text-anchor="middle" x="842" y="961">agent if needed</text>
+
+  <rect class="green" x="950" y="895" width="145" height="75" rx="8"/>
+  <text class="small" text-anchor="middle" x="1022" y="922">synthesis</text>
+  <text class="micro" text-anchor="middle" x="1022" y="943">final draft</text>
+
+  <rect class="green" x="760" y="1010" width="165" height="55" rx="8"/>
+  <text class="small" text-anchor="middle" x="842" y="1041">verification</text>
+
+  <path class="line" d="M835 730 V752 H652 V775"/>
+  <path class="line" d="M735 810 H760"/>
+  <path class="line" d="M925 810 H950"/>
+  <path class="line" d="M1022 845 V870 H652 V895"/>
+  <path class="line" d="M735 932 H760"/>
+  <path class="line" d="M925 932 H950"/>
+  <path class="line" d="M1022 970 V1038 H925"/>
+
+  <!-- LLM + RAG -->
+  <rect class="yellow" x="1220" y="650" width="250" height="90" rx="8"/>
+  <text class="label" text-anchor="middle" x="1345" y="687">LiteLLM Gateway</text>
+  <text class="tiny" text-anchor="middle" x="1345" y="711">chat + embeddings</text>
+  <text class="micro" text-anchor="middle" x="1345" y="729">model router selects model</text>
+  <path class="line" d="M1095 932 H1160 V695 H1220"/>
+  <path class="softline" d="M1370 410 V620 H960"/>
+
+  <rect class="group-gray" x="1190" y="800" width="430" height="295" rx="10"/>
+  <text class="title" x="1214" y="836">PostgreSQL + pgvector</text>
+
+  <rect class="gray" x="1220" y="875" width="170" height="60" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="1305" y="900">Project</text>
+  <text class="micro" text-anchor="middle" x="1305" y="920">internal workspace</text>
+
+  <rect class="gray" x="1420" y="875" width="170" height="60" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="1505" y="900">Conversation</text>
+  <text class="micro" text-anchor="middle" x="1505" y="920">messages</text>
+
+  <rect class="gray" x="1220" y="970" width="170" height="70" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="1305" y="997">KnowledgeDocument</text>
+  <text class="micro" text-anchor="middle" x="1305" y="1018">DocumentChunk</text>
+  <text class="micro" text-anchor="middle" x="1305" y="1034">vector embedding</text>
+
+  <rect class="gray" x="1420" y="970" width="170" height="70" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="1505" y="997">AgentRun</text>
+  <text class="micro" text-anchor="middle" x="1505" y="1018">AgentStep</text>
+  <text class="micro" text-anchor="middle" x="1505" y="1034">ToolExecution</text>
+
+  <path class="softline" d="M970 475 H1150 V905 H1220"/>
+  <path class="softline" d="M652 970 V1005 H1220"/>
+  <path class="softline" d="M842 1065 V1080 H1420"/>
+
+  <!-- Knowledge preparation -->
+  <rect class="group-blue" x="54" y="875" width="410" height="220" rx="10"/>
+  <text class="title" x="78" y="911">Admin-Prepared Knowledge</text>
+  <text class="micro" x="78" y="933">existing upload/index path remains available</text>
+
+  <rect class="blue" x="90" y="965" width="145" height="58" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="162" y="990">Upload docs</text>
+  <text class="micro" text-anchor="middle" x="162" y="1008">PDF, DOCX, TXT</text>
+
+  <rect class="blue" x="275" y="965" width="145" height="58" rx="8"/>
+  <text class="tiny" text-anchor="middle" x="347" y="990">Process</text>
+  <text class="micro" text-anchor="middle" x="347" y="1008">extract, chunk, embed</text>
+
+  <path class="line" d="M235 994 H275"/>
+  <path class="softline" d="M420 994 H1220"/>
+
+  <!-- Response -->
+  <path class="line" d="M842 1010 V1130 H260 V502"/>
+  <text class="tiny" x="290" y="1130">assistant answer saved to ConversationMessage and shown in Workforce Chat UI</text>
+</svg>

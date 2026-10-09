@@ -216,6 +216,11 @@ export interface BusinessAgentProfile {
   slug: string;
   department: string;
   description: string | null;
+  roleSummary?: string | null;
+  avatarUrl?: string | null;
+  avatarAlt?: string | null;
+  icon?: string | null;
+  displayOrder?: number | null;
   capabilities: string[];
   allowedSpecialists: string[];
   allowedTools: string[];
@@ -247,6 +252,17 @@ export function createConversation(
   payload: { title?: string; agentSlug?: string },
 ): Promise<Conversation> {
   return apiClient.post<Conversation, typeof payload>(`/projects/${projectId}/conversations`, payload);
+}
+
+export function listWorkforceConversations(apiClient: ApiClient): Promise<Conversation[]> {
+  return apiClient.get<Conversation[]>('/workforce/conversations');
+}
+
+export function createWorkforceConversation(
+  apiClient: ApiClient,
+  payload: { title?: string; agentSlug?: string },
+): Promise<Conversation> {
+  return apiClient.post<Conversation, typeof payload>('/workforce/conversations', payload);
 }
 
 export function addConversationMessage(
@@ -360,4 +376,8 @@ export function searchKnowledge(
 
 export function getAdminHealth(apiClient: ApiClient): Promise<AdminHealth> {
   return apiClient.get<AdminHealth>('/admin/health');
+}
+
+export function syncWorkforceSanityKnowledge(apiClient: ApiClient): Promise<unknown> {
+  return apiClient.post<unknown>('/workforce/sanity-knowledge/sync');
 }

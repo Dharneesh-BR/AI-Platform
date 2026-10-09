@@ -19,6 +19,9 @@ export const agentTeam = defineType({
   type: 'document',
   groups: [
     {name: 'profile', title: 'Profile', default: true},
+    {name: 'presentation', title: 'Presentation'},
+    {name: 'members', title: 'Members'},
+    {name: 'knowledge', title: 'Knowledge'},
     {name: 'workflow', title: 'Internal Workflow'},
   ],
   fields: [
@@ -80,12 +83,109 @@ export const agentTeam = defineType({
       validation: (rule) => rule.max(300).warning('Keep this short for the workflow picker.'),
     }),
     defineField({
+      name: 'teamImage',
+      title: 'Team Image',
+      type: 'image',
+      group: 'presentation',
+      description: 'Used for team cards, org charts, and workforce graphics.',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          title: 'Alt Text',
+          type: 'string',
+          validation: (rule) => rule.max(140),
+        }),
+      ],
+    }),
+    defineField({
+      name: 'icon',
+      title: 'Icon Key',
+      type: 'string',
+      group: 'presentation',
+      description: 'Optional frontend icon key such as megaphone, palette, chart, scale, factory.',
+      validation: (rule) => rule.max(40),
+    }),
+    defineField({
+      name: 'displayOrder',
+      title: 'Display Order',
+      type: 'number',
+      group: 'presentation',
+      initialValue: 100,
+      validation: (rule) => rule.integer().min(1),
+    }),
+    defineField({
       name: 'supportedIntents',
       title: 'Supported Intents',
       type: 'array',
       group: 'profile',
       of: [defineArrayMember({type: 'string'})],
       validation: (rule) => rule.required().min(1).unique(),
+    }),
+    defineField({
+      name: 'memberAgents',
+      title: 'Member Agents',
+      type: 'array',
+      group: 'members',
+      description: 'Agents that belong to this team and may be used by backend routing.',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{type: 'workforceAgent'}],
+        }),
+      ],
+      validation: (rule) => rule.unique(),
+    }),
+    defineField({
+      name: 'routingInstructions',
+      title: 'Routing Instructions',
+      type: 'text',
+      rows: 4,
+      group: 'members',
+      description: 'Plain-language rules for when this team should use each member agent.',
+    }),
+    defineField({
+      name: 'knowledgeSources',
+      title: 'Shared Team Knowledge Sources',
+      type: 'array',
+      group: 'knowledge',
+      description: 'Files or source records shared by all agents in this team. Backend indexing should tag these with this team slug.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'title',
+              type: 'string',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'scope',
+              type: 'string',
+              description: 'RAG scope key, for example MARKETING, SALES, LEGAL, HR, FINANCE, PRODUCTION.',
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: 'file',
+              type: 'file',
+              options: {
+                accept: '.pdf,.doc,.docx,.txt,.md,.markdown,.csv,.xlsx,.ppt,.pptx',
+              },
+            }),
+            defineField({
+              name: 'notes',
+              type: 'text',
+              rows: 2,
+            }),
+          ],
+          preview: {
+            select: {
+              title: 'title',
+              subtitle: 'scope',
+            },
+          },
+        }),
+      ],
     }),
     defineField({
       name: 'internalRoles',

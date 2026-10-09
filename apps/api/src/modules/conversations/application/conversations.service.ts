@@ -4,6 +4,7 @@ import type { AuthenticatedUser } from '../../../common/auth';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AgentsService } from '../../agents/application/agents.service';
 import { AgentRuntimeService } from '../../agents/application/runtime/agent-runtime.service';
+import { WorkforceContextService } from '../../agents/application/runtime/workforce-context.service';
 
 export interface CreateConversationInput {
   projectId: string;
@@ -27,7 +28,18 @@ export class ConversationsService {
     private readonly prisma: PrismaService,
     private readonly agentsService: AgentsService,
     private readonly agentRuntimeService: AgentRuntimeService,
+    private readonly workforceContextService: WorkforceContextService,
   ) {}
+
+  async listWorkforceConversations(actor: AuthenticatedUser) {
+    const projectId = await this.workforceContextService.ensureProjectId(actor);
+    return this.listProjectConversations(projectId, actor);
+  }
+
+  async createWorkforceConversation(input: Omit<CreateConversationInput, 'projectId'>) {
+    const projectId = await this.workforceContextService.ensureProjectId(input.actor);
+    return this.createConversation({ ...input, projectId });
+  }
 
   async listProjectConversations(projectId: string, actor: AuthenticatedUser) {
     await this.ensureProject(projectId, actor.id);

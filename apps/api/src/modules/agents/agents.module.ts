@@ -15,6 +15,7 @@ import { CalculationSpecialist } from './application/runtime/specialists/calcula
 import { DocumentSpecialist } from './application/runtime/specialists/document.specialist';
 import { RagSpecialist } from './application/runtime/specialists/rag.specialist';
 import { SanityAgentProfileClient } from './application/runtime/sanity-agent-profile.client';
+import { SanityKnowledgeSyncService } from './application/runtime/sanity-knowledge-sync.service';
 import { ResearchSpecialist } from './application/runtime/specialists/research.specialist';
 import { SpecialistRegistryService } from './application/runtime/specialists/specialist-registry.service';
 import { WritingSpecialist } from './application/runtime/specialists/writing.specialist';
@@ -23,6 +24,7 @@ import { TaskPlannerService } from './application/runtime/task-planner.service';
 import { ToolAuthorizationService } from './application/runtime/tools/tool-authorization.service';
 import { ToolRegistryService } from './application/runtime/tools/tool-registry.service';
 import { VerificationService } from './application/runtime/verification.service';
+import { WorkforceContextService } from './application/runtime/workforce-context.service';
 import { AgentsController } from './presentation/controllers/agents.controller';
 
 @Module({
@@ -43,14 +45,16 @@ import { AgentsController } from './presentation/controllers/agents.controller';
     RagSpecialist,
     ResearchSpecialist,
     SanityAgentProfileClient,
+    SanityKnowledgeSyncService,
     SpecialistRegistryService,
     SupervisorService,
     TaskPlannerService,
     ToolAuthorizationService,
     ToolRegistryService,
     VerificationService,
+    WorkforceContextService,
     WritingSpecialist,
   ],
-  exports: [AgentRuntimeService, BusinessAgentProfileService, BusinessAgentTeamService, AgentsService],
+  exports: [AgentRuntimeService, BusinessAgentProfileService, BusinessAgentTeamService, AgentsService, WorkforceContextService],
 })
 export class AgentsModule {}

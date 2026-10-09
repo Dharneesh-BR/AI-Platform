@@ -25,6 +25,8 @@ export class RagContextService {
     userId: string;
     question: string;
     allowedKnowledgeScopes?: string[];
+    agentSlug?: string;
+    teamSlug?: string;
   }): Promise<RagContext> {
     const results = await this.vectorSearchService.search({
       projectId: input.projectId,
@@ -32,6 +34,8 @@ export class RagContextService {
       query: input.question,
       limit: this.ragConfig.maxRetrievedChunks,
       allowedKnowledgeScopes: input.allowedKnowledgeScopes,
+      agentSlug: input.agentSlug,
+      teamSlug: input.teamSlug,
     });
 
     return this.toContext(results);

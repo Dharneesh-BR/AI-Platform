@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AgentCapabilitySchema, type AgentTeamView, type BusinessAgentProfileView } from './agent-runtime.types';
+import { AgentCapabilitySchema, type AgentTeamView, type BusinessAgentProfileView, type SanityKnowledgeSourceView } from './agent-runtime.types';
 
 interface SanityWorkforceAgentDocument {
   _id?: string;
@@ -8,6 +8,12 @@ interface SanityWorkforceAgentDocument {
   slug?: string;
   department?: string;
   description?: string;
+  roleSummary?: string;
+  avatarUrl?: string;
+  avatarAlt?: string;
+  icon?: string;
+  displayOrder?: number;
+  knowledgeSources?: SanityKnowledgeSourceDocument[];
   systemInstructions?: string;
   responseFormatInstructions?: string;
   outputSections?: Array<{
@@ -31,7 +37,14 @@ interface SanityAgentTeamDocument {
   primaryAgentSlug?: string;
   department?: string;
   description?: string;
+  teamImageUrl?: string;
+  teamImageAlt?: string;
+  icon?: string;
+  displayOrder?: number;
   supportedIntents?: string[];
+  memberAgentSlugs?: string[];
+  routingInstructions?: string;
+  knowledgeSources?: SanityKnowledgeSourceDocument[];
   internalRoles?: Array<{
     roleName?: string;
     roleSlug?: string;
@@ -46,6 +59,22 @@ interface SanityAgentTeamDocument {
   enabled?: boolean;
 }
 
+interface SanityKnowledgeSourceDocument {
+  _key?: string;
+  title?: string;
+  scope?: string;
+  notes?: string;
+  file?: {
+    asset?: {
+      _id?: string;
+      url?: string;
+      originalFilename?: string;
+      mimeType?: string;
+      size?: number;
+    };
+  };
+}
+
 const WORKFORCE_AGENTS_QUERY = /* groq */ `
   *[_type == "workforceAgent" && enabled == "enabled"] | order(department asc, name asc) {
     _id,
@@ -53,6 +82,11 @@ const WORKFORCE_AGENTS_QUERY = /* groq */ `
     "slug": slug.current,
     department,
     description,
+    roleSummary,
+    "avatarUrl": avatar.asset->url,
+    "avatarAlt": avatar.alt,
+    icon,
+    displayOrder,
     systemInstructions,
     responseFormatInstructions,
     outputSections[] {
@@ -65,6 +99,21 @@ const WORKFORCE_AGENTS_QUERY = /* groq */ `
     allowedSpecialists,
     allowedTools,
     knowledgeScopes,
+    knowledgeSources[] {
+      _key,
+      title,
+      scope,
+      notes,
+      file {
+        asset-> {
+          _id,
+          url,
+          originalFilename,
+          mimeType,
+          size
+        }
+      }
+    },
     modelPolicy,
     verificationPolicy,
     "enabled": enabled == "enabled"
@@ -79,7 +128,28 @@ const AGENT_TEAMS_QUERY = /* groq */ `
     "primaryAgentSlug": primaryAgent->slug.current,
     department,
     description,
+    "teamImageUrl": teamImage.asset->url,
+    "teamImageAlt": teamImage.alt,
+    icon,
+    displayOrder,
     supportedIntents,
+    "memberAgentSlugs": memberAgents[]->slug.current,
+    routingInstructions,
+    knowledgeSources[] {
+      _key,
+      title,
+      scope,
+      notes,
+      file {
+        asset-> {
+          _id,
+          url,
+          originalFilename,
+          mimeType,
+          size
+        }
+      }
+    },
     internalRoles[] | order(order asc) {
       _key,
       roleName,
@@ -152,6 +222,26 @@ export class SanityAgentProfileClient {
     }
   }
 
+  async listKnowledgeSources(): Promise<SanityKnowledgeSourceView[]> {
+    const [agents, teams] = await Promise.all([
+      this.fetchAgentDocuments(),
+      this.fetchTeamDocuments(),
+    ]);
+
+    return [
+      ...teams.flatMap((team) => this.toKnowledgeSources({
+        ownerType: 'team',
+        ownerSlug: team.teamSlug,
+        sources: team.knowledgeSources,
+      })),
+      ...agents.flatMap((agent) => this.toKnowledgeSources({
+        ownerType: 'agent',
+        ownerSlug: agent.slug,
+        sources: agent.knowledgeSources,
+      })),
+    ];
+  }
+
   private getConfig() {
     const projectId = this.configService.get<string>('SANITY_PROJECT_ID')?.trim();
     const dataset = this.configService.get<string>('SANITY_DATASET')?.trim() || 'production';
@@ -170,6 +260,54 @@ export class SanityAgentProfileClient {
     return `https://${config.projectId}.api.sanity.io/v${config.apiVersion}/data/query/${config.dataset}?${params.toString()}`;
   }
 
+  private async fetchAgentDocuments(): Promise<SanityWorkforceAgentDocument[]> {
+    const config = this.getConfig();
+    if (!config) {
+      return [];
+    }
+
+    try {
+      const response = await fetch(this.buildQueryUrl(config, WORKFORCE_AGENTS_QUERY), {
+        headers: config.token ? { Authorization: `Bearer ${config.token}` } : undefined,
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`Sanity workforce agent query failed with ${response.status} ${response.statusText}.`);
+        return [];
+      }
+
+      const body = (await response.json()) as { result?: SanityWorkforceAgentDocument[] };
+      return body.result ?? [];
+    } catch (error) {
+      this.logger.warn(`Sanity workforce agent query failed: ${error instanceof Error ? error.message : String(error)}`);
+      return [];
+    }
+  }
+
+  private async fetchTeamDocuments(): Promise<SanityAgentTeamDocument[]> {
+    const config = this.getConfig();
+    if (!config) {
+      return [];
+    }
+
+    try {
+      const response = await fetch(this.buildQueryUrl(config, AGENT_TEAMS_QUERY), {
+        headers: config.token ? { Authorization: `Bearer ${config.token}` } : undefined,
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`Sanity agent team query failed with ${response.status} ${response.statusText}.`);
+        return [];
+      }
+
+      const body = (await response.json()) as { result?: SanityAgentTeamDocument[] };
+      return body.result ?? [];
+    } catch (error) {
+      this.logger.warn(`Sanity agent team query failed: ${error instanceof Error ? error.message : String(error)}`);
+      return [];
+    }
+  }
+
   private toProfile(document: SanityWorkforceAgentDocument): BusinessAgentProfileView | null {
     if (!document.name || !document.slug || !document.department || !document.systemInstructions) {
       return null;
@@ -182,6 +320,11 @@ export class SanityAgentProfileClient {
       slug: document.slug,
       department: document.department,
       description: document.description ?? null,
+      roleSummary: document.roleSummary ?? null,
+      avatarUrl: document.avatarUrl ?? null,
+      avatarAlt: document.avatarAlt ?? null,
+      icon: document.icon ?? null,
+      displayOrder: document.displayOrder ?? null,
       systemInstructions: document.systemInstructions,
       responseFormatInstructions: document.responseFormatInstructions ?? null,
       outputSections: this.parseOutputSections(document.outputSections),
@@ -229,7 +372,13 @@ export class SanityAgentProfileClient {
       primaryAgentSlug: document.primaryAgentSlug,
       department: document.department,
       description: document.description ?? null,
+      teamImageUrl: document.teamImageUrl ?? null,
+      teamImageAlt: document.teamImageAlt ?? null,
+      icon: document.icon ?? null,
+      displayOrder: document.displayOrder ?? null,
       supportedIntents: this.parseStringArray(document.supportedIntents),
+      memberAgentSlugs: this.parseStringArray(document.memberAgentSlugs),
+      routingInstructions: document.routingInstructions ?? null,
       internalRoles,
       enabled: document.enabled ?? true,
     };
@@ -257,5 +406,42 @@ export class SanityAgentProfileClient {
 
   private parseRecord(value: unknown): Record<string, unknown> {
     return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  }
+
+  private toKnowledgeSources(input: {
+    ownerType: 'team' | 'agent';
+    ownerSlug?: string;
+    sources?: SanityKnowledgeSourceDocument[];
+  }): SanityKnowledgeSourceView[] {
+    const ownerSlug = input.ownerSlug?.trim();
+    if (!ownerSlug || !Array.isArray(input.sources)) {
+      return [];
+    }
+
+    const knowledgeSources: SanityKnowledgeSourceView[] = [];
+
+    input.sources.forEach((source, index) => {
+      const asset = source.file?.asset;
+      if (!source.title || !source.scope || !asset?.url) {
+        return;
+      }
+
+      knowledgeSources.push({
+        sourceId: `${input.ownerType}:${ownerSlug}:${source._key ?? asset._id ?? index}`,
+        ownerType: input.ownerType,
+        title: source.title,
+        scope: source.scope,
+        notes: source.notes ?? null,
+        teamSlug: input.ownerType === 'team' ? ownerSlug : null,
+        agentSlug: input.ownerType === 'agent' ? ownerSlug : null,
+        fileUrl: asset.url,
+        assetId: asset._id ?? null,
+        originalFilename: asset.originalFilename ?? `${source.title}.txt`,
+        mimeType: asset.mimeType ?? null,
+        size: asset.size ?? null,
+      });
+    });
+
+    return knowledgeSources;
   }
 }

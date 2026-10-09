@@ -24,6 +24,8 @@ export class RagSpecialist implements AgentSpecialist {
         userId: input.userId,
         question: input.userInput,
         allowedKnowledgeScopes: input.businessAgent.knowledgeScopes.length ? input.businessAgent.knowledgeScopes : ['GENERAL'],
+        agentSlug: input.businessAgent.slug,
+        teamSlug: input.agentTeam?.teamSlug,
       });
       return {
         ok: true,

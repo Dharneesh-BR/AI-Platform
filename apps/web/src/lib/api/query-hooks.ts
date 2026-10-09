@@ -25,6 +25,7 @@ import type { CreateProjectRequest } from '@platform/contracts';
 import {
   addConversationMessage,
   createConversation,
+  createWorkforceConversation,
   createKnowledgeSource,
   deleteKnowledgeDocument,
   createReport,
@@ -36,6 +37,7 @@ import {
   listAuditLogs,
   listBusinessAgents,
   listConversations,
+  listWorkforceConversations,
   listKnowledgeSources,
   listKnowledgeDocuments,
   listModelProviders,
@@ -45,6 +47,7 @@ import {
   listUsers,
   retryKnowledgeDocument,
   searchKnowledge,
+  syncWorkforceSanityKnowledge,
   uploadKnowledgeDocument,
   type Conversation,
 } from './platform';
@@ -248,6 +251,25 @@ export function useCreateConversation(projectId: string, context?: QueryAuthCont
   });
 }
 
+export function useWorkforceConversations(context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  return useQuery({
+    queryKey: ['workforce-conversations'],
+    queryFn: () => listWorkforceConversations(apiClient),
+    enabled: hasUserContext(context),
+  });
+}
+
+export function useCreateWorkforceConversation(context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { title?: string; agentSlug?: string }) => createWorkforceConversation(apiClient, payload),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workforce-conversations'] }),
+  });
+}
+
 function mergeConversation(existing: Conversation[] | undefined, conversation: Conversation): Conversation[] {
   const conversations = existing ?? [];
   return [
@@ -268,6 +290,34 @@ export function useAddConversationMessage(projectId: string, context?: QueryAuth
         mergeConversation(existing, conversation),
       );
       void queryClient.invalidateQueries({ queryKey: ['conversations', projectId] });
+    },
+  });
+}
+
+export function useAddWorkforceConversationMessage(context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { conversationId: string; content: string; agentSlug?: string }) =>
+      addConversationMessage(apiClient, payload.conversationId, { content: payload.content, agentSlug: payload.agentSlug }),
+    onSuccess: (conversation) => {
+      queryClient.setQueryData<Conversation[]>(['workforce-conversations'], (existing) =>
+        mergeConversation(existing, conversation),
+      );
+      void queryClient.invalidateQueries({ queryKey: ['workforce-conversations'] });
+    },
+  });
+}
+
+export function useSyncWorkforceSanityKnowledge(context?: QueryAuthContext) {
+  const apiClient = useApiClient(context);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => syncWorkforceSanityKnowledge(apiClient),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['workforce-conversations'] });
     },
   });
 }

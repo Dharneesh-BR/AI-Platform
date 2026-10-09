@@ -8,7 +8,11 @@ export class BusinessAgentTeamService {
 
   async list(): Promise<AgentTeamView[]> {
     const sanityTeams = await this.sanityClient.listTeams();
-    return sanityTeams.length ? sanityTeams : DEFAULT_AGENT_TEAMS;
+    return (sanityTeams.length ? sanityTeams : DEFAULT_AGENT_TEAMS).sort((first, second) => {
+      const firstOrder = typeof first.displayOrder === 'number' ? first.displayOrder : 100;
+      const secondOrder = typeof second.displayOrder === 'number' ? second.displayOrder : 100;
+      return firstOrder - secondOrder || first.teamName.localeCompare(second.teamName);
+    });
   }
 
   async getByAgentSlug(agentSlug?: string): Promise<AgentTeamView | null> {

@@ -32,6 +32,8 @@ export class VectorSearchService {
     limit?: number;
     documentId?: string;
     allowedKnowledgeScopes?: string[];
+    agentSlug?: string;
+    teamSlug?: string;
   }): Promise<KnowledgeSearchResult[]> {
     try {
       const embedding = await this.embeddingService.embedQuery(input.query);
@@ -42,6 +44,8 @@ export class VectorSearchService {
         limit: input.limit,
         documentId: input.documentId,
         allowedKnowledgeScopes: input.allowedKnowledgeScopes,
+        agentSlug: input.agentSlug,
+        teamSlug: input.teamSlug,
       });
 
       if (results.length) {
@@ -65,6 +69,8 @@ export class VectorSearchService {
     limit?: number;
     documentId?: string;
     allowedKnowledgeScopes?: string[];
+    agentSlug?: string;
+    teamSlug?: string;
   }): Promise<KnowledgeSearchResult[]> {
     const vector = `[${input.embedding.join(',')}]`;
     const limit = Math.max(1, Math.min(input.limit ?? this.ragConfig.maxRetrievedChunks, 20));
@@ -75,6 +81,17 @@ export class VectorSearchService {
     const knowledgeScopeFilter = Prisma.sql`
       AND COALESCE(d.metadata->>'knowledgeScope', 'GENERAL') IN (${Prisma.join(allowedKnowledgeScopes)})
     `;
+    const agentSlug = input.agentSlug?.trim();
+    const teamSlug = input.teamSlug?.trim();
+    const ownershipFilter = agentSlug || teamSlug
+      ? Prisma.sql`
+        AND (
+          COALESCE(d.metadata->>'ownerType', 'general') = 'general'
+          OR d.metadata->>'agentSlug' = ${agentSlug ?? ''}
+          OR d.metadata->>'teamSlug' = ${teamSlug ?? ''}
+        )
+      `
+      : Prisma.empty;
     const readyDocumentFilter = await this.getReadyDocumentFilter();
 
     const rows = await this.prisma.$queryRaw<
@@ -107,6 +124,7 @@ export class VectorSearchService {
         AND c.embedding IS NOT NULL
         ${readyDocumentFilter}
         ${knowledgeScopeFilter}
+        ${ownershipFilter}
         ${documentFilter}
       ORDER BY c.embedding <=> ${vector}::vector
       LIMIT ${limit}
@@ -153,6 +171,9 @@ export class VectorSearchService {
     query: string;
     limit?: number;
     documentId?: string;
+    allowedKnowledgeScopes?: string[];
+    agentSlug?: string;
+    teamSlug?: string;
   }): Promise<KnowledgeSearchResult[]> {
     const limit = Math.max(1, Math.min(input.limit ?? this.ragConfig.maxRetrievedChunks, 20));
     const sources = await this.prisma.researchSource.findMany({
@@ -179,13 +200,20 @@ export class VectorSearchService {
     return sources
       .map((source) => {
         const content = this.extractContentText(source.content);
+        const metadata = this.asRecord(source.metadata);
         return {
           source,
           content,
+          metadata,
           score: this.lexicalScore(input.query, `${source.title}\n${content}`),
         };
       })
-      .filter((result) => result.content.trim() && result.score > 0)
+      .filter((result) =>
+        result.content.trim() &&
+        result.score > 0 &&
+        this.matchesKnowledgeScope(result.metadata, input.allowedKnowledgeScopes) &&
+        this.matchesOwnership(result.metadata, input.agentSlug, input.teamSlug),
+      )
       .sort((left, right) => right.score - left.score)
       .slice(0, limit)
       .map((result) => ({
@@ -201,6 +229,25 @@ export class VectorSearchService {
           sourceType: result.source.type,
         },
       }));
+  }
+
+  private matchesKnowledgeScope(metadata: Record<string, unknown>, allowedKnowledgeScopes?: string[]): boolean {
+    const allowed = allowedKnowledgeScopes?.length ? allowedKnowledgeScopes : ['GENERAL'];
+    const scope = typeof metadata.knowledgeScope === 'string' ? metadata.knowledgeScope : 'GENERAL';
+    return allowed.includes(scope);
+  }
+
+  private matchesOwnership(metadata: Record<string, unknown>, agentSlug?: string, teamSlug?: string): boolean {
+    const ownerType = typeof metadata.ownerType === 'string' ? metadata.ownerType : 'general';
+
+    if (ownerType === 'general') {
+      return true;
+    }
+
+    return (
+      (typeof metadata.agentSlug === 'string' && metadata.agentSlug === agentSlug) ||
+      (typeof metadata.teamSlug === 'string' && metadata.teamSlug === teamSlug)
+    );
   }
 
   private extractContentText(content: unknown): string {

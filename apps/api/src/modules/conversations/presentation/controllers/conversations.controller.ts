@@ -11,6 +11,23 @@ import { CreateConversationDto } from '../dto/create-conversation.dto';
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
+  @Get('workforce/conversations')
+  listWorkforce(@CurrentUser() user: AuthenticatedUser) {
+    return this.conversationsService.listWorkforceConversations(user);
+  }
+
+  @Post('workforce/conversations')
+  createWorkforce(
+    @Body() dto: CreateConversationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.conversationsService.createWorkforceConversation({
+      actor: user,
+      title: dto.title,
+      agentSlug: dto.agentSlug,
+    });
+  }
+
   @Get('projects/:projectId/conversations')
   list(
     @Param('projectId') projectId: string,

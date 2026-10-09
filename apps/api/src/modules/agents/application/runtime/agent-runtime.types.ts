@@ -57,6 +57,11 @@ export interface BusinessAgentProfileView {
   slug: string;
   department: string;
   description?: string | null;
+  roleSummary?: string | null;
+  avatarUrl?: string | null;
+  avatarAlt?: string | null;
+  icon?: string | null;
+  displayOrder?: number | null;
   systemInstructions: string;
   responseFormatInstructions?: string | null;
   outputSections?: Array<{
@@ -93,9 +98,30 @@ export interface AgentTeamView {
   primaryAgentSlug: string;
   department: string;
   description?: string | null;
+  teamImageUrl?: string | null;
+  teamImageAlt?: string | null;
+  icon?: string | null;
+  displayOrder?: number | null;
   supportedIntents: string[];
+  memberAgentSlugs?: string[];
+  routingInstructions?: string | null;
   internalRoles: AgentTeamRoleView[];
   enabled: boolean;
+}
+
+export interface SanityKnowledgeSourceView {
+  sourceId: string;
+  ownerType: 'team' | 'agent';
+  title: string;
+  scope: string;
+  notes?: string | null;
+  teamSlug?: string | null;
+  agentSlug?: string | null;
+  fileUrl: string;
+  assetId?: string | null;
+  originalFilename?: string | null;
+  mimeType?: string | null;
+  size?: number | null;
 }
 
 export interface AgentSourceReference {
@@ -114,6 +140,7 @@ export interface SpecialistExecutionInput {
   permissions: string[];
   userInput: string;
   businessAgent: BusinessAgentProfileView;
+  agentTeam?: AgentTeamView;
   companyContext: string;
   planStep?: TaskPlanStep;
   selectedModel?: string;

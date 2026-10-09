@@ -16,6 +16,7 @@ export interface UploadKnowledgeDocumentInput {
   mimeType?: string;
   sizeBytes: number;
   buffer: Buffer;
+  metadata?: Record<string, unknown>;
 }
 
 @Injectable()
@@ -71,7 +72,7 @@ export class KnowledgeDocumentService {
         status: KnowledgeDocumentStatus.UPLOADED,
         mimeType: input.mimeType,
         sizeBytes: input.sizeBytes,
-        metadata: { uploadMode: 'multipart' },
+        metadata: { ...(input.metadata ?? {}), uploadMode: input.metadata?.uploadMode ?? 'multipart' },
         uploadedByUserId: input.actor.id,
         createdBy: input.actor.id,
         updatedBy: input.actor.id,
@@ -93,7 +94,8 @@ export class KnowledgeDocumentService {
         storageKey: storageResult.storageKey,
         checksum: storageResult.checksum,
         metadata: {
-          uploadMode: 'multipart',
+          ...(input.metadata ?? {}),
+          uploadMode: input.metadata?.uploadMode ?? 'multipart',
           ...this.storageMetadata(),
         },
         updatedBy: input.actor.id,

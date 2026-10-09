@@ -7,7 +7,20 @@ import { PROJECT_REPOSITORY, type ProjectRepository } from '../../domain/reposit
 export class ListProjectsUseCase {
   constructor(@Inject(PROJECT_REPOSITORY) private readonly projectRepository: ProjectRepository) {}
 
-  execute(actor: AuthenticatedUser): Promise<ProjectEntity[]> {
+  async execute(actor: AuthenticatedUser): Promise<ProjectEntity[]> {
+    const projects = await this.projectRepository.list(actor);
+
+    if (projects.some((project) => project.lifecycleState === 'AI_READY')) {
+      return projects;
+    }
+
+    await this.projectRepository.create({
+      actor,
+      name: 'AI Workforce',
+      slug: 'ai-workforce',
+      description: 'Default AI-ready workspace for company workforce chat.',
+    });
+
     return this.projectRepository.list(actor);
   }
 }

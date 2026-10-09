@@ -78,6 +78,7 @@ export class DocumentProcessingService {
               content: chunk.content,
               tokenCount: Math.ceil(chunk.content.length / 4),
               metadata: {
+                ...(document.metadata as Record<string, unknown>),
                 ...chunk.metadata,
                 ...extracted.metadata,
                 embeddingProvider: this.ragConfig.embeddingProvider,
@@ -124,6 +125,7 @@ export class DocumentProcessingService {
           chunkCount: chunks.length,
         },
         metadata: {
+          ...(document.metadata as Record<string, unknown>),
           ingestionMode: 'document-processing',
           characterCount: extracted.text.length,
         },

@@ -120,9 +120,11 @@ export class BusinessAgentProfileService {
       profilesBySlug.set(profile.slug, profile);
     }
 
-    return [...profilesBySlug.values()].sort((first, second) =>
-      `${first.department}:${first.name}`.localeCompare(`${second.department}:${second.name}`),
-    );
+    return [...profilesBySlug.values()].sort((first, second) => {
+      const firstOrder = typeof first.displayOrder === 'number' ? first.displayOrder : 100;
+      const secondOrder = typeof second.displayOrder === 'number' ? second.displayOrder : 100;
+      return firstOrder - secondOrder || `${first.department}:${first.name}`.localeCompare(`${second.department}:${second.name}`);
+    });
   }
 
   private parseCapabilities(value: unknown) {

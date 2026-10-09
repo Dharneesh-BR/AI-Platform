@@ -38,6 +38,6 @@ import { ProjectKnowledgeController } from './presentation/controllers/project-k
       useClass: PrismaResearchSourceRepository,
     },
   ],
-  exports: [RagContextService, VectorSearchService],
+  exports: [KnowledgeDocumentService, RagContextService, VectorSearchService],
 })
 export class KnowledgeBaseModule {}

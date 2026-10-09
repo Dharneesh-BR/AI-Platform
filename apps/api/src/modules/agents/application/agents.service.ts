@@ -8,6 +8,8 @@ import type { AgentExecutionJobPayload } from './ports/agent-execution-job.paylo
 import { BusinessAgentProfileService } from './runtime/business-agent-profile.service';
 import { BusinessAgentTeamService } from './runtime/business-agent-team.service';
 import { AgentRuntimeService } from './runtime/agent-runtime.service';
+import { SanityKnowledgeSyncService } from './runtime/sanity-knowledge-sync.service';
+import { WorkforceContextService } from './runtime/workforce-context.service';
 
 export interface CreateAgentRunInput {
   projectId: string;
@@ -23,6 +25,8 @@ export class AgentsService {
     private readonly profileService: BusinessAgentProfileService,
     private readonly teamService: BusinessAgentTeamService,
     private readonly agentRuntimeService: AgentRuntimeService,
+    private readonly sanityKnowledgeSyncService: SanityKnowledgeSyncService,
+    private readonly workforceContextService: WorkforceContextService,
     private readonly queueInfrastructure: QueueInfrastructureService,
   ) {}
 
@@ -77,6 +81,16 @@ export class AgentsService {
       userInput: input.message,
       agentSlug: businessAgent.slug,
     });
+  }
+
+  async syncSanityKnowledge(projectId: string, actor: AuthenticatedUser) {
+    await this.ensureProject(projectId, actor.id);
+    return this.sanityKnowledgeSyncService.syncProject({ projectId, actor });
+  }
+
+  async syncWorkforceSanityKnowledge(actor: AuthenticatedUser) {
+    const projectId = await this.workforceContextService.ensureProjectId(actor);
+    return this.sanityKnowledgeSyncService.syncProject({ projectId, actor });
   }
 
   async createQueuedRuntimeRun(input: {

@@ -4,19 +4,17 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowUp, ChevronLeft, MessageSquarePlus, Plus } from 'lucide-react';
 import { AssistantMarkdown, AsyncRunProgress, HandoffList, MessageHandoffs, messageSources, SourceList } from '../../../components/platform/ai-primitives';
-import { Pill, ProgressBar } from '../../../components/platform/app-shell';
+import { Pill } from '../../../components/platform/app-shell';
 import {
-  useAddConversationMessage,
+  useAddWorkforceConversationMessage,
   useAgentRunStatus,
   useBusinessAgents,
-  useConversations,
-  useCreateConversation,
-  useProjects,
+  useCreateWorkforceConversation,
+  useWorkforceConversations,
 } from '../../../lib/api/query-hooks';
 import type { AgentRunStatus, AgentWorkflow, BusinessAgentProfile, Conversation } from '../../../lib/api/platform';
 import { hasApiAuth } from '../../../lib/auth/api-access';
 import { useAuth } from '../../../lib/auth/session';
-import { getLifecycleProgress, getLifecycleTone } from '../../projects/components/project-lifecycle';
 
 interface WorkforceChatProps {
   initialAgentSlug?: string;
@@ -224,16 +222,11 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
   const { session } = useAuth();
   const context = { accessToken: session.accessToken };
   const agentsQuery = useBusinessAgents(context);
-  const projectsQuery = useProjects(context);
   const agents = (agentsQuery.data ?? []).filter((agent) => agent.slug !== 'magnafic-ai');
   const [selectedAgentSlug, setSelectedAgentSlug] = useState(initialAgentSlug);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const selectedProject = (projectsQuery.data ?? []).find((project) => project.id === selectedProjectId) ?? (projectsQuery.data ?? [])[0];
-  const projectId = selectedProject?.id ?? '';
-  const projectIsAiReady = selectedProject?.lifecycleState === 'AI_READY';
-  const conversationsQuery = useConversations(projectId, context);
-  const createConversation = useCreateConversation(projectId, context);
-  const addMessage = useAddConversationMessage(projectId, context);
+  const conversationsQuery = useWorkforceConversations(context);
+  const createConversation = useCreateWorkforceConversation(context);
+  const addMessage = useAddWorkforceConversationMessage(context);
   const conversations = conversationsQuery.data ?? [];
   const selectedAgent = agents.find((agent) => agent.slug === selectedAgentSlug) ?? agents[0];
   const activeConversation = selectedAgent
@@ -262,13 +255,6 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
   useEffect(() => {
     setSelectedAgentSlug(initialAgentSlug);
   }, [initialAgentSlug]);
-
-  useEffect(() => {
-    const projects = projectsQuery.data ?? [];
-    if (!selectedProjectId && projects[0]?.id) {
-      setSelectedProjectId(projects[0].id);
-    }
-  }, [projectsQuery.data, selectedProjectId]);
 
   useEffect(() => {
     const firstAgent = agents[0];
@@ -320,16 +306,6 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
       return;
     }
 
-    if (!projectId) {
-      setStatusMessage('Create a project first so the agent has company context.');
-      return;
-    }
-
-    if (!projectIsAiReady) {
-      setStatusMessage('Finish project setup and approve the company profile before using workforce agents.');
-      return;
-    }
-
     if (!selectedAgent) {
       setStatusMessage('Select an available agent before sending.');
       return;
@@ -375,7 +351,7 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
   }
 
   async function startNewChat() {
-    if (!projectId || !selectedAgent) {
+    if (!selectedAgent || !hasApiAuth(session)) {
       return;
     }
 
@@ -395,21 +371,10 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
             <ChevronLeft size={17} aria-hidden="true" />
             Agents
           </Link>
-          <button className="icon-button" type="button" onClick={() => void startNewChat()} disabled={isBusy || !projectId} title="New chat">
+          <button className="icon-button" type="button" onClick={() => void startNewChat()} disabled={isBusy || !selectedAgent || !hasApiAuth(session)} title="New chat">
             <MessageSquarePlus size={18} aria-hidden="true" />
           </button>
         </div>
-
-        {projectsQuery.data && projectsQuery.data.length > 1 ? (
-          <label className="compact-field">
-            <span>Project context</span>
-            <select value={projectId} onChange={(event) => setSelectedProjectId(event.target.value)}>
-              {projectsQuery.data.map((project) => (
-                <option key={project.id} value={project.id}>{project.name}</option>
-              ))}
-            </select>
-          </label>
-        ) : null}
 
         <div className="workforce-agent-list">
           {agents.map((agent) => (
@@ -450,34 +415,7 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
           </div>
         </header>
 
-        {!projectId && !projectsQuery.isLoading ? (
-          <div className="chat-empty-state">
-            <h2>Create a project first</h2>
-            <p>Workforce agents need a project context before they can answer company-aware questions.</p>
-            <Link className="button button-primary section-gap" href="/projects">Go to projects</Link>
-          </div>
-        ) : null}
-
-        {projectId && selectedProject && !projectIsAiReady ? (
-          <div className="chat-empty-state">
-            <div className="pill-row">
-              <Pill tone={getLifecycleTone(selectedProject.lifecycleState)}>{selectedProject.lifecycleState}</Pill>
-              <Pill tone="slate">Workforce locked</Pill>
-            </div>
-            <h2>Finish setup for {selectedProject.name}</h2>
-            <p>Workforce agents need an approved company profile before they can answer with trusted company context.</p>
-            <div className="section-gap">
-              <ProgressBar value={getLifecycleProgress(selectedProject.lifecycleState)} />
-            </div>
-            <div className="topbar-actions section-gap">
-              <Link className="button button-primary" href={selectedProject.nextRoute}>Continue setup</Link>
-              <Link className="button button-muted" href={`/projects/${selectedProject.id}`}>Project workspace</Link>
-            </div>
-          </div>
-        ) : null}
-
-        {projectId && projectIsAiReady ? (
-          <>
+        <>
             <div className="workforce-message-scroll">
               {displayMessages.length === 0 ? (
                 <div className="chat-empty-state">
@@ -552,8 +490,7 @@ export function WorkforceChat({ initialAgentSlug = 'marketing' }: WorkforceChatP
                 </button>
               </form>
             </footer>
-          </>
-        ) : null}
+        </>
       </div>
     </section>
   );

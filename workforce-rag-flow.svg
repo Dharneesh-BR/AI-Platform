@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="980" viewBox="0 0 1400 980">
+  <defs>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#edf1f5" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7db4e8"/>
+    </marker>
+    <style>
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #172033; font-size: 22px; font-weight: 650; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #26334a; font-size: 17px; font-weight: 600; }
+      .tiny { font-family: Inter, Segoe UI, Arial, sans-serif; fill: #344258; font-size: 15px; font-weight: 560; }
+      .blue { fill: #cfe4ff; stroke: #75aee8; stroke-width: 2.5; }
+      .green { fill: #dff6df; stroke: #43a07f; stroke-width: 2.5; }
+      .mint { fill: #e7f8ec; stroke: #4aa787; stroke-width: 2.2; }
+      .yellow { fill: #fff0cd; stroke: #efc261; stroke-width: 2.2; }
+      .gray { fill: #f4f6f8; stroke: #aeb7c2; stroke-width: 2.2; }
+      .group { fill: rgba(245,255,250,.55); stroke: #35c0a3; stroke-width: 2.5; stroke-dasharray: 7 7; }
+      .line { fill: none; stroke: #8bc0ef; stroke-width: 2.8; marker-end: url(#arrow); }
+      .softline { fill: none; stroke: #b6cee4; stroke-width: 2.4; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1400" height="980" fill="#ffffff"/>
+  <rect width="1400" height="980" fill="url(#grid)" opacity="0.9"/>
+
+  <!-- Top layer -->
+  <rect class="blue" x="410" y="42" width="180" height="110" rx="8"/>
+  <text class="label" text-anchor="middle" x="500" y="86">User</text>
+  <text class="label" text-anchor="middle" x="500" y="114">Interface</text>
+  <text class="small" text-anchor="middle" x="500" y="139">(chat)</text>
+
+  <rect class="blue" x="760" y="42" width="315" height="110" rx="8"/>
+  <text class="label" text-anchor="middle" x="918" y="86">Authentication</text>
+  <text class="small" text-anchor="middle" x="918" y="116">(company app login)</text>
+
+  <path class="line" d="M590 97 H760"/>
+  <path class="line" d="M500 152 V205"/>
+
+  <rect class="blue" x="410" y="205" width="180" height="100" rx="8"/>
+  <text class="label" text-anchor="middle" x="500" y="264">API</text>
+
+  <path class="line" d="M500 305 V360"/>
+
+  <!-- Workforce group -->
+  <rect class="group" x="120" y="350" width="740" height="390" rx="8"/>
+  <text class="small" x="145" y="383">Company-Specific Workforce</text>
+
+  <rect class="green" x="405" y="395" width="190" height="105" rx="8"/>
+  <text class="label" text-anchor="middle" x="500" y="437">Coordinator</text>
+  <text class="label" text-anchor="middle" x="500" y="466">Agent</text>
+
+  <rect class="green" x="150" y="570" width="170" height="100" rx="8"/>
+  <text class="label" text-anchor="middle" x="235" y="612">Sales</text>
+  <text class="label" text-anchor="middle" x="235" y="641">Agent</text>
+
+  <rect class="green" x="415" y="570" width="170" height="100" rx="8"/>
+  <text class="label" text-anchor="middle" x="500" y="612">Support</text>
+  <text class="label" text-anchor="middle" x="500" y="641">Agent</text>
+
+  <rect class="green" x="680" y="570" width="170" height="100" rx="8"/>
+  <text class="label" text-anchor="middle" x="765" y="612">HR / Legal</text>
+  <text class="label" text-anchor="middle" x="765" y="641">Agent</text>
+
+  <path class="softline" d="M500 500 V535 H235 V570"/>
+  <path class="softline" d="M500 500 V570"/>
+  <path class="softline" d="M500 535 H765 V570"/>
+
+  <!-- External LLM -->
+  <rect class="yellow" x="1050" y="460" width="175" height="110" rx="8"/>
+  <text class="label" text-anchor="middle" x="1138" y="524">LLM</text>
+  <path class="line" d="M860 515 H1050"/>
+
+  <!-- Knowledge servers -->
+  <path class="line" d="M235 670 V765"/>
+  <path class="line" d="M500 670 V765"/>
+  <path class="line" d="M765 670 V765"/>
+
+  <rect class="mint" x="145" y="765" width="180" height="76" rx="7"/>
+  <text class="small" text-anchor="middle" x="235" y="796">Sales Knowledge</text>
+  <text class="small" text-anchor="middle" x="235" y="820">Retriever</text>
+
+  <rect class="mint" x="410" y="765" width="180" height="76" rx="7"/>
+  <text class="small" text-anchor="middle" x="500" y="796">Shared Workforce</text>
+  <text class="small" text-anchor="middle" x="500" y="820">Retriever</text>
+
+  <rect class="mint" x="675" y="765" width="180" height="76" rx="7"/>
+  <text class="small" text-anchor="middle" x="765" y="796">HR / Legal</text>
+  <text class="small" text-anchor="middle" x="765" y="820">Retriever</text>
+
+  <!-- Bottom resources -->
+  <path class="line" d="M235 841 V890 H185"/>
+  <path class="line" d="M500 841 V890 H500"/>
+  <path class="line" d="M765 841 V890 H1000"/>
+
+  <rect class="gray" x="30" y="885" width="270" height="75" rx="7"/>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="72" y="908" width="185" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="164" y="931">Pricing / Sales Docs</text>
+
+  <rect class="gray" x="335" y="885" width="370" height="75" rx="7"/>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="365" y="908" width="140" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="435" y="931">PDFs</text>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="535" y="908" width="140" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="605" y="931">SOPs / FAQs</text>
+
+  <rect class="gray" x="850" y="885" width="520" height="75" rx="7"/>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="880" y="908" width="140" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="950" y="931">HR Policies</text>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="1045" y="908" width="155" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="1122" y="931">Legal Docs</text>
+  <rect fill="#ffffff" stroke="#aeb7c2" stroke-width="2" x="1225" y="908" width="115" height="34" rx="5"/>
+  <text class="tiny" text-anchor="middle" x="1282" y="931">Policies</text>
+
+  <!-- Sanity + vector DB side -->
+  <rect class="yellow" x="970" y="660" width="225" height="82" rx="8"/>
+  <text class="small" text-anchor="middle" x="1082" y="694">Sanity</text>
+  <text class="tiny" text-anchor="middle" x="1082" y="720">agents, roles, docs</text>
+
+  <rect class="yellow" x="970" y="770" width="225" height="82" rx="8"/>
+  <text class="small" text-anchor="middle" x="1082" y="804">PostgreSQL</text>
+  <text class="tiny" text-anchor="middle" x="1082" y="830">pgvector RAG index</text>
+
+  <path class="softline" d="M970 701 H860"/>
+  <path class="softline" d="M970 811 H855"/>
+
+  <!-- Final response -->
+  <path class="line" d="M1225 515 H1310 V145 H1075"/>
+  <path class="line" d="M1050 515 H930 V250 H590"/>
+  <text class="tiny" x="935" y="238">final answer returned</text>
+</svg>
